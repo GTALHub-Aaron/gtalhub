@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Weigh-Off | GTALHub</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: hero, then your card and log form, your chart and history, then comparisons (requests and head-to-head boards). */
+:root{
+  --bg:#f6f2fb; --surface:#ffffff; --surface-2:#efe8f8; --line:#e0d5ee;
+  --fg:#2a1d3a; --muted:#6e6082;
+  --plum:#5b2a86; --plum-soft:#ece0f7;
+  --orchid:#b0469a; --orchid-soft:#f8e3f1;
+  --lav:#9b87f5; --good:#2f8f5b; --bad:#c2410c; --warn:#a15c00;
+  --hero-a:#3b1a5c; --hero-b:#6a2f8f; --hero-fg:#fbf7ff;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:16px;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#17111f; --surface:#211830; --surface-2:#2a1f3b; --line:#3a2d4f;
+  --fg:#f1eaf9; --muted:#b3a5c7;
+  --plum:#b78cf0; --plum-soft:#33244a;
+  --orchid:#f08ad6; --orchid-soft:#3d2140;
+  --lav:#a594ff; --good:#5fd394; --bad:#ff8a5b; --warn:#e2a146;
+  --hero-a:#2a1242; --hero-b:#4b2170; --hero-fg:#fbf7ff;
+  color-scheme:dark;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+.wrap{max-width:980px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 48px;display:grid;gap:22px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h3{font-size:20px}
+.num{font-variant-numeric:tabular-nums}
+.label{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* hero */
+.hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:var(--hero-fg);border-radius:22px;padding:22px 24px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:end;justify-content:space-between;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(240,138,214,.35),transparent 70%);pointer-events:none}
+.hero h1{font-size:clamp(30px,6vw,46px);font-weight:800;line-height:1.05}
+.hero h1 em{font-style:normal;color:#f3b6e6}
+.hero p{margin:6px 0 0;opacity:.85;max-width:50ch}
+.who{position:relative;z-index:1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.who .btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.home{position:relative;z-index:1;color:rgba(255,255,255,.8);font-size:13px;text-decoration:none}
+.home:hover{color:#fff}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.card > h3{margin-bottom:12px}
+.narrow{max-width:460px;margin:0 auto;width:100%}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+
+/* player card */
+.player{display:grid;gap:14px;position:relative;--c:var(--plum);--cs:var(--plum-soft)}
+.player.them{--c:var(--orchid);--cs:var(--orchid-soft)}
+.player.is-leading{box-shadow:0 0 0 2px var(--c),0 10px 30px -18px var(--c)}
+.p-head{display:flex;align-items:center;gap:12px}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--cs);color:var(--c);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:20px;flex:none}
+.p-head h2{font-size:22px;color:var(--c)}
+.p-head .sub{font-size:13px;color:var(--muted)}
+.crown{margin-left:auto;font-size:12px;font-weight:700;background:var(--cs);color:var(--c);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.big{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:baseline}
+.big .pct{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;color:var(--c)}
+.big .lbs{font-size:17px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface-2);border-radius:12px;padding:8px 10px;min-width:0}
+.stat .v{font-weight:700;font-size:16px}
+.goalbar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.goalbar i{display:block;height:100%;background:var(--c);border-radius:99px;transition:width .5s ease}
+.goalline{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:6px}
+.hidden-note{font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:12px;padding:10px 12px}
+
+/* forms */
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:12px;padding:10px 16px;font-weight:700;background:var(--plum);color:#fff}
+@media (prefers-color-scheme: dark){.btn{color:#1b1027}}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.danger{background:var(--bad);color:#fff}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:10px}
+.linkbtn{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;padding:0}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--lav);outline-offset:2px}
+.field{display:grid;gap:4px;min-width:0}
+.field > span{font-size:13px;font-weight:600;color:var(--muted)}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=date]{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;min-width:0}
+.form{display:grid;gap:12px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.note{font-size:13px;color:var(--muted);min-height:1.2em}
+.note.ok{color:var(--good)} .note.err{color:var(--bad)}
+.tabs{display:inline-flex;background:var(--surface-2);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+.tabs button{border:0;background:transparent;color:var(--muted);font-weight:700;padding:8px 14px;border-radius:9px}
+.tabs button[aria-selected="true"]{background:var(--plum);color:#fff}
+@media (prefers-color-scheme: dark){.tabs button[aria-selected="true"]{color:#1b1027}}
+
+/* share settings */
+.share{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px;margin:0}
+.share legend{font-size:13px;font-weight:700;padding:0 4px}
+.share label{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.share input{margin-top:3px;accent-color:var(--plum)}
+.share .warn{font-size:12px;color:var(--warn);font-weight:600}
+
+/* comparisons */
+.cmp{display:grid;gap:16px}
+.cmp-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.cmp-head h3 em{font-style:normal;color:var(--orchid)}
+.leaderline{font-weight:700}
+.req{display:grid;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px}
+.req-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center}
+.pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+details summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--muted)}
+details[open] summary{margin-bottom:10px}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* chart and table */
+.chart-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.chartbox{overflow-x:auto}
+svg text{font-family:var(--body);font-size:11px;fill:var(--muted)}
+.tablebox{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+th{text-align:left;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.r,th.r{text-align:right}
+tr:last-child td{border-bottom:0}
+.down{color:var(--good);font-weight:600}.up{color:var(--bad);font-weight:600}
+.start-row td{color:var(--muted);font-style:italic}
+.empty{color:var(--muted);text-align:center;padding:22px 10px}
+.status{font-size:12px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <a class="home" href="/">← GTALHub</a>
+      <h1>The <em>Weigh-Off</em></h1>
+      <p>Track your weight loss, then challenge friends. Whoever loses the biggest share of their starting weight takes the crown.</p>
+    </div>
+    <div class="who" id="who" hidden>
+      <span id="whoName"></span>
+      <button class="btn sm" id="btnExport" type="button">Export my data</button>
+      <button class="btn sm" id="btnSignOut" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <!-- loading -->
+  <div id="vLoading" class="status">Loading…</div>
+
+  <!-- signed out -->
+  <section id="vAuth" class="card narrow" hidden>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" data-tab="in">Sign in</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="up">Create account</button>
+    </div>
+    <form id="authForm" class="form" novalidate>
+      <label class="field"><span>Email</span><input type="email" id="aEmail" autocomplete="email" required></label>
+      <label class="field"><span>Password</span><input type="password" id="aPass" autocomplete="current-password" minlength="8" required></label>
+      <div class="actions"><button class="btn" type="submit" id="aSubmit">Sign in</button>
+        <button class="linkbtn" type="button" id="aForgot">Forgot password?</button></div>
+      <div class="note" id="aNote" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <!-- password reset (after clicking the email link) -->
+  <section id="vReset" class="card narrow" hidden>
+    <h3>Choose a new password</h3>
+    <form id="resetForm" class="form" novalidate>
+      <label class="field"><span>New password (8+ characters)</span><input type="password" id="rPass" autocomplete="new-password" minlength="8" required></label>
+      <div class="actions"><button class="btn" type="submit">Save password</button></div>
+      <div class="note" id="rNote" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <!-- first-time profile -->
+  <section id="vSetup" class="card narrow" hidden>
+    <h3>Set up your profile</h3>
+    <form id="setupForm" class="form" novalidate>
+      <label class="field"><span>Username (friends use this to find you)</span><input type="text" id="sUser" autocomplete="username" placeholder="e.g. gerry_g" maxlength="20" required></label>
+      <label class="field"><span>Display name</span><input type="text" id="sName" maxlength="40" placeholder="e.g. Gerry" required></label>
+      <div class="row">
+        <label class="field"><span>Starting weight (lbs)</span><input type="number" id="sStart" step="0.1" min="50" max="700" inputmode="decimal" required></label>
+        <label class="field"><span>Start date</span><input type="date" id="sDate" required></label>
+        <label class="field"><span>Goal weight (optional)</span><input type="number" id="sGoal" step="0.1" min="50" max="700" inputmode="decimal"></label>
+      </div>
+      <p class="small muted" style="margin:0">Your weights are private. Nobody sees anything unless you accept a comparison, and you choose what each person can see.</p>
+      <div class="actions"><button class="btn" type="submit">Start tracking</button></div>
+      <div class="note" id="sNote" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <!-- signed in -->
+  <div id="vApp" hidden style="display:grid;gap:22px">
+    <section class="grid2">
+      <article class="card player" id="meCard"></article>
+      <section class="card" aria-labelledby="logTitle">
+        <h3 id="logTitle">Log a weigh-in</h3>
+        <form id="logForm" class="form" novalidate>
+          <div class="row">
+            <label class="field"><span>Date</span><input type="date" id="lDate" required></label>
+            <label class="field"><span>Weight (lbs)</span><input type="number" id="lWeight" step="0.1" min="50" max="700" inputmode="decimal" placeholder="e.g. 198.4" required></label>
+          </div>
+          <div class="actions"><button class="btn" type="submit">Add weigh-in</button></div>
+          <div class="note" id="lNote" aria-live="polite"></div>
+        </form>
+      </section>
+    </section>
+
+    <section class="card" aria-labelledby="cmpTitle">
+      <div class="section-title"><h3 id="cmpTitle">Comparisons</h3>
+        <button class="btn ghost sm" type="button" id="btnRefresh">Refresh</button></div>
+      <div id="incoming"></div>
+      <div id="active" class="cmp"></div>
+      <div id="outgoing"></div>
+      <details id="newReq" style="margin-top:14px">
+        <summary>Challenge someone</summary>
+        <form id="reqForm" class="form" novalidate>
+          <label class="field"><span>Their username</span><input type="text" id="qUser" autocomplete="off" maxlength="20" required></label>
+          <div id="qShare"></div>
+          <div class="actions"><button class="btn" type="submit">Send request</button></div>
+          <div class="note" id="qNote" aria-live="polite"></div>
+        </form>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="chartTitle">
+      <div class="chart-head"><h3 id="chartTitle">Your percent lost over time</h3></div>
+      <div class="chartbox" id="myChart"></div>
+    </section>
+
+    <section class="card" aria-labelledby="histTitle">
+      <h3 id="histTitle">Your weigh-ins</h3>
+      <div class="tablebox"><table>
+        <thead><tr><th>Date</th><th class="r">Weight</th><th class="r">Change</th><th class="r">Total lost</th><th class="r">% lost</th><th></th></tr></thead>
+        <tbody id="hist"></tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <div class="status" id="status" aria-live="polite"></div>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const SB_URL = "https://hjwuluhdiczmssldyeus.supabase.co";
+const SB_KEY = "sb_publishable_zAZpo7UDyx1eHD_HpayR-g_RRjdgtO9";
+const sb = createClient(SB_URL, SB_KEY);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const n1 = v => (Math.round(v*10)/10).toFixed(1);
+const todayStr = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+const fmtDate = s => { if(!s) return "—"; const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); };
+const fmtShort = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric"}); };
+const note = (id,msg,cls="") => { const el=$(id); el.textContent=msg; el.className="note"+(cls?" "+cls:""); };
+const errMsg = e => (e && (e.message || e.error_description)) || "Something went wrong. Try again.";
+
+const S = { user:null, profile:null, weighins:[], pairings:[], partner:{}, editing:false, confirmDel:null, confirmEnd:null, authTab:"in" };
+
+/* ---------- views ---------- */
+function show(view){
+  ["vLoading","vAuth","vReset","vSetup","vApp"].forEach(v => $(v).hidden = v!==view);
+  $("who").hidden = !(view==="vApp" || view==="vSetup");
+}
+
+/* ---------- share settings ---------- */
+const SHARE_FIELDS = [
+  ["pct","Percent of starting weight lost"],
+  ["lbs","Pounds lost"],
+  ["trend","History over time (their chart shows your line), not just your latest"],
+  ["goal","Progress toward my goal, as a percent"],
+  ["weights","My actual weights (start, current and every weigh-in)"]
+];
+const DEFAULT_SHARE = {pct:true, lbs:false, trend:true, goal:false, weights:false};
+function shareHTML(prefix, val, legend="What they can see about you"){
+  val = {...DEFAULT_SHARE, ...(val||{})};
+  return `<fieldset class="share" data-share="${prefix}"><legend>${esc(legend)}</legend>
+    ${SHARE_FIELDS.map(([k,l])=>`<label><input type="checkbox" data-k="${k}"${val[k]?" checked":""}> <span>${esc(l)}</span></label>`).join("")}
+    <div class="warn" data-warn hidden>Sharing both percent and pounds lets them work out your actual weight.</div>
+  </fieldset>`;
+}
+function readShare(root){
+  const out={}; root.querySelectorAll("input[data-k]").forEach(i=>out[i.dataset.k]=i.checked); return out;
+}
+function syncShareWarn(fs){
+  const v=readShare(fs); const w=fs.querySelector("[data-warn]");
+  if(w) w.hidden = !(v.pct && v.lbs && !v.weights);
+}
+document.addEventListener("change", e => { const fs=e.target.closest("fieldset.share"); if(fs) syncShareWarn(fs); });
+
+/* ---------- math for your own data ---------- */
+function mySeries(){
+  const p=S.profile; if(!p || p.start_weight==null) return null;
+  const sw=+p.start_weight;
+  const ws=S.weighins.filter(w=>w.date>=p.start_date).slice().sort((a,b)=>a.date.localeCompare(b.date)||a.created_at.localeCompare(b.created_at));
+  const pts=[{date:p.start_date, weight:sw, start:true}, ...ws.map(w=>({...w, weight:+w.weight}))];
+  const last=pts[pts.length-1], prev=pts.length>1?pts[pts.length-2]:null;
+  const lost=sw-last.weight;
+  return {sw, ws, pts, last, lost, pct:lost/sw*100, recent: prev? last.weight-prev.weight : null};
+}
+
+/* ---------- loading ---------- */
+async function loadAll(){
+  const uid=S.user.id;
+  const [{data:prof,error:e1},{data:ws,error:e2}] = await Promise.all([
+    sb.from("profiles").select("*").eq("id",uid).maybeSingle(),
+    sb.from("weighins").select("*").eq("user_id",uid).order("date").order("created_at")
+  ]);
+  if(e1||e2) throw (e1||e2);
+  S.profile=prof; S.weighins=ws||[];
+  if(!prof){ show("vSetup"); $("whoName").textContent=S.user.email; if(!$("sDate").value) $("sDate").value=todayStr(); return; }
+  await loadPairings();
+  show("vApp"); render();
+}
+async function loadPairings(){
+  const {data,error}=await sb.rpc("list_pairings");
+  if(error) throw error;
+  S.pairings=data||[];
+  const acc=S.pairings.filter(p=>p.status==="accepted");
+  const res=await Promise.all(acc.map(p=>sb.rpc("partner_progress",{p_id:p.id})));
+  S.partner={}; acc.forEach((p,i)=>{ if(!res[i].error) S.partner[p.id]=res[i].data; });
+}
+async function refresh(msg){
+  try{ await loadAll(); if(msg) $("status").textContent=msg; }
+  catch(e){ $("status").textContent="Couldn't load your data: "+errMsg(e); }
+}
+
+/* ---------- render ---------- */
+function render(){
+  const p=S.profile;
+  $("whoName").innerHTML=`${esc(p.display_name)} <span style="opacity:.75">@${esc(p.username)}</span>`;
+  renderMe(); renderPairings(); renderMyChart(); renderHistory();
+  if(!$("qShare").innerHTML) $("qShare").innerHTML=shareHTML("q", DEFAULT_SHARE);
+}
+
+function renderMe(){
+  const p=S.profile, s=mySeries(), el=$("meCard");
+  const head=`<div class="p-head"><div class="avatar">${esc(p.display_name[0]||"?")}</div><div><h2>${esc(p.display_name)}</h2>
+    <div class="sub">${s?`Started ${fmtDate(p.start_date)} at <span class="num">${n1(s.sw)}</span> lbs`:"Not started yet"}</div></div></div>`;
+  if(S.editing || !s){
+    el.innerHTML=`${head}<form class="form" id="editForm" novalidate>
+      <label class="field"><span>Display name</span><input type="text" id="eName" maxlength="40" value="${esc(p.display_name)}" required></label>
+      <div class="row">
+        <label class="field"><span>Starting weight (lbs)</span><input type="number" id="eStart" step="0.1" min="50" max="700" inputmode="decimal" value="${p.start_weight??""}" required></label>
+        <label class="field"><span>Start date</span><input type="date" id="eDate" value="${p.start_date||todayStr()}" required></label>
+        <label class="field"><span>Goal weight (optional)</span><input type="number" id="eGoal" step="0.1" min="50" max="700" inputmode="decimal" value="${p.goal_weight??""}"></label>
+      </div>
+      <div class="actions"><button class="btn" type="submit">Save</button>${s?`<button class="btn ghost" type="button" data-act="cancelEdit">Cancel</button>`:""}</div>
+      <div class="note" id="eNote"></div></form>`;
+    return;
+  }
+  const recent = s.recent===null ? "—" : `<span class="${s.recent<=0?"down":"up"}">${s.recent<=0?"−":"+"}${n1(Math.abs(s.recent))}</span>`;
+  let goal="";
+  if(p.goal_weight && +p.goal_weight < s.sw){
+    const need=s.sw-p.goal_weight, prog=Math.max(0,Math.min(100,s.lost/need*100));
+    goal=`<div><div class="goalbar" role="progressbar" aria-valuenow="${Math.round(prog)}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress to goal"><i style="width:${prog}%"></i></div>
+      <div class="goalline num"><span>${Math.round(prog)}% of the way to ${n1(p.goal_weight)}</span><span>${s.last.weight>p.goal_weight?n1(s.last.weight-p.goal_weight)+" to go":"Goal reached"}</span></div></div>`;
+  }
+  el.innerHTML=`${head}
+    <div class="big num"><span class="pct">${n1(s.pct)}%</span><span class="lbs">${s.lost>=0?n1(s.lost)+" lbs lost":n1(-s.lost)+" lbs gained"}</span></div>
+    <div class="stats num">
+      <div class="stat"><div class="label">Current</div><div class="v">${n1(s.last.weight)}</div></div>
+      <div class="stat"><div class="label">Last change</div><div class="v">${recent}</div></div>
+      <div class="stat"><div class="label">Weigh-ins</div><div class="v">${s.ws.length}</div></div>
+    </div>${goal}
+    <div><button class="linkbtn" type="button" data-act="edit">Edit profile and starting point</button></div>`;
+}
+
+/* partner card from filtered data */
+function partnerCard(d, leading){
+  const head=`<div class="p-head"><div class="avatar">${esc((d.name||"?")[0])}</div><div><h2>${esc(d.name)}</h2>
+    <div class="sub">@${esc(d.username)}${d.started&&d.start_date?` · started ${fmtDate(d.start_date)}`:""}</div></div>${leading?'<span class="crown">Leading</span>':""}</div>`;
+  if(!d.started) return `<article class="card player them">${head}<div class="hidden-note">Hasn't set a starting weight yet.</div></article>`;
+  const sh=d.share||{}, last=d.points[d.points.length-1]||{};
+  let big="";
+  if(sh.pct||sh.lbs){
+    big=`<div class="big num">${sh.pct?`<span class="pct">${n1(last.pct??0)}%</span>`:""}${sh.lbs?`<span class="lbs">${(last.lbs??0)>=0?n1(last.lbs??0)+" lbs lost":n1(-(last.lbs))+" lbs gained"}</span>`:""}</div>`;
+  }
+  const stats=[];
+  if(sh.weights && last.weight!=null) stats.push(["Current", n1(last.weight)]);
+  if(sh.weights && d.start_weight!=null) stats.push(["Start", n1(d.start_weight)]);
+  stats.push(["Weigh-ins", d.count]);
+  let goal="";
+  if(sh.goal && d.goal_pct!=null){
+    goal=`<div><div class="goalbar"><i style="width:${d.goal_pct}%"></i></div><div class="goalline num"><span>${d.goal_pct}% of the way to their goal</span></div></div>`;
+  }
+  const SHORT={pct:"percent lost", lbs:"pounds lost", trend:"history over time", goal:"goal progress", weights:"actual weights"};
+  const hiddenBits=SHARE_FIELDS.filter(([k])=>!sh[k]).map(([k])=>SHORT[k]);
+  return `<article class="card player them${leading?" is-leading":""}">${head}${big}
+    <div class="stats num">${stats.map(([l,v])=>`<div class="stat"><div class="label">${l}</div><div class="v">${v}</div></div>`).join("")}</div>${goal}
+    ${!sh.pct&&!sh.lbs?'<div class="hidden-note">They\'re keeping their progress numbers private.</div>':""}
+    ${hiddenBits.length?`<div class="small muted">Not shared: ${esc(hiddenBits.join(", "))}.</div>`:""}
+  </article>`;
+}
+
+/* which metric both sides can be compared on */
+function compareMetric(d){
+  if(!d||!d.started) return null;
+  if(d.share.pct) return "pct";
+  if(d.share.lbs) return "lbs";
+  return null;
+}
+
+function renderPairings(){
+  const inc=S.pairings.filter(p=>p.status==="pending"&&p.direction==="incoming");
+  const out=S.pairings.filter(p=>p.status==="pending"&&p.direction==="outgoing");
+  const act=S.pairings.filter(p=>p.status==="accepted");
+
+  $("incoming").innerHTML = inc.length ? `<div class="form" style="margin-bottom:14px">${inc.map(p=>`
+    <div class="req" data-id="${p.id}">
+      <div class="req-top"><div><strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> wants to compare with you.</div><span class="pill">Request</span></div>
+      ${shareHTML("in-"+p.id, DEFAULT_SHARE, "If you accept, what they can see about you")}
+      <div class="actions"><button class="btn sm" data-act="accept" data-id="${p.id}">Accept</button>
+        <button class="btn ghost sm" data-act="decline" data-id="${p.id}">Decline</button></div>
+    </div>`).join("")}</div>` : "";
+
+  $("outgoing").innerHTML = out.length ? `<div class="form" style="margin-top:14px">${out.map(p=>`
+    <div class="req-top req"><div>Waiting for <strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> to accept.</div>
+      <button class="btn ghost sm" data-act="cancel" data-id="${p.id}">Cancel request</button></div>`).join("")}</div>` : "";
+
+  if(!act.length && !inc.length && !out.length){
+    $("active").innerHTML=`<div class="empty">No comparisons yet. Use "Challenge someone" below and enter their username.</div>`;
+    $("newReq").open = true;
+    return;
+  }
+  const me=mySeries();
+  $("active").innerHTML = act.map(p=>{
+    const d=S.partner[p.id];
+    if(!d) return `<div class="req">Couldn't load ${esc(p.partner_name)}'s progress.</div>`;
+    const m=compareMetric(d);
+    let mine=null, theirs=null, leader="", leadMe=false, leadThem=false;
+    if(m && me){
+      mine = m==="pct"? me.pct : me.lost;
+      const last=d.points[d.points.length-1]||{}; theirs = last[m]??0;
+      const diff=Math.abs(mine-theirs), unit=m==="pct"?" pts":" lbs";
+      if(diff<0.05) leader="Dead even";
+      else if(mine>theirs){ leader=`You lead by ${n1(diff)}${unit}`; leadMe=true; }
+      else { leader=`${esc(d.name)} leads by ${n1(diff)}${unit}`; leadThem=true; }
+      if(m==="lbs") leader+=" (by pounds lost, since they don't share percent)";
+    } else if(d.started) leader="No shared number to compare yet";
+    const endBtn = S.confirmEnd===p.id
+      ? `<span class="actions"><button class="btn danger sm" data-act="endYes" data-id="${p.id}">End comparison</button><button class="btn ghost sm" data-act="endNo">Keep</button></span>`
+      : `<button class="linkbtn" data-act="end" data-id="${p.id}">End comparison</button>`;
+    return `<div class="cmp" data-id="${p.id}" style="border-top:1px solid var(--line);padding-top:16px">
+      <div class="cmp-head"><h3>You <em>vs</em> ${esc(d.name)}</h3><span class="leaderline">${leader}</span></div>
+      <div class="grid2">
+        <article class="card player${leadMe?" is-leading":""}" style="--c:var(--plum);--cs:var(--plum-soft)">
+          <div class="p-head"><div class="avatar">${esc(S.profile.display_name[0])}</div><div><h2>You</h2><div class="sub">What you see of yourself</div></div>${leadMe?'<span class="crown">Leading</span>':""}</div>
+          ${me?`<div class="big num"><span class="pct">${n1(me.pct)}%</span><span class="lbs">${me.lost>=0?n1(me.lost)+" lbs lost":n1(-me.lost)+" lbs gained"}</span></div>`:'<div class="hidden-note">Set your starting weight first.</div>'}
+        </article>
+        ${partnerCard(d, leadThem)}
+      </div>
+      ${m && (d.share.trend) ? `<div><div class="chart-head"><span class="label">${m==="pct"?"Percent lost":"Pounds lost"} over time</span>
+        <div class="legend"><span><i style="background:var(--plum)"></i>You</span><span><i style="background:var(--orchid)"></i>${esc(d.name)}</span></div></div>
+        <div class="chartbox" data-chart="${p.id}"></div></div>` : ""}
+      <details><summary>What ${esc(d.name)} can see about you</summary>
+        <div class="form">${shareHTML("sh-"+p.id, p.my_share, "Shared with "+d.name)}
+        <div class="actions"><button class="btn sm" data-act="saveShare" data-id="${p.id}">Save sharing</button>${endBtn}</div>
+        <div class="note" id="shNote-${p.id}"></div></div>
+      </details>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("fieldset.share").forEach(syncShareWarn);
+
+  // charts
+  act.forEach(p=>{
+    const d=S.partner[p.id], box=document.querySelector(`[data-chart="${p.id}"]`);
+    if(!box||!d) return; const m=compareMetric(d);
+    const series=[];
+    if(me) series.push({name:"You", color:"var(--plum)", pts: me.pts.map(x=>({date:x.date, v: m==="pct"? (me.sw-x.weight)/me.sw*100 : me.sw-x.weight}))});
+    series.push({name:d.name, color:"var(--orchid)", pts: d.points.filter(x=>x[m]!=null).map(x=>({date:x.date, v:+x[m]}))});
+    drawChart(box, series, m==="pct"?"%":" lb", `${m==="pct"?"Percent":"Pounds"} lost over time: you and ${d.name}`);
+  });
+}
+
+function renderMyChart(){
+  const s=mySeries(), box=$("myChart");
+  if(!s || s.ws.length===0){ box.innerHTML='<div class="empty">Your chart fills in after your first weigh-in.</div>'; return; }
+  drawChart(box, [{name:"You", color:"var(--plum)", pts:s.pts.map(x=>({date:x.date, v:(s.sw-x.weight)/s.sw*100}))}], "%", "Your percent of starting weight lost over time");
+}
+
+function drawChart(box, series, unit, label){
+  series=series.filter(s=>s.pts.length);
+  if(!series.length || series.every(s=>s.pts.length<2)){
+    if(series.every(s=>s.pts.length<2)){ box.innerHTML='<div class="empty">The chart fills in after a few weigh-ins.</div>'; return; }
+  }
+  const W=860,H=260,L=46,R=18,T=16,B=34;
+  const ts=series.flatMap(s=>s.pts.map(x=>new Date(x.date+"T12:00:00").getTime()));
+  let x0=Math.min(...ts), x1=Math.max(...ts); if(x1===x0) x1=x0+86400000;
+  const vs=series.flatMap(s=>s.pts.map(x=>x.v));
+  let yMin=Math.min(0,...vs), yMax=Math.max(1,...vs);
+  const span=yMax-yMin, step = span>40?10: span>12?4: span>6?2:1;
+  yMin=Math.floor(yMin/step)*step; yMax=Math.ceil(yMax/step)*step;
+  const X=t=>L+(t-x0)/(x1-x0)*(W-L-R), Y=v=>T+(yMax-v)/(yMax-yMin)*(H-T-B);
+  let g="";
+  for(let v=yMin; v<=yMax+1e-9; v+=step){
+    g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" ${v===0?'stroke-width="1.5"':'stroke-dasharray="3 4"'}/>`;
+    g+=`<text x="${L-8}" y="${Y(v)+4}" text-anchor="end">${v}${unit.trim()==="%"?"%":""}</text>`;
+  }
+  const nT=Math.min(6,new Set(ts).size);
+  for(let i=0;i<nT;i++){
+    const t=nT===1?x0:x0+(x1-x0)*i/(nT-1);
+    const ds=new Date(t-new Date(t).getTimezoneOffset()*60000).toISOString().slice(0,10);
+    g+=`<text x="${X(t)}" y="${H-10}" text-anchor="${i===0?"start":i===nT-1?"end":"middle"}">${fmtShort(ds)}</text>`;
+  }
+  series.forEach(s=>{
+    const pts=s.pts.map(x=>[X(new Date(x.date+"T12:00:00").getTime()), Y(x.v)]);
+    const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join("");
+    if(series.length===1){ const area=d+`L${pts[pts.length-1][0].toFixed(1)},${Y(Math.max(0,yMin))}L${pts[0][0].toFixed(1)},${Y(Math.max(0,yMin))}Z`; g+=`<path d="${area}" fill="${s.color}" opacity=".10"/>`; }
+    g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+    pts.forEach((p,i)=>{ const last=i===pts.length-1; g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${last?6:3.5}" fill="${last?s.color:"var(--surface)"}" stroke="${s.color}" stroke-width="2"/>`; });
+    const lp=pts[pts.length-1], lv=s.pts[s.pts.length-1].v;
+    g+=`<text x="${Math.min(lp[0],W-R-4)}" y="${lp[1]-11}" text-anchor="end" style="fill:${s.color};font-weight:700;font-size:12px">${n1(lv)}${unit}</text>`;
+  });
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px;display:block" role="img" aria-label="${esc(label)}">${g}</svg>`;
+}
+
+function renderHistory(){
+  const s=mySeries(), tb=$("hist");
+  if(!s){ tb.innerHTML='<tr><td colspan="6" class="empty">Set your starting weight to begin the log.</td></tr>'; return; }
+  const rows=s.pts.map((x,i)=>{ const prev=i?s.pts[i-1]:null; return {...x, change:prev?x.weight-prev.weight:null, lost:s.sw-x.weight, pct:(s.sw-x.weight)/s.sw*100, order:i}; })
+    .sort((a,b)=>b.date.localeCompare(a.date)||b.order-a.order);
+  tb.innerHTML=rows.map(r=>{
+    if(r.start) return `<tr class="start-row"><td>${fmtDate(r.date)}</td><td class="r">${n1(r.weight)}</td><td class="r">Start</td><td class="r">—</td><td class="r">—</td><td></td></tr>`;
+    const ch=r.change===null?"—":`<span class="${r.change<=0?"down":"up"}">${r.change<=0?"−":"+"}${n1(Math.abs(r.change))}</span>`;
+    const del=S.confirmDel===r.id
+      ? `<span class="actions"><button class="btn danger sm" data-act="delYes" data-id="${r.id}">Delete</button><button class="btn ghost sm" data-act="delNo">Keep</button></span>`
+      : `<button class="linkbtn" data-act="del" data-id="${r.id}" aria-label="Remove weigh-in on ${fmtDate(r.date)}">Remove</button>`;
+    return `<tr><td>${fmtDate(r.date)}</td><td class="r">${n1(r.weight)}</td><td class="r">${ch}</td><td class="r">${n1(r.lost)} lbs</td><td class="r"><strong>${n1(r.pct)}%</strong></td><td class="r">${del}</td></tr>`;
+  }).join("");
+}
+
+/* ---------- auth ---------- */
+function setAuthTab(t){
+  S.authTab=t;
+  document.querySelectorAll("[data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
+  $("aSubmit").textContent = t==="in" ? "Sign in" : "Create account";
+  $("aPass").autocomplete = t==="in" ? "current-password" : "new-password";
+  $("aForgot").hidden = t!=="in";
+  note("aNote", t==="up" ? "Use 8 or more characters for your password. We'll email you a link to confirm your address." : "");
+}
+document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>setAuthTab(b.dataset.tab)));
+
+$("authForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const email=$("aEmail").value.trim(), pass=$("aPass").value, btn=$("aSubmit");
+  if(!email || !email.includes("@")) return note("aNote","Enter your email address.","err");
+  if(pass.length<8) return note("aNote","Passwords are at least 8 characters.","err");
+  btn.disabled=true;
+  try{
+    if(S.authTab==="in"){
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error) throw error;
+    } else {
+      const {data,error}=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin+location.pathname}});
+      if(error) throw error;
+      if(!data.session) note("aNote","Check your email for a confirmation link, then come back here and sign in.","ok");
+    }
+  }catch(err){
+    const m=errMsg(err);
+    note("aNote", /invalid login/i.test(m) ? "That email and password don't match. If you just signed up, confirm your email first." : m, "err");
+  }finally{ btn.disabled=false; }
+});
+$("aForgot").addEventListener("click", async ()=>{
+  const email=$("aEmail").value.trim();
+  if(!email) return note("aNote","Enter your email above, then click Forgot password.","err");
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+  note("aNote", error? errMsg(error) : "If that email has an account, a reset link is on its way.", error?"err":"ok");
+});
+$("resetForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const pass=$("rPass").value; if(pass.length<8) return note("rNote","Use 8 or more characters.","err");
+  const {error}=await sb.auth.updateUser({password:pass});
+  if(error) return note("rNote",errMsg(error),"err");
+  note("rNote","Password saved.","ok"); history.replaceState(null,"",location.pathname); refresh();
+});
+$("btnSignOut").addEventListener("click", async ()=>{ await sb.auth.signOut(); });
+
+/* ---------- profile ---------- */
+function readWeight(id){ const v=parseFloat($(id).value); return v>=50&&v<=700 ? Math.round(v*10)/10 : null; }
+$("setupForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const username=$("sUser").value.trim().toLowerCase(), name=$("sName").value.trim();
+  const sw=readWeight("sStart"), sd=$("sDate").value, gwRaw=$("sGoal").value, gw=gwRaw?readWeight("sGoal"):null;
+  if(!/^[a-z0-9_]{3,20}$/.test(username)) return note("sNote","Usernames are 3 to 20 characters: letters, numbers and underscores.","err");
+  if(!name) return note("sNote","Enter a display name.","err");
+  if(sw===null) return note("sNote","Enter a starting weight between 50 and 700 lbs.","err");
+  if(!sd) return note("sNote","Pick a start date.","err");
+  if(gwRaw && gw===null) return note("sNote","Goal weight should be between 50 and 700 lbs.","err");
+  const {error}=await sb.from("profiles").insert({id:S.user.id, username, display_name:name, start_weight:sw, start_date:sd, goal_weight:gw});
+  if(error) return note("sNote", error.code==="23505" ? "That username is taken. Try another." : errMsg(error), "err");
+  refresh();
+});
+
+/* ---------- weigh-ins ---------- */
+$("logForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const w=readWeight("lWeight"), d=$("lDate").value, p=S.profile;
+  if(w===null) return note("lNote","Enter a weight between 50 and 700 lbs.","err");
+  if(!d) return note("lNote","Pick a date.","err");
+  if(p.start_date && d<p.start_date) return note("lNote","That date is before your start date.","err");
+  const {error}=await sb.from("weighins").insert({user_id:S.user.id, date:d, weight:w});
+  if(error) return note("lNote","Couldn't save that weigh-in: "+errMsg(error),"err");
+  $("lWeight").value="";
+  await refresh();
+  const s=mySeries(); note("lNote", s?`Logged ${n1(w)} lbs. That's ${n1(s.pct)}% lost so far.`:`Logged ${n1(w)} lbs.`, "ok");
+});
+
+/* ---------- comparison requests ---------- */
+$("reqForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const u=$("qUser").value.trim().toLowerCase();
+  if(!u) return note("qNote","Enter their username.","err");
+  const share=readShare(document.querySelector('[data-share="q"]'));
+  const {error}=await sb.rpc("request_pairing",{p_username:u, p_share:share});
+  if(error) return note("qNote",errMsg(error),"err");
+  $("qUser").value=""; note("qNote","Request sent. They'll see it next time they open the Weigh-Off.","ok");
+  await loadPairings(); renderPairings();
+});
+
+/* ---------- clicks ---------- */
+document.addEventListener("click", async e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const act=b.dataset.act, id=b.dataset.id;
+  try{
+    if(act==="edit"){ S.editing=true; renderMe(); return; }
+    if(act==="cancelEdit"){ S.editing=false; renderMe(); return; }
+    if(act==="del"){ S.confirmDel=id; renderHistory(); return; }
+    if(act==="delNo"){ S.confirmDel=null; renderHistory(); return; }
+    if(act==="delYes"){ S.confirmDel=null; const {error}=await sb.from("weighins").delete().eq("id",id); if(error) throw error; await refresh(); return; }
+    if(act==="end"){ S.confirmEnd=id; renderPairings(); keepOpen(id); return; }
+    if(act==="endNo"){ const was=S.confirmEnd; S.confirmEnd=null; renderPairings(); keepOpen(was); return; }
+    if(act==="endYes"||act==="cancel"||act==="decline"){
+      b.disabled=true;
+      const {error}= act==="decline" ? await sb.rpc("respond_pairing",{p_id:id,p_accept:false,p_share:{}}) : await sb.rpc("end_pairing",{p_id:id});
+      if(error) throw error; S.confirmEnd=null; await loadPairings(); renderPairings(); return;
+    }
+    if(act==="accept"){
+      b.disabled=true;
+      const share=readShare(document.querySelector(`[data-share="in-${id}"]`));
+      const {error}=await sb.rpc("respond_pairing",{p_id:id,p_accept:true,p_share:share});
+      if(error) throw error; await loadPairings(); renderPairings(); return;
+    }
+    if(act==="saveShare"){
+      const share=readShare(document.querySelector(`[data-share="sh-${id}"]`));
+      const {error}=await sb.rpc("update_share",{p_id:id,p_share:share});
+      if(error) throw error; await loadPairings(); renderPairings(); keepOpen(id);
+      note("shNote-"+id,"Saved.","ok"); return;
+    }
+  }catch(err){ $("status").textContent=errMsg(err); b.disabled=false; }
+});
+function keepOpen(id){ const d=document.querySelector(`.cmp[data-id="${id}"] details`); if(d) d.open=true; }
+
+document.addEventListener("submit", async e=>{
+  if(e.target.id!=="editForm") return;
+  e.preventDefault();
+  const name=$("eName").value.trim(), sw=readWeight("eStart"), sd=$("eDate").value, gwRaw=$("eGoal").value, gw=gwRaw?readWeight("eGoal"):null;
+  if(!name) return note("eNote","Enter a display name.","err");
+  if(sw===null) return note("eNote","Starting weight should be between 50 and 700 lbs.","err");
+  if(!sd) return note("eNote","Pick a start date.","err");
+  if(gwRaw && gw===null) return note("eNote","Goal weight should be between 50 and 700 lbs.","err");
+  const {error}=await sb.from("profiles").update({display_name:name,start_weight:sw,start_date:sd,goal_weight:gw}).eq("id",S.user.id);
+  if(error) return note("eNote",errMsg(error),"err");
+  S.editing=false; refresh();
+});
+
+$("btnRefresh").addEventListener("click", ()=>refresh("Up to date."));
+
+/* ---------- export ---------- */
+$("btnExport").addEventListener("click", ()=>{
+  const p=S.profile; if(!p) return;
+  const lines=[["date","weight_lbs","note"],[p.start_date,p.start_weight,"start"],...S.weighins.map(w=>[w.date,w.weight,""])];
+  if(p.goal_weight) lines.push(["","" + p.goal_weight,"goal"]);
+  const csv=lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download=`weigh-off-${p.username}-${todayStr()}.csv`; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+});
+
+/* ---------- start ---------- */
+$("lDate").value=todayStr();
+sb.auth.onAuthStateChange((event, session)=>{
+  if(event==="PASSWORD_RECOVERY"){ S.user=session.user; show("vReset"); return; }
+  const was=S.user && S.user.id;
+  S.user=session?session.user:null;
+  if(!S.user){ S.profile=null; show("vAuth"); setAuthTab(S.authTab); return; }
+  if(was!==S.user.id || event==="SIGNED_IN" || event==="INITIAL_SESSION") setTimeout(()=>refresh(),0);
+});
+</script>
+</body>
+</html>
