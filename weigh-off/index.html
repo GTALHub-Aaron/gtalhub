@@ -43,8 +43,7 @@ h3{font-size:20px}
 .small{font-size:13px}
 
 /* hero */
-.hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:var(--hero-fg);border-radius:22px;padding:22px 24px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:end;justify-content:space-between;position:relative;overflow:hidden}
-.hero::after{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--hero-glow),transparent 70%);pointer-events:none}
+.hero{background:radial-gradient(circle at calc(100% - 70px) 50px,var(--hero-glow),transparent 130px),linear-gradient(135deg,var(--hero-a),var(--hero-b));color:var(--hero-fg);border-radius:22px;padding:22px 24px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:end;justify-content:space-between;position:relative;z-index:5}
 .hero h1{font-size:clamp(30px,6vw,46px);font-weight:800;line-height:1.05}
 .hero h1 em{font-style:normal;color:var(--hero-em)}
 .hero p{margin:6px 0 0;opacity:.85;max-width:50ch}
@@ -154,31 +153,136 @@ tr:last-child td{border-bottom:0}
 .start-row td{color:var(--muted);font-style:italic}
 .empty{color:var(--muted);text-align:center;padding:22px 10px}
 .status{font-size:12px;color:var(--muted);text-align:center}
+#vApp,#pgProgress{display:grid;gap:22px}
+@media (max-width:640px){#vApp,#pgProgress{gap:14px}}
+
+/* top bar, account menu */
+.topbar{position:relative;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}
+.topbar-r{display:flex;align-items:center;gap:10px}
+.acct{position:relative}
+.acct-btn{display:flex;align-items:center;gap:8px;min-height:36px;padding:3px 10px 3px 3px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:14px;max-width:220px}
+.acct-btn .av{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.9);color:var(--hero-a);display:grid;place-items:center;font-family:var(--display);font-weight:800;flex:none}
+.acct-btn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-btn svg{width:14px;height:14px;flex:none;opacity:.8}
+.acct-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(280px,calc(100vw - 32px));background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);padding:8px;display:grid;gap:2px;z-index:20}
+.acct-id{padding:8px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:4px;font-weight:700}
+.acct-id .muted{font-weight:500;font-size:13px}
+.acct-menu .mi{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;color:var(--fg);padding:10px;border-radius:10px;font-weight:600;min-height:44px}
+.acct-menu .mi:hover,.acct-menu button.mi:focus-visible{background:var(--surface-2)}
+.acct-menu select{font:inherit;font-size:14px;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.acct-menu .mi.out{color:var(--bad)}
+.hero-main{position:relative;z-index:1}
+
+/* app navigation: segmented on wide screens, bottom bar on phones */
+.appnav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;width:max-content;max-width:100%}
+.appnav a{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;color:var(--muted);font-weight:700;text-decoration:none;min-height:40px}
+.appnav a svg{width:18px;height:18px}
+.appnav a[aria-current="page"]{background:var(--plum);color:#fff}
+[data-mode="dark"] .appnav a[aria-current="page"]{color:#1b1027}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--bad);color:#fff;font-size:12px;display:inline-grid;place-items:center}
+
+/* comparison list */
+.list-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.list-head .actions{margin-left:auto}
+.cmplist{display:grid;gap:10px}
+.cmprow{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;color:inherit;text-decoration:none;background:var(--surface);min-height:64px}
+.cmprow:hover{border-color:var(--orchid);background:var(--surface-2)}
+.cmprow .avatar{width:40px;height:40px;font-size:18px;background:var(--orchid-soft);color:var(--orchid)}
+.cr-name{font-weight:700;font-size:16px;font-family:var(--display)}
+.cr-name em{font-style:normal;color:var(--orchid)}
+.cr-sub{font-size:13px;color:var(--muted)}
+.cr-sub.me{color:var(--plum);font-weight:600}
+.cr-nums{display:grid;justify-items:end;font-variant-numeric:tabular-nums;font-size:13px;line-height:1.3}
+.cr-nums b{font-size:15px}
+.cr-nums .y{color:var(--plum)} .cr-nums .t{color:var(--orchid)}
+.cmprow .chev{width:18px;height:18px;color:var(--muted)}
+.backlink{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:700;text-decoration:none;min-height:40px}
+.backlink:hover{color:var(--fg)}
+.backlink svg{width:18px;height:18px}
+.detail-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+#newReq{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;background:var(--surface-2)}
+#newReq h4{margin:0 0 10px;font-family:var(--display);font-size:17px}
+
+/* toast */
+.status#status{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;max-width:min(92vw,520px);text-align:center;box-shadow:0 12px 30px -12px rgba(0,0,0,.5);transition:opacity .2s,transform .2s;z-index:50}
+.status#status.on{opacity:1;transform:translate(-50%,0)}
+
+/* phones */
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding:12px max(12px,env(safe-area-inset-left,0px)) calc(96px + env(safe-area-inset-bottom,0px));gap:14px}
+  .hero{padding:14px 16px 16px;border-radius:18px;gap:10px}
+  .hero h1{font-size:30px}
+  body.in-app .hero p{display:none}
+  .card{padding:14px;border-radius:14px}
+  input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select{font-size:16px}
+  .btn{min-height:44px} .btn.sm{min-height:38px;padding:8px 12px}
+  .linkbtn{min-height:36px}
+  .acct-btn .nm{display:none} .acct-btn{padding:3px 8px 3px 3px}
+  .appnav{position:fixed;left:0;right:0;bottom:0;width:auto;border-radius:0;border-width:1px 0 0;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:30;box-shadow:0 -8px 24px -16px rgba(0,0,0,.35)}
+  .appnav a{flex:1;flex-direction:column;gap:2px;font-size:12px;padding:6px 4px;justify-content:center}
+  .appnav a svg{width:22px;height:22px}
+  .appnav .badge{position:absolute;margin:-26px 0 0 30px}
+  .appnav a{position:relative}
+  .status#status{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  #pgProgress .grid2 > .logcard{order:-1}
+  .big .pct{font-size:38px}
+  .stat{padding:8px}
+  .stat .v{font-size:15px}
+  .cmprow{grid-template-columns:auto 1fr auto;padding:12px}
+  .cmprow .chev{display:none}
+  /* weigh-in history as stacked rows */
+  table.hist thead{display:none}
+  table.hist tr{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  table.hist tr:last-child{border-bottom:0}
+  table.hist td{border:0;padding:0;white-space:normal}
+  table.hist td.r{text-align:right}
+  table.hist td:nth-child(1){font-weight:700}
+  table.hist td:nth-child(2){font-weight:700}
+  table.hist td:nth-child(n+3){font-size:14px}
+  table.hist td:nth-child(3),table.hist td:nth-child(5){text-align:left}
+  table.hist td[data-l]::before{content:attr(data-l) " ";color:var(--muted);font-size:12px;font-weight:600}
+  table.hist td:nth-child(6):empty{display:none}
+  table.hist .start-row td:nth-child(n+3){display:none}
+  table.hist td.empty{grid-column:1/-1}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="hero">
-    <div>
+    <div class="topbar">
       <a class="home" href="/">← GTALHub</a>
+      <div class="topbar-r">
+        <button type="button" class="modesw" id="modeSw" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch light / dark">
+          <span class="ic sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="ic moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+          <span class="knob"><span class="k-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="k-moon"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span></span>
+        </button>
+        <div class="acct" id="who" hidden>
+          <button type="button" class="acct-btn" id="acctBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctMenu" aria-label="Account menu">
+            <span class="av" id="acctAv">?</span><span class="nm" id="acctName"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acct-menu" id="acctMenu" hidden>
+            <div class="acct-id" id="whoName"></div>
+            <label class="mi" id="themeWrap" hidden><span>Theme</span><select id="themeSel"></select></label>
+            <button class="mi" id="btnExport" type="button">Export my data <span class="muted small">CSV</span></button>
+            <button class="mi out" id="btnSignOut" type="button">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-main">
       <h1>The <em>Weigh-Off</em></h1>
       <p>Track your weight loss, then challenge friends. Whoever loses the biggest share of their starting weight takes the crown.</p>
     </div>
-    <div class="hero-side">
-      <button type="button" class="modesw" id="modeSw" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch light / dark">
-        <span class="ic sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="ic moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
-        <span class="knob"><span class="k-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="k-moon"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span></span>
-      </button>
-    <div class="who" id="who" hidden>
-      <span id="whoName"></span>
-      <label id="themeWrap" hidden><span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Theme</span>
-        <select id="themeSel" aria-label="Theme"></select></label>
-      <button class="btn sm" id="btnExport" type="button">Export my data</button>
-      <button class="btn sm" id="btnSignOut" type="button">Sign out</button>
-    </div>
-    </div>
   </header>
+
+  <nav class="appnav" id="appNav" aria-label="Weigh-Off sections" hidden>
+    <a href="#progress" data-v="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span>My progress</span></a>
+    <a href="#comparisons" data-v="comparisons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 6 4.8"/></svg><span>Comparisons</span><span class="badge" id="navBadge" hidden></span></a>
+  </nav>
 
   <!-- loading -->
   <div id="vLoading" class="status">Loading…</div>
@@ -226,53 +330,56 @@ tr:last-child td{border-bottom:0}
   </section>
 
   <!-- signed in -->
-  <div id="vApp" hidden style="display:grid;gap:22px">
-    <section class="grid2">
-      <article class="card player" id="meCard"></article>
-      <section class="card" aria-labelledby="logTitle">
-        <h3 id="logTitle">Log a weigh-in</h3>
-        <form id="logForm" class="form" novalidate>
-          <div class="row">
-            <label class="field"><span>Date</span><input type="date" id="lDate" required></label>
-            <label class="field"><span>Weight (lbs)</span><input type="number" id="lWeight" step="0.1" min="50" max="700" inputmode="decimal" placeholder="e.g. 198.4" required></label>
-          </div>
-          <div class="actions"><button class="btn" type="submit">Add weigh-in</button></div>
-          <div class="note" id="lNote" aria-live="polite"></div>
-        </form>
+  <div id="vApp" hidden>
+    <div id="pgProgress" style="display:grid;gap:inherit">
+      <section class="grid2">
+        <article class="card player" id="meCard"></article>
+        <section class="card logcard" aria-labelledby="logTitle">
+          <h3 id="logTitle">Log a weigh-in</h3>
+          <form id="logForm" class="form" novalidate>
+            <div class="row">
+              <label class="field"><span>Date</span><input type="date" id="lDate" required></label>
+              <label class="field"><span>Weight (lbs)</span><input type="number" id="lWeight" step="0.1" min="50" max="700" inputmode="decimal" placeholder="e.g. 198.4" required></label>
+            </div>
+            <div class="actions"><button class="btn" type="submit">Add weigh-in</button></div>
+            <div class="note" id="lNote" aria-live="polite"></div>
+          </form>
+        </section>
       </section>
-    </section>
+      <section class="card" aria-labelledby="chartTitle">
+        <div class="chart-head"><h3 id="chartTitle">Your percent lost over time</h3></div>
+        <div class="chartbox" id="myChart"></div>
+      </section>
+      <section class="card" aria-labelledby="histTitle">
+        <h3 id="histTitle">Your weigh-ins</h3>
+        <div class="tablebox"><table class="hist">
+          <thead><tr><th>Date</th><th class="r">Weight</th><th class="r">Change</th><th class="r">Total lost</th><th class="r">% lost</th><th></th></tr></thead>
+          <tbody id="hist"></tbody>
+        </table></div>
+      </section>
+    </div>
 
-    <section class="card" aria-labelledby="cmpTitle">
-      <div class="section-title"><h3 id="cmpTitle">Comparisons</h3>
-        <button class="btn ghost sm" type="button" id="btnRefresh">Refresh</button></div>
-      <div id="incoming"></div>
-      <div id="active" class="cmp"></div>
-      <div id="outgoing"></div>
-      <details id="newReq" style="margin-top:14px">
-        <summary>Challenge someone</summary>
+    <section class="card" id="pgCmp" aria-labelledby="cmpTitle" hidden>
+      <div class="list-head"><h3 id="cmpTitle">Comparisons</h3>
+        <div class="actions"><button class="btn ghost sm" type="button" id="btnRefresh">Refresh</button>
+          <button class="btn sm" type="button" id="btnNewReq" aria-expanded="false" aria-controls="newReq">+ Challenge someone</button></div></div>
+      <div id="newReq" hidden>
+        <h4>Challenge someone</h4>
         <form id="reqForm" class="form" novalidate>
           <div class="field sugwrap"><label for="qUser"><span class="small muted" style="font-weight:600">Their username or name</span></label>
             <input type="text" id="qUser" autocomplete="off" maxlength="40" placeholder="Start typing (3+ letters)" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qSug" required>
             <ul id="qSug" class="sug" role="listbox" hidden></ul></div>
           <div id="qShare"></div>
-          <div class="actions"><button class="btn" type="submit">Send request</button></div>
+          <div class="actions"><button class="btn" type="submit">Send request</button><button class="btn ghost" type="button" id="btnCloseReq">Cancel</button></div>
           <div class="note" id="qNote" aria-live="polite"></div>
         </form>
-      </details>
+      </div>
+      <div id="incoming"></div>
+      <div id="active" class="cmplist"></div>
+      <div id="outgoing"></div>
     </section>
 
-    <section class="card" aria-labelledby="chartTitle">
-      <div class="chart-head"><h3 id="chartTitle">Your percent lost over time</h3></div>
-      <div class="chartbox" id="myChart"></div>
-    </section>
-
-    <section class="card" aria-labelledby="histTitle">
-      <h3 id="histTitle">Your weigh-ins</h3>
-      <div class="tablebox"><table>
-        <thead><tr><th>Date</th><th class="r">Weight</th><th class="r">Change</th><th class="r">Total lost</th><th class="r">% lost</th><th></th></tr></thead>
-        <tbody id="hist"></tbody>
-      </table></div>
-    </section>
+    <section id="pgDetail" hidden></section>
   </div>
 
   <div class="status" id="status" aria-live="polite"></div>
@@ -349,6 +456,9 @@ function show(view){
   ["vLoading","vAuth","vReset","vSetup","vApp"].forEach(v => $(v).hidden = v!==view);
   $("who").hidden = !(view==="vApp" || view==="vSetup");
   $("themeWrap").hidden = view!=="vApp";
+  $("appNav").hidden = view!=="vApp";
+  document.body.classList.toggle("in-app", view==="vApp");
+  if(view!=="vApp") closeMenu();
   if(view==="vApp"){ if(S.profile && S.profile.mode && S.profile.mode!==userMode) setMode(S.profile.mode); applyTheme((S.profile && S.profile.theme) || "plum"); }
   else if(view!=="vLoading") applyTheme(null);
 }
@@ -401,7 +511,7 @@ async function loadAll(){
   ]);
   if(e1||e2) throw (e1||e2);
   S.profile=prof; S.weighins=ws||[];
-  if(!prof){ show("vSetup"); $("whoName").textContent=S.user.email; if(!$("sDate").value) $("sDate").value=todayStr(); return; }
+  if(!prof){ show("vSetup"); setWho(S.user.email, ""); if(!$("sDate").value) $("sDate").value=todayStr(); return; }
   await loadPairings();
   show("vApp"); render();
 }
@@ -426,10 +536,35 @@ async function refresh(msg){
 /* ---------- render ---------- */
 function render(){
   const p=S.profile;
-  $("whoName").innerHTML=`${esc(p.display_name)} <span style="opacity:.75">@${esc(p.username)}</span>`;
-  renderMe(); renderPairings(); renderMyChart(); renderHistory();
+  setWho(p.display_name, "@"+p.username);
   if(!$("qShare").innerHTML) $("qShare").innerHTML=shareHTML("q", DEFAULT_SHARE);
+  renderMe(); renderHistory(); renderPairings(); route();
 }
+function setWho(name, sub){
+  $("whoName").innerHTML=`${esc(name)}${sub?`<div class="muted">${esc(sub)}</div>`:""}`;
+  $("acctName").textContent=name; $("acctAv").textContent=(name||"?")[0].toUpperCase();
+}
+
+/* ---------- pages: #progress, #comparisons, #vs-<id> ---------- */
+function route(){
+  if($("vApp").hidden) return;
+  const h=location.hash.slice(1);
+  let view="progress", id=null;
+  if(h==="comparisons") view="comparisons";
+  else if(h.startsWith("vs-")){ id=h.slice(3); view=S.pairings.some(p=>p.id===id&&p.status==="accepted")?"detail":"comparisons"; }
+  S.view=view; S.cmpId=id;
+  $("pgProgress").hidden=view!=="progress";
+  $("pgCmp").hidden=view!=="comparisons";
+  $("pgDetail").hidden=view!=="detail";
+  document.querySelectorAll("#appNav a").forEach(a=>{
+    const on = a.dataset.v===view || (view==="detail" && a.dataset.v==="comparisons");
+    if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
+  });
+  if(view==="progress") renderMyChart();
+  if(view==="detail") renderDetail(id);
+  if(S.lastView!==view+(id||"")){ S.lastView=view+(id||""); window.scrollTo({top:0}); }
+}
+addEventListener("hashchange", route);
 
 function renderMe(){
   const p=S.profile, s=mySeries(), el=$("meCard");
@@ -499,78 +634,102 @@ function compareMetric(d){
   return null;
 }
 
+/* who's ahead in one comparison */
+function cmpSummary(p){
+  const d=S.partner[p.id], me=mySeries();
+  const out={d, m:null, mine:null, theirs:null, leader:"", leadMe:false, leadThem:false};
+  if(!d) return out;
+  const m=compareMetric(d); out.m=m;
+  if(m && me){
+    out.mine = m==="pct"? me.pct : me.lost;
+    const last=d.points[d.points.length-1]||{}; out.theirs = last[m]??0;
+    const diff=Math.abs(out.mine-out.theirs), unit=m==="pct"?" pts":" lbs";
+    if(diff<0.05) out.leader="Dead even";
+    else if(out.mine>out.theirs){ out.leader=`You lead by ${n1(diff)}${unit}`; out.leadMe=true; }
+    else { out.leader=`${d.name} leads by ${n1(diff)}${unit}`; out.leadThem=true; }
+  } else if(!d.started) out.leader=`${d.name} hasn't started yet`;
+  else out.leader="No shared number to compare";
+  return out;
+}
+const CHEV='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+
 function renderPairings(){
   const inc=S.pairings.filter(p=>p.status==="pending"&&p.direction==="incoming");
   const out=S.pairings.filter(p=>p.status==="pending"&&p.direction==="outgoing");
   const act=S.pairings.filter(p=>p.status==="accepted");
+  const nb=$("navBadge"); nb.hidden=!inc.length; nb.textContent=inc.length; nb.setAttribute("aria-label", inc.length+" new request"+(inc.length===1?"":"s"));
 
   $("incoming").innerHTML = inc.length ? `<div class="form" style="margin-bottom:14px">${inc.map(p=>`
     <div class="req" data-id="${p.id}">
-      <div class="req-top"><div><strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> wants to compare with you.</div><span class="pill">Request</span></div>
-      ${shareHTML("in-"+p.id, DEFAULT_SHARE, "If you accept, what they can see about you")}
+      <div class="req-top"><div><strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> wants to compare with you.</div><span class="pill">New request</span></div>
+      <details><summary>Choose what they can see if you accept</summary>${shareHTML("in-"+p.id, DEFAULT_SHARE, "What they can see about you")}</details>
       <div class="actions"><button class="btn sm" data-act="accept" data-id="${p.id}">Accept</button>
         <button class="btn ghost sm" data-act="decline" data-id="${p.id}">Decline</button></div>
     </div>`).join("")}</div>` : "";
 
-  $("outgoing").innerHTML = out.length ? `<div class="form" style="margin-top:14px">${out.map(p=>`
-    <div class="req-top req"><div>Waiting for <strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> to accept.</div>
+  $("outgoing").innerHTML = out.length ? `<div class="form" style="margin-top:14px"><div class="label">Waiting on</div>${out.map(p=>`
+    <div class="req-top req"><div><strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> hasn't accepted yet.</div>
       <button class="btn ghost sm" data-act="cancel" data-id="${p.id}">Cancel request</button></div>`).join("")}</div>` : "";
 
-  if(!act.length && !inc.length && !out.length){
-    $("active").innerHTML=`<div class="empty">No comparisons yet. Use "Challenge someone" below and enter their username.</div>`;
-    $("newReq").open = true;
-    return;
+  if(!act.length){
+    $("active").innerHTML = (inc.length||out.length) ? "" : `<div class="empty">No comparisons yet. Tap "Challenge someone" and enter their username.</div>`;
+    if(!act.length && !inc.length && !out.length) openReq(true);
+  } else {
+    $("active").innerHTML = act.map(p=>{
+      const c=cmpSummary(p), d=c.d, name=d?d.name:p.partner_name;
+      const unit=c.m==="lbs"?" lb":"%";
+      const nums = c.m && c.mine!=null
+        ? `<div class="cr-nums"><span class="y">You <b>${n1(c.mine)}${unit}</b></span><span class="t">${esc(name)} <b>${n1(c.theirs)}${unit}</b></span></div>` : `<div></div>`;
+      return `<a class="cmprow" href="#vs-${p.id}" aria-label="Open your comparison with ${esc(name)}">
+        <div class="avatar">${esc((name||"?")[0])}</div>
+        <div style="min-width:0"><div class="cr-name">You <em>vs</em> ${esc(name)}</div><div class="cr-sub${c.leadMe?" me":""}">${d?esc(c.leader):"Couldn't load their progress"}</div></div>
+        ${nums}${CHEV}</a>`;
+    }).join("");
   }
-  const me=mySeries();
-  $("active").innerHTML = act.map(p=>{
-    const d=S.partner[p.id];
-    if(!d) return `<div class="req">Couldn't load ${esc(p.partner_name)}'s progress.</div>`;
-    const m=compareMetric(d);
-    let mine=null, theirs=null, leader="", leadMe=false, leadThem=false;
-    if(m && me){
-      mine = m==="pct"? me.pct : me.lost;
-      const last=d.points[d.points.length-1]||{}; theirs = last[m]??0;
-      const diff=Math.abs(mine-theirs), unit=m==="pct"?" pts":" lbs";
-      if(diff<0.05) leader="Dead even";
-      else if(mine>theirs){ leader=`You lead by ${n1(diff)}${unit}`; leadMe=true; }
-      else { leader=`${esc(d.name)} leads by ${n1(diff)}${unit}`; leadThem=true; }
-      if(m==="lbs") leader+=" (by pounds lost, since they don't share percent)";
-    } else if(d.started) leader="No shared number to compare yet";
-    const endBtn = S.confirmEnd===p.id
-      ? `<span class="actions"><button class="btn danger sm" data-act="endYes" data-id="${p.id}">End comparison</button><button class="btn ghost sm" data-act="endNo">Keep</button></span>`
-      : `<button class="linkbtn" data-act="end" data-id="${p.id}">End comparison</button>`;
-    return `<div class="cmp" data-id="${p.id}" style="border-top:1px solid var(--line);padding-top:16px">
-      <div class="cmp-head"><h3>You <em>vs</em> ${esc(d.name)}</h3><span class="leaderline">${leader}</span></div>
+  document.querySelectorAll("#pgCmp fieldset.share").forEach(syncShareWarn);
+  if(S.view==="detail") renderDetail(S.cmpId);
+}
+
+function renderDetail(id){
+  const box=$("pgDetail"), p=S.pairings.find(x=>x.id===id&&x.status==="accepted");
+  if(!p){ location.hash="#comparisons"; return; }
+  const c=cmpSummary(p), d=c.d, me=mySeries(), back=`<a class="backlink" href="#comparisons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>All comparisons</a>`;
+  if(!d){ box.innerHTML=`${back}<div class="card"><div class="empty">Couldn't load ${esc(p.partner_name)}'s progress. Try Refresh on the comparisons page.</div></div>`; return; }
+  const m=c.m;
+  let leader=c.leader; if(m==="lbs" && c.mine!=null) leader+=" (by pounds, since they don't share percent)";
+  const endBtn = S.confirmEnd===p.id
+    ? `<span class="actions"><button class="btn danger sm" data-act="endYes" data-id="${p.id}">Yes, end it</button><button class="btn ghost sm" data-act="endNo">Keep</button></span>`
+    : `<button class="btn ghost sm" data-act="end" data-id="${p.id}">End comparison</button>`;
+  box.innerHTML=`<div style="display:grid;gap:14px">${back}
+    <section class="card cmp" data-id="${p.id}">
+      <div class="cmp-head"><h3>You <em>vs</em> ${esc(d.name)}</h3><span class="leaderline">${esc(leader)}</span></div>
       <div class="grid2">
-        <article class="card player${leadMe?" is-leading":""}" style="--c:var(--plum);--cs:var(--plum-soft)">
-          <div class="p-head"><div class="avatar">${esc(S.profile.display_name[0])}</div><div><h2>You</h2><div class="sub">What you see of yourself</div></div>${leadMe?'<span class="crown">Leading</span>':""}</div>
+        <article class="card player${c.leadMe?" is-leading":""}" style="--c:var(--plum);--cs:var(--plum-soft)">
+          <div class="p-head"><div class="avatar">${esc(S.profile.display_name[0])}</div><div><h2>You</h2><div class="sub">What you see of yourself</div></div>${c.leadMe?'<span class="crown">Leading</span>':""}</div>
           ${me?`<div class="big num"><span class="pct">${n1(me.pct)}%</span><span class="lbs">${me.lost>=0?n1(me.lost)+" lbs lost":n1(-me.lost)+" lbs gained"}</span></div>`:'<div class="hidden-note">Set your starting weight first.</div>'}
         </article>
-        ${partnerCard(d, leadThem)}
+        ${partnerCard(d, c.leadThem)}
       </div>
-      ${m && (d.share.trend) ? `<div><div class="chart-head"><span class="label">${m==="pct"?"Percent lost":"Pounds lost"} over time</span>
+      ${m && d.share.trend ? `<div><div class="chart-head"><span class="label">${m==="pct"?"Percent lost":"Pounds lost"} over time</span>
         <div class="legend"><span><i style="background:var(--plum)"></i>You</span><span><i style="background:var(--orchid)"></i>${esc(d.name)}</span></div></div>
         <div class="chartbox" data-chart="${p.id}"></div></div>` : ""}
       ${manageHTML(p,d)}
       ${p.my_share && p.my_share.edit ? `<div class="small muted">${esc(d.name)} can add and remove your weigh-ins. Entries they make show "logged by ${esc(d.name)}" in your history.</div>` : ""}
-      <details><summary>What ${esc(d.name)} can see about you</summary>
+      <details${S.openShare===p.id?" open":""} data-sharebox><summary>What ${esc(d.name)} can see about you</summary>
         <div class="form">${shareHTML("sh-"+p.id, p.my_share, "Shared with "+d.name)}
-        <div class="actions"><button class="btn sm" data-act="saveShare" data-id="${p.id}">Save sharing</button>${endBtn}</div>
+        <div class="actions"><button class="btn sm" data-act="saveShare" data-id="${p.id}">Save sharing</button></div>
         <div class="note" id="shNote-${p.id}"></div></div>
       </details>
-    </div>`;
-  }).join("");
-  document.querySelectorAll("fieldset.share").forEach(syncShareWarn);
-
-  // charts
-  act.forEach(p=>{
-    const d=S.partner[p.id], box=document.querySelector(`[data-chart="${p.id}"]`);
-    if(!box||!d) return; const m=compareMetric(d);
+      <div class="detail-foot"><span class="small muted">Comparing since ${p.accepted_at?fmtDate(String(p.accepted_at).slice(0,10)):"recently"}</span>${endBtn}</div>
+    </section></div>`;
+  box.querySelectorAll("fieldset.share").forEach(syncShareWarn);
+  const cb=box.querySelector(`[data-chart="${p.id}"]`);
+  if(cb){
     const series=[];
     if(me) series.push({name:"You", color:"var(--plum)", pts: me.pts.map(x=>({date:x.date, v: m==="pct"? (me.sw-x.weight)/me.sw*100 : me.sw-x.weight}))});
     series.push({name:d.name, color:"var(--orchid)", pts: d.points.filter(x=>x[m]!=null).map(x=>({date:x.date, v:+x[m]}))});
-    drawChart(box, series, m==="pct"?"%":" lb", `${m==="pct"?"Percent":"Pounds"} lost over time: you and ${d.name}`);
-  });
+    drawChart(cb, series, m==="pct"?"%":" lb", `${m==="pct"?"Percent":"Pounds"} lost over time: you and ${d.name}`);
+  }
 }
 
 /* logging for a partner who granted edit */
@@ -599,7 +758,7 @@ function manageHTML(p, d){
 }
 
 function renderMyChart(){
-  const s=mySeries(), box=$("myChart");
+  const s=mySeries(), box=$("myChart"); if(!box.offsetParent) return;
   if(!s || s.ws.length===0){ box.innerHTML='<div class="empty">Your chart fills in after your first weigh-in.</div>'; return; }
   drawChart(box, [{name:"You", color:"var(--plum)", pts:s.pts.map(x=>({date:x.date, v:(s.sw-x.weight)/s.sw*100}))}], "%", "Your percent of starting weight lost over time");
 }
@@ -609,7 +768,9 @@ function drawChart(box, series, unit, label){
   if(!series.length || series.every(s=>s.pts.length<2)){
     if(series.every(s=>s.pts.length<2)){ box.innerHTML='<div class="empty">The chart fills in after a few weigh-ins.</div>'; return; }
   }
-  const W=860,H=260,L=46,R=18,T=16,B=34;
+  box._chart=[series,unit,label];
+  const cw=Math.round(box.clientWidth)||860, W=Math.max(300,cw), small=W<520, H=small?210:260, L=small?40:46, R=small?12:18, T=small?22:16, B=small?30:34;
+  box._w=W;
   const ts=series.flatMap(s=>s.pts.map(x=>new Date(x.date+"T12:00:00").getTime()));
   let x0=Math.min(...ts), x1=Math.max(...ts); if(x1===x0) x1=x0+86400000;
   const vs=series.flatMap(s=>s.pts.map(x=>x.v));
@@ -622,12 +783,13 @@ function drawChart(box, series, unit, label){
     g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" ${v===0?'stroke-width="1.5"':'stroke-dasharray="3 4"'}/>`;
     g+=`<text x="${L-8}" y="${Y(v)+4}" text-anchor="end">${v}${unit.trim()==="%"?"%":""}</text>`;
   }
-  const nT=Math.min(6,new Set(ts).size);
+  const nT=Math.min(small?4:6,new Set(ts).size);
   for(let i=0;i<nT;i++){
     const t=nT===1?x0:x0+(x1-x0)*i/(nT-1);
     const ds=new Date(t-new Date(t).getTimezoneOffset()*60000).toISOString().slice(0,10);
     g+=`<text x="${X(t)}" y="${H-10}" text-anchor="${i===0?"start":i===nT-1?"end":"middle"}">${fmtShort(ds)}</text>`;
   }
+  const usedY=[];
   series.forEach(s=>{
     const pts=s.pts.map(x=>[X(new Date(x.date+"T12:00:00").getTime()), Y(x.v)]);
     const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join("");
@@ -635,9 +797,10 @@ function drawChart(box, series, unit, label){
     g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
     pts.forEach((p,i)=>{ const last=i===pts.length-1; g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${last?6:3.5}" fill="${last?s.color:"var(--surface)"}" stroke="${s.color}" stroke-width="2"/>`; });
     const lp=pts[pts.length-1], lv=s.pts[s.pts.length-1].v;
-    g+=`<text x="${Math.min(lp[0],W-R-4)}" y="${lp[1]-11}" text-anchor="end" style="fill:${s.color};font-weight:700;font-size:12px">${n1(lv)}${unit}</text>`;
+    let ly=lp[1]-11; while(usedY.some(u=>Math.abs(u-ly)<14)) ly = ly>T+14 ? ly-14 : ly+28; usedY.push(ly);
+    g+=`<text x="${Math.min(lp[0]-8,W-R-4)}" y="${ly}" text-anchor="end" style="fill:${s.color};font-weight:700;font-size:12px">${n1(lv)}${unit}</text>`;
   });
-  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px;display:block" role="img" aria-label="${esc(label)}">${g}</svg>`;
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" role="img" aria-label="${esc(label)}">${g}</svg>`;
 }
 
 function renderHistory(){
@@ -646,13 +809,13 @@ function renderHistory(){
   const rows=s.pts.map((x,i)=>{ const prev=i?s.pts[i-1]:null; return {...x, change:prev?x.weight-prev.weight:null, lost:s.sw-x.weight, pct:(s.sw-x.weight)/s.sw*100, order:i}; })
     .sort((a,b)=>b.date.localeCompare(a.date)||b.order-a.order);
   tb.innerHTML=rows.map(r=>{
-    if(r.start) return `<tr class="start-row"><td>${fmtDate(r.date)}</td><td class="r">${n1(r.weight)}</td><td class="r">Start</td><td class="r">—</td><td class="r">—</td><td></td></tr>`;
+    if(r.start) return `<tr class="start-row"><td>${fmtDate(r.date)} <span class="muted small">· start</span></td><td class="r">${n1(r.weight)} <span class="muted small">lbs</span></td><td class="r">Start</td><td class="r">—</td><td class="r">—</td><td></td></tr>`;
     const ch=r.change===null?"—":`<span class="${r.change<=0?"down":"up"}">${r.change<=0?"−":"+"}${n1(Math.abs(r.change))}</span>`;
     const del=S.confirmDel===r.id
       ? `<span class="actions"><button class="btn danger sm" data-act="delYes" data-id="${r.id}">Delete</button><button class="btn ghost sm" data-act="delNo">Keep</button></span>`
       : `<button class="linkbtn" data-act="del" data-id="${r.id}" aria-label="Remove weigh-in on ${fmtDate(r.date)}">Remove</button>`;
     const by = r.entered_by && r.entered_by!==S.user.id ? ` <span class="pill">logged by ${esc((S.names||{})[r.entered_by]||"a partner")}</span>` : "";
-    return `<tr><td>${fmtDate(r.date)}${by}</td><td class="r">${n1(r.weight)}</td><td class="r">${ch}</td><td class="r">${n1(r.lost)} lbs</td><td class="r"><strong>${n1(r.pct)}%</strong></td><td class="r">${del}</td></tr>`;
+    return `<tr><td>${fmtDate(r.date)}${by}</td><td class="r">${n1(r.weight)} <span class="muted small">lbs</span></td><td class="r" data-l="Change">${ch}</td><td class="r" data-l="Total lost">${n1(r.lost)} lbs</td><td class="r" data-l="Lost"><strong>${n1(r.pct)}%</strong></td><td class="r">${del}</td></tr>`;
   }).join("");
 }
 
@@ -772,8 +935,9 @@ $("reqForm").addEventListener("submit", async e=>{
   const share=readShare(document.querySelector('[data-share="q"]'));
   const {error}=await sb.rpc("request_pairing",{p_username:u, p_share:share});
   if(error) return note("qNote", /no user/i.test(errMsg(error)) ? "No user with that username. Start typing and pick them from the suggestions." : errMsg(error), "err");
-  $("qUser").value=""; closeSug(); note("qNote","Request sent. They'll see it next time they open the Weigh-Off.","ok");
-  await loadPairings(); renderPairings();
+  $("qUser").value=""; closeSug(); note("qNote","");
+  await loadPairings(); openReq(false); renderPairings();
+  $("status").textContent="Request sent. They'll see it next time they open the Weigh-Off.";
 });
 
 /* ---------- clicks ---------- */
@@ -792,28 +956,29 @@ document.addEventListener("click", async e=>{
       const {error}=await sb.from("weighins").delete().eq("id",id); if(error) throw error;
       await loadPairings(); renderPairings(); return;
     }
-    if(act==="end"){ S.confirmEnd=id; renderPairings(); keepOpen(id); return; }
-    if(act==="endNo"){ const was=S.confirmEnd; S.confirmEnd=null; renderPairings(); keepOpen(was); return; }
+    if(act==="end"){ S.confirmEnd=id; renderPairings(); return; }
+    if(act==="endNo"){ S.confirmEnd=null; renderPairings(); return; }
     if(act==="endYes"||act==="cancel"||act==="decline"){
       b.disabled=true;
       const {error}= act==="decline" ? await sb.rpc("respond_pairing",{p_id:id,p_accept:false,p_share:{}}) : await sb.rpc("end_pairing",{p_id:id});
-      if(error) throw error; S.confirmEnd=null; await loadPairings(); renderPairings(); return;
+      if(error) throw error; const ended=act==="endYes"; S.confirmEnd=null; await loadPairings(); renderPairings();
+      if(ended){ location.hash="#comparisons"; $("status").textContent="Comparison ended."; } return;
     }
     if(act==="accept"){
       b.disabled=true;
       const share=readShare(document.querySelector(`[data-share="in-${id}"]`));
       const {error}=await sb.rpc("respond_pairing",{p_id:id,p_accept:true,p_share:share});
-      if(error) throw error; await loadPairings(); renderPairings(); return;
+      if(error) throw error; await loadPairings(); renderPairings(); location.hash="#vs-"+id; return;
     }
     if(act==="saveShare"){
       const share=readShare(document.querySelector(`[data-share="sh-${id}"]`));
       const {error}=await sb.rpc("update_share",{p_id:id,p_share:share});
-      if(error) throw error; await loadPairings(); renderPairings(); keepOpen(id);
+      S.openShare=id; if(error) throw error; await loadPairings(); renderPairings();
       note("shNote-"+id,"Saved.","ok"); return;
     }
   }catch(err){ $("status").textContent=errMsg(err); b.disabled=false; }
 });
-function keepOpen(id){ const d=document.querySelector(`.cmp[data-id="${id}"] details`); if(d) d.open=true; }
+document.addEventListener("toggle", e=>{ if(e.target.matches && e.target.matches("[data-sharebox]")) S.openShare = e.target.open ? S.cmpId : null; }, true);
 
 document.addEventListener("submit", async e=>{
   const f=e.target; if(!f.dataset.plog) return;
@@ -843,6 +1008,27 @@ document.addEventListener("submit", async e=>{
 });
 
 $("btnRefresh").addEventListener("click", ()=>refresh("Up to date."));
+function openReq(on){ $("newReq").hidden=!on; $("btnNewReq").setAttribute("aria-expanded",String(on)); $("btnNewReq").hidden=on; if(on && document.activeElement===$("btnNewReq")) $("qUser").focus(); }
+$("btnNewReq").addEventListener("click", ()=>openReq(true));
+$("btnCloseReq").addEventListener("click", ()=>{ openReq(false); note("qNote",""); });
+
+/* ---------- account menu ---------- */
+function closeMenu(){ $("acctMenu").hidden=true; $("acctBtn").setAttribute("aria-expanded","false"); }
+$("acctBtn").addEventListener("click", e=>{ e.stopPropagation(); const open=$("acctMenu").hidden; $("acctMenu").hidden=!open; $("acctBtn").setAttribute("aria-expanded",String(open)); });
+document.addEventListener("click", e=>{ if(!$("acctMenu").hidden && !e.target.closest("#who")) closeMenu(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("acctMenu").hidden){ closeMenu(); $("acctBtn").focus(); } });
+$("btnExport").addEventListener("click", ()=>closeMenu());
+
+/* ---------- status toast ---------- */
+let toastT=null;
+new MutationObserver(()=>{ const el=$("status"); if(!el.textContent) return; el.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>{ el.classList.remove("on"); setTimeout(()=>{ if(!el.classList.contains("on")) el.textContent=""; },250); },3800); })
+  .observe($("status"),{childList:true,characterData:true,subtree:true});
+
+/* ---------- redraw charts when the width changes (not on height-only changes like a phone keyboard) ---------- */
+let rzT=null;
+addEventListener("resize", ()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{
+  document.querySelectorAll(".chartbox").forEach(b=>{ if(b._chart && b.offsetParent && Math.abs((Math.round(b.clientWidth)||0)-(b._w||0))>8) drawChart(b, ...b._chart); });
+},150); });
 
 /* ---------- export ---------- */
 $("btnExport").addEventListener("click", ()=>{
