@@ -116,6 +116,11 @@ input[type=text],input[type=email],input[type=password],input[type=number],input
 .req{display:grid;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px}
 .req-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center}
 .pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+.sugwrap{position:relative}
+.sug{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px -12px rgba(0,0,0,.35);z-index:5}
+.sug li{padding:8px 10px;border-radius:8px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.sug li[aria-selected="true"],.sug li:hover{background:var(--surface-2)}
+.sug li .muted{font-size:13px}
 details summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--muted)}
 details[open] summary{margin-bottom:10px}
 .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -225,7 +230,9 @@ tr:last-child td{border-bottom:0}
       <details id="newReq" style="margin-top:14px">
         <summary>Challenge someone</summary>
         <form id="reqForm" class="form" novalidate>
-          <label class="field"><span>Their username</span><input type="text" id="qUser" autocomplete="off" maxlength="20" required></label>
+          <div class="field sugwrap"><label for="qUser"><span class="small muted" style="font-weight:600">Their username or name</span></label>
+            <input type="text" id="qUser" autocomplete="off" maxlength="40" placeholder="Start typing (3+ letters)" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qSug" required>
+            <ul id="qSug" class="sug" role="listbox" hidden></ul></div>
           <div id="qShare"></div>
           <div class="actions"><button class="btn" type="submit">Send request</button></div>
           <div class="note" id="qNote" aria-live="polite"></div>
@@ -653,6 +660,38 @@ $("logForm").addEventListener("submit", async e=>{
   const s=mySeries(); note("lNote", s?`Logged ${n1(w)} lbs. That's ${n1(s.pct)}% lost so far.`:`Logged ${n1(w)} lbs.`, "ok");
 });
 
+/* ---------- username suggestions ---------- */
+const sug={list:[], idx:-1, timer:null, seq:0};
+function closeSug(){ $("qSug").hidden=true; $("qUser").setAttribute("aria-expanded","false"); sug.idx=-1; }
+function drawSug(){
+  const ul=$("qSug");
+  if(!sug.list.length){ closeSug(); return; }
+  ul.innerHTML=sug.list.map((u,i)=>`<li role="option" id="sug-${i}" data-u="${esc(u.username)}" aria-selected="${i===sug.idx}"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)}</span></li>`).join("");
+  ul.hidden=false; $("qUser").setAttribute("aria-expanded","true");
+  $("qUser").setAttribute("aria-activedescendant", sug.idx>=0?"sug-"+sug.idx:"");
+}
+function pickSug(u){ $("qUser").value=u; closeSug(); note("qNote",""); }
+$("qUser").addEventListener("input", ()=>{
+  clearTimeout(sug.timer);
+  const q=$("qUser").value.trim();
+  if(q.length<3){ sug.list=[]; closeSug(); return; }
+  sug.timer=setTimeout(async ()=>{
+    const my=++sug.seq;
+    const {data,error}=await sb.rpc("search_users",{p_q:q});
+    if(my!==sug.seq) return;
+    sug.list=error?[]:(data||[]); sug.idx=-1; drawSug();
+  },250);
+});
+$("qUser").addEventListener("keydown", e=>{
+  if($("qSug").hidden) return;
+  if(e.key==="ArrowDown"){ e.preventDefault(); sug.idx=Math.min(sug.list.length-1,sug.idx+1); drawSug(); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); sug.idx=Math.max(0,sug.idx-1); drawSug(); }
+  else if(e.key==="Enter" && sug.idx>=0){ e.preventDefault(); pickSug(sug.list[sug.idx].username); }
+  else if(e.key==="Escape"){ closeSug(); }
+});
+$("qSug").addEventListener("mousedown", e=>{ const li=e.target.closest("li[data-u]"); if(li){ e.preventDefault(); pickSug(li.dataset.u); } });
+$("qUser").addEventListener("blur", ()=>setTimeout(closeSug,100));
+
 /* ---------- comparison requests ---------- */
 $("reqForm").addEventListener("submit", async e=>{
   e.preventDefault();
@@ -660,8 +699,8 @@ $("reqForm").addEventListener("submit", async e=>{
   if(!u) return note("qNote","Enter their username.","err");
   const share=readShare(document.querySelector('[data-share="q"]'));
   const {error}=await sb.rpc("request_pairing",{p_username:u, p_share:share});
-  if(error) return note("qNote",errMsg(error),"err");
-  $("qUser").value=""; note("qNote","Request sent. They'll see it next time they open the Weigh-Off.","ok");
+  if(error) return note("qNote", /no user/i.test(errMsg(error)) ? "No user with that username. Start typing and pick them from the suggestions." : errMsg(error), "err");
+  $("qUser").value=""; closeSug(); note("qNote","Request sent. They'll see it next time they open the Weigh-Off.","ok");
   await loadPairings(); renderPairings();
 });
 
