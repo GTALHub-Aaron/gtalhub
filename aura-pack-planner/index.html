@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aura Pack Planner</title>
+<meta name="robots" content="noindex">
+
+<style>
+/* Layout: one working column — paste box and box rules side by side, then the packing table that mirrors the exported sheet */
+:root{
+  --bg:#f3f4f6; --panel:#ffffff; --ink:#1b1f27; --muted:#5d6573; --line:#d5d9e0;
+  --red:#1f3a68; --err:#c62828; --red-ink:#ffffff; --blue-tint:#e6eef9; --green-tint:#ebf4e5; --gay-tint:#faefd8; --pink-tint:#fbe7ea; --purple-tint:#eee8f7; --zebra:#e1e4e9;
+  --blue-alt:#bccce4; --gay-alt:#e3cb9c; --green-alt:#c2d9b3; --pink-alt:#e6b8c0; --purple-alt:#c9bbe0;
+  --focus:#1f5fd8; --ok:#1e7a3c; --warn:#a15c00;
+  --ui:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:Consolas,"SF Mono",Menlo,ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171c; --panel:#1c2027; --ink:#e7eaf0; --muted:#9aa3b2; --line:#323844;
+  --red:#2f5597; --err:#ef6b6b; --red-ink:#ffffff; --blue-tint:#22324a; --green-tint:#2a3423; --gay-tint:#3d331c; --pink-tint:#45282d; --purple-tint:#342b45; --zebra:#242932;
+  --blue-alt:#2c405e; --gay-alt:#4b3f24; --green-alt:#35422d; --pink-alt:#553139; --purple-alt:#413655;
+  --focus:#6f9cff; --ok:#5fc27f; --warn:#e2a146; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171c; --panel:#1c2027; --ink:#e7eaf0; --muted:#9aa3b2; --line:#323844;
+  --red:#2f5597; --err:#ef6b6b; --red-ink:#ffffff; --blue-tint:#22324a; --green-tint:#2a3423; --gay-tint:#3d331c; --pink-tint:#45282d; --purple-tint:#342b45; --zebra:#242932;
+  --blue-alt:#2c405e; --gay-alt:#4b3f24; --green-alt:#35422d; --pink-alt:#553139; --purple-alt:#413655;
+  --focus:#6f9cff; --ok:#5fc27f; --warn:#e2a146; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.45}
+.wrap{max-width:1400px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:3px solid var(--red);padding-bottom:12px}
+h1{margin:0;font-size:28px;font-weight:700;text-wrap:balance}
+h1 span{color:var(--red)}
+.sub{margin:2px 0 0;color:var(--muted)}
+h2{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.intake{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px}
+@media (max-width:860px){.intake{grid-template-columns:1fr}}
+.pastebox{width:100%;min-height:150px;resize:vertical;border:2px dashed var(--line);border-radius:4px;padding:18px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);text-align:center;transition:border-color .15s}
+.pastebox::placeholder{color:var(--muted);white-space:pre-line}
+.pastebox:hover,.pastebox:focus{border-color:var(--red);outline:none}
+.k{font-family:var(--mono);font-size:13px;border:1px solid var(--line);border-radius:3px;padding:1px 6px;background:var(--bg)}
+.status{font-size:14px;color:var(--muted);min-height:1.4em}
+.status.ok{color:var(--ok)} .status.err{color:var(--err)}
+button{font:inherit;font-weight:600;border-radius:3px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px;cursor:pointer}
+button:hover{border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+button.primary{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+button.primary:hover{filter:brightness(1.08)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.rule{border:1px solid var(--line);border-radius:3px;padding:10px;display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;font-size:14px}
+.rule .name{grid-column:1/-1;font-weight:700;display:flex;align-items:center;gap:8px}
+.swatch{width:14px;height:14px;border:1px solid var(--line);display:inline-block}
+.rule label,.lbl{color:var(--muted);font-size:14px}
+.rule select{font:inherit;font-size:13px;width:100%;padding:3px 4px;border:1px solid var(--line);border-radius:3px;background:var(--bg);color:var(--ink)}
+.rule .name input.nm{font-family:var(--ui);font-weight:700;font-size:14px;background:transparent;border-color:transparent;padding:2px 4px;flex:1;min-width:0}
+.rule .name input.nm:hover,.rule .name input.nm:focus{border-color:var(--line);background:var(--bg)}
+.rm{border:0;background:transparent;color:var(--muted);padding:2px 6px;font-size:15px;line-height:1}
+.rm:hover,.rm.armed{color:var(--err)}
+.rm.armed{font-size:12px;border:1px solid var(--err)}
+.rule input,.num{font:inherit;font-family:var(--mono);font-size:13px;width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:3px;background:var(--bg);color:var(--ink)}
+.num{width:7ch}
+.logic{font-size:14px;color:var(--muted);margin:0;max-width:80ch}
+.logic b{color:var(--ink)}
+.summary{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font-family:var(--mono);font-size:14px;border:1px solid var(--line);border-radius:3px;padding:6px 10px;display:flex;gap:8px;align-items:center;background:var(--panel)}
+.chip b{font-size:18px}
+.tablebox{overflow-x:auto;border:2px solid var(--red);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+th{background:var(--red);color:var(--red-ink);font-weight:800;padding:8px 6px;border:1px solid var(--line);white-space:nowrap;text-align:center}
+td{border:1px solid var(--line);padding:0;text-align:center;vertical-align:middle;white-space:nowrap}
+td input{font:inherit;width:100%;min-width:3ch;border:0;background:transparent;color:inherit;text-align:center;padding:6px}
+td input:focus{background:var(--bg)}
+td.calc{padding:6px 8px;font-family:var(--mono);font-size:13px}
+tr.alt td:not(.tinted){background:var(--zebra)}
+tbody tr.gs td{border-top:2px solid var(--ink)}
+td.t4965{background:var(--blue-tint)} td.tgay{background:var(--gay-tint)} td.multi{background:var(--green-tint)}
+td.del button{border:0;background:transparent;color:var(--muted);padding:4px 8px;font-size:16px}
+td.del button:hover{color:var(--err)}
+tfoot td{font-weight:700;padding:8px 6px;border:0}
+.w-po{width:11ch}.w-type{width:9ch}.w-bld{width:7ch}.w-qty{width:6ch}.w-name{min-width:22ch}.w-st{min-width:20ch}.w-city{min-width:11ch}.w-state{width:5ch}.w-zip{width:11ch}
+.ex{font-size:13px;color:var(--warn);font-weight:600;text-transform:none;letter-spacing:0}
+td.empty{padding:28px 12px;color:var(--muted);white-space:normal}
+.hint{font-size:13px;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Aura <span>Pack Planner</span></h1>
+      <p class="sub">Paste the customer's shipping table from Excel, get the boxes for every location, export the packing list.</p>
+    </div>
+  </header>
+
+  <section class="intake">
+    <div class="panel">
+      <h2>1 · Paste the customer's table</h2>
+      <textarea id="paste" class="pastebox" aria-label="Paste Excel cells here" placeholder="Click here, then press Ctrl + V&#10;Copy the cells in Excel first, header row included"></textarea>
+      <p class="hint">Copy from <b>Purchasing Document</b> through <b>Postal Code</b>. With the header row, columns can be in any order. Without it, they must be in that order.</p>
+      <div id="status" class="status" role="status"></div>
+    </div>
+    <div class="panel">
+      <h2>2 · Box rules</h2>
+      <div class="rules" id="rules"></div>
+      <div class="row"><button id="btnAddBox">+ Add box</button>
+        <button id="btnReset" style="margin-left:auto">Reset rules</button></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="row" style="justify-content:space-between">
+      <h2>3 · Packing list <span id="exampleTag" class="ex"></span></h2>
+      <div class="row">
+        <button id="btnAdd">Add location</button>
+        <button id="btnClear">Clear all</button>
+        <button id="btnExport" class="primary">Export Excel</button>
+      </div>
+    </div>
+    <p class="logic" id="logic"></p>
+    <div class="summary" id="summary"></div>
+    <div class="tablebox"><table id="tbl"></table></div>
+    <p class="hint">Click any location cell to correct it. Box rows update when a quantity changes.</p>
+  </section>
+</div>
+
+<script>
+/* Minimal dependency-free .xlsx writer: one sheet, inline strings, styles, merges, widths, frozen header. */
+const MiniXlsx=(()=>{
+  const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+  const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+  const enc=new TextEncoder();
+  function zip(files){ // files: [{name, data:string}] stored (no compression)
+    const parts=[],central=[];let off=0;
+    for(const f of files){
+      const name=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data);
+      const h=new DataView(new ArrayBuffer(30));
+      h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);
+      h.setUint16(10,0,true);h.setUint16(12,0x21,true);h.setUint32(14,crc,true);h.setUint32(18,data.length,true);
+      h.setUint32(22,data.length,true);h.setUint16(26,name.length,true);h.setUint16(28,0,true);
+      parts.push(new Uint8Array(h.buffer),name,data);
+      const c=new DataView(new ArrayBuffer(46));
+      c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,0,true);
+      c.setUint16(12,0,true);c.setUint16(14,0x21,true);c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);
+      c.setUint16(28,name.length,true);c.setUint16(30,0,true);c.setUint16(32,0,true);c.setUint16(34,0,true);c.setUint16(36,0,true);
+      c.setUint32(38,0,true);c.setUint32(42,off,true);
+      central.push(new Uint8Array(c.buffer),name);
+      off+=30+name.length+data.length;
+    }
+    const cdSize=central.reduce((a,b)=>a+b.length,0);
+    const e=new DataView(new ArrayBuffer(22));
+    e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);
+    e.setUint32(12,cdSize,true);e.setUint32(16,off,true);
+    return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  }
+  const x=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"");
+  const colName=n=>{let s="";n++;while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
+  const ref=(r,c)=>colName(c)+(r+1);
+
+  /* style: {bold, size, color, fill, align:"center"|"right", wrap, text, border:{t,b,l,r} each "thin"|"medium" + optional color via tc,bc,lc,rc} */
+  function build({sheetName="Sheet1",cells,merges=[],widths=[],freezeRows=0,rowHeights={},landscape=true}){
+    const fonts=['<font><sz val="11"/><name val="Calibri"/><family val="2"/></font>'],fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>'],
+      borders=['<border><left/><right/><top/><bottom/><diagonal/></border>'],xfs=['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'];
+    const fK={},flK={},bK={},xK={};
+    const fontId=s=>{const k=[s.bold?1:0,s.size||11,s.color||""].join("|");if(fK[k]==null){fK[k]=fonts.length;fonts.push(`<font>${s.bold?"<b/>":""}<sz val="${s.size||11}"/>${s.color?`<color rgb="${s.color}"/>`:""}<name val="Calibri"/><family val="2"/></font>`)}return fK[k]};
+    const fillId=s=>{if(!s.fill)return 0;if(flK[s.fill]==null){flK[s.fill]=fills.length;fills.push(`<fill><patternFill patternType="solid"><fgColor rgb="${s.fill}"/><bgColor indexed="64"/></patternFill></fill>`)}return flK[s.fill]};
+    const side=(tag,st,col)=>st?`<${tag} style="${st}"><color rgb="${col||"FF000000"}"/></${tag}>`:`<${tag}/>`;
+    const borderId=s=>{const b=s.border;if(!b)return 0;const k=JSON.stringify(b);if(bK[k]==null){bK[k]=borders.length;borders.push(`<border>${side("left",b.l,b.lc)}${side("right",b.r,b.rc)}${side("top",b.t,b.tc)}${side("bottom",b.b,b.bc)}<diagonal/></border>`)}return bK[k]};
+    const xfId=s=>{if(!s)return 0;const f=fontId(s),fl=fillId(s),b=borderId(s),nf=s.text?49:0;const k=[f,fl,b,nf,s.align||"",s.wrap?1:0].join("|");
+      if(xK[k]==null){xK[k]=xfs.length;const al=s.align||s.wrap?`<alignment${s.align?` horizontal="${s.align}"`:""} vertical="center"${s.wrap?' wrapText="1"':""}/>`:"";
+        xfs.push(`<xf numFmtId="${nf}" fontId="${f}" fillId="${fl}" borderId="${b}" xfId="0" applyFont="1" applyFill="1" applyBorder="1"${nf?' applyNumberFormat="1"':""}${al?' applyAlignment="1">'+al+"</xf>":"/>"}`)}return xK[k]};
+    // cells: array of rows; each row array of {v, s} or null
+    let maxC=0;const rowsXml=cells.map((row,r)=>{
+      const cs=(row||[]).map((cell,c)=>{if(!cell)return"";maxC=Math.max(maxC,c+1);const s=xfId(cell.s);const sa=s?` s="${s}"`:"";
+        if(cell.v==null||cell.v==="")return`<c r="${ref(r,c)}"${sa}/>`;
+        if(typeof cell.v==="number"&&isFinite(cell.v))return`<c r="${ref(r,c)}"${sa}><v>${cell.v}</v></c>`;
+        return`<c r="${ref(r,c)}"${sa} t="inlineStr"><is><t xml:space="preserve">${x(cell.v)}</t></is></c>`}).join("");
+      const ht=rowHeights[r]?` ht="${rowHeights[r]}" customHeight="1"`:"";
+      return`<row r="${r+1}"${ht}>${cs}</row>`}).join("");
+    const cols=widths.length?`<cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols>`:"";
+    const pane=freezeRows?`<sheetViews><sheetView workbookViewId="0"><pane ySplit="${freezeRows}" topLeftCell="A${freezeRows+1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`:`<sheetViews><sheetView workbookViewId="0"/></sheetViews>`;
+    const mg=merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${ref(m[0],m[1])}:${ref(m[2],m[3])}"/>`).join("")}</mergeCells>`:"";
+    const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${landscape?'<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>':""}<dimension ref="A1:${ref(Math.max(cells.length-1,0),Math.max(maxC-1,0))}"/>${pane}<sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rowsXml}</sheetData>${mg}<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>${landscape?'<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>':""}</worksheet>`;
+    const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="${fonts.length}">${fonts.join("")}</fonts><fills count="${fills.length}">${fills.join("")}</fills><borders count="${borders.length}">${borders.join("")}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+    const sn=x(sheetName.slice(0,31));
+    return zip([
+      {name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`},
+      {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+      {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${sn}" sheetId="1" r:id="rId1"/></sheets></workbook>`},
+      {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+      {name:"xl/styles.xml",data:styles},
+      {name:"xl/worksheets/sheet1.xml",data:sheet}
+    ]);
+  }
+  return {build};
+})();
+
+</script>
+<script>
+const FIELDS=[
+  ["po","Purchasing Document","w-po"],["type","Destination Type","w-type"],["building","Building","w-bld"],
+  ["qty","Quantity","w-qty"],["name","Delivery Name","w-name"],["street","Street","w-st"],
+  ["city","City","w-city"],["state","State","w-state"],["zip","Postal Code","w-zip"]
+];
+/* color: key into TINTS. minFill: blank = always available; a number = bulk box used only for that many units or more */
+const TINTS={none:{label:"None",css:"",alt:"",argb:null,altArgb:null},
+  blue:{label:"Blue",css:"var(--blue-tint)",alt:"var(--blue-alt)",argb:"FFE6EEF9",altArgb:"FFBCCCE4"},
+  tan:{label:"Tan",css:"var(--gay-tint)",alt:"var(--gay-alt)",argb:"FFFAEFD8",altArgb:"FFE3CB9C"},
+  green:{label:"Green",css:"var(--green-tint)",alt:"var(--green-alt)",argb:"FFEBF4E5",altArgb:"FFC2D9B3"},
+  pink:{label:"Pink",css:"var(--pink-tint)",alt:"var(--pink-alt)",argb:"FFFBE7EA",altArgb:"FFE6B8C0"},
+  purple:{label:"Purple",css:"var(--purple-tint)",alt:"var(--purple-alt)",argb:"FFEEE8F7",altArgb:"FFC9BBE0"}};
+const DEFAULT_BOXES=[
+  {id:"gaylord",label:"Gaylord",pn:"",dims:"Gaylord",cap:140,minFill:70,color:"tan"},
+  {id:"b4682",label:"20 ct box",pn:"S-4682",dims:"36x22x22",cap:20,minFill:"",color:"green"},
+  {id:"b4965",label:"10 ct box",pn:"S-4965",dims:"36x21x10",cap:10,minFill:"",color:"blue"}
+];
+
+const clone=o=>JSON.parse(JSON.stringify(o));
+function load(k,d){try{const v=localStorage.getItem(k);const p=v?JSON.parse(v):null;return Array.isArray(d)?(Array.isArray(p)&&p.length?p:clone(d)):(p??clone(d))}catch(e){return clone(d)}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function toRow(a){const r={};FIELDS.forEach(([k],i)=>r[k]=a[i]==null?"":String(a[i]).trim());return r}
+
+let boxes=load("aura.boxes.v2",DEFAULT_BOXES);
+// one-time update: the 20 ct box used to default to no color
+try{if(!localStorage.getItem("aura.mig.green")){boxes.forEach(b=>{if(b.id==="b4682"&&b.color==="none")b.color="green"});save("aura.boxes.v2",boxes);localStorage.setItem("aura.mig.green","1")}}catch(e){}
+let rows=[];
+let isExample=false;
+const $=id=>document.getElementById(id);
+const qtyNum=v=>Number(String(v).replace(/,/g,""))||0;
+const isBulk=b=>String(b.minFill??"").trim()!==""&&+b.minFill>0;
+
+/* ---------- packing logic ----------
+   1. Bulk boxes (those with a minimum), largest first: fill as many full ones as fit.
+      If what's left meets a bulk box's minimum, it goes in one more and we're done.
+   2. Anything left goes in the regular boxes using the fewest boxes possible,
+      breaking ties by the least empty space, then by larger boxes. */
+function pack(qty,bx=boxes){
+  let q=Math.max(0,Math.floor(qtyNum(qty)));
+  const list=bx.filter(b=>+b.cap>0);
+  const bulk=list.filter(isBulk).sort((a,b)=>b.cap-a.cap);
+  const reg=list.filter(b=>!isBulk(b)).sort((a,b)=>b.cap-a.cap);
+  const counts=new Map();const add=(b,n)=>counts.set(b.id,(counts.get(b.id)||0)+n);
+  for(const b of bulk){const n=Math.floor(q/b.cap);if(n){add(b,n);q-=n*b.cap}}
+  if(q>0){const fit=bulk.filter(b=>q>=+b.minFill).sort((a,b)=>a.cap-b.cap)[0]; if(fit){add(fit,1);q=0}}
+  if(q>0&&reg.length){
+    const maxCap=reg[0].cap, lim=q+maxCap;
+    const best=new Array(lim+1).fill(Infinity), pick=new Array(lim+1).fill(-1); best[0]=0;
+    for(let n=1;n<=lim;n++)for(let i=0;i<reg.length;i++){const c=+reg[i].cap;if(c<=n&&best[n-c]+1<best[n]){best[n]=best[n-c]+1;pick[n]=i}}
+    let tgt=-1;
+    for(let n=q;n<=lim;n++){if(best[n]===Infinity)continue;if(tgt<0||best[n]<best[tgt])tgt=n}
+    if(tgt>=0){let n=tgt;while(n>0){const b=reg[pick[n]];add(b,1);n-=b.cap}q=0}
+  }
+  if(q>0&&bulk.length){const b=bulk[bulk.length-1];add(b,Math.ceil(q/b.cap))}
+  return list.slice().sort((a,b)=>b.cap-a.cap).filter(b=>counts.get(b.id)).map(b=>({box:b,count:counts.get(b.id)}));
+}
+
+/* ---------- rules UI ---------- */
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+const boxName=b=>b.pn||b.label||"Box";
+function renderRules(){
+  $("rules").innerHTML=boxes.map((b,i)=>`
+   <div class="rule">
+    <div class="name"><span class="swatch" style="background:${TINTS[b.color]?.css||"var(--panel)"}"></span>
+      <input id="r-${b.id}-label" data-i="${i}" data-f="label" value="${esc(b.label)}" aria-label="Box name" class="nm">
+      <button class="rm" data-rm="${i}" aria-label="Remove ${esc(b.label)}" title="Remove box">×</button></div>
+    <label for="r-${b.id}-cap">Holds</label><input id="r-${b.id}-cap" data-i="${i}" data-f="cap" type="number" min="1" value="${esc(b.cap)}">
+    <label for="r-${b.id}-pn">Uline P/N</label><input id="r-${b.id}-pn" data-i="${i}" data-f="pn" value="${esc(b.pn)}" placeholder="optional">
+    <label for="r-${b.id}-dims">Box dims</label><input id="r-${b.id}-dims" data-i="${i}" data-f="dims" value="${esc(b.dims)}">
+    <label for="r-${b.id}-min">Use at</label><input id="r-${b.id}-min" data-i="${i}" data-f="minFill" type="number" min="1" value="${esc(b.minFill)}" placeholder="any qty" title="Leave blank for a regular box. Enter a number to only use this box when at least that many units are left (like a gaylord).">
+    <label for="r-${b.id}-color">Color</label><select id="r-${b.id}-color" data-i="${i}" data-f="color">${Object.entries(TINTS).map(([k,t])=>`<option value="${k}"${b.color===k?" selected":""}>${t.label}</option>`).join("")}</select>
+   </div>`).join("");
+  const bulk=boxes.filter(isBulk).sort((a,b)=>b.cap-a.cap), reg=boxes.filter(b=>!isBulk(b)).sort((a,b)=>b.cap-a.cap);
+  let t="";
+  if(bulk.length)t+=bulk.map(b=>`A full <b>${esc(boxName(b))}</b> holds <b>${b.cap}</b> and is used for a leftover of <b>${b.minFill}</b> or more.`).join(" ")+" ";
+  if(reg.length)t+=`Everything else goes in the fewest ${reg.map(b=>`<b>${esc(boxName(b))}</b> (${b.cap})`).join(", ")} boxes possible, with the least empty space.`;
+  if(!boxes.length)t="Add at least one box.";
+  $("logic").innerHTML=t+` <span class="hint">“Use at” blank = regular box. A number = only used when that many or more are left, like a gaylord.</span>`;
+}
+function onRuleChange(e){const t=e.target;if(t.dataset.i==null)return;const b=boxes[+t.dataset.i],f=t.dataset.f;
+  if(f==="cap")b.cap=Math.max(1,parseInt(t.value)||1);
+  else if(f==="minFill")b.minFill=t.value.trim()===""?"":Math.max(1,parseInt(t.value)||1);
+  else b[f]=t.value.trim();
+  save("aura.boxes.v2",boxes);renderRules();renderTable();}
+$("rules").addEventListener("change",onRuleChange);
+$("rules").addEventListener("click",e=>{const r=e.target.closest("[data-rm]");if(!r)return;
+  const i=+r.dataset.rm;
+  if(r.dataset.armed!=="1"){r.dataset.armed="1";r.textContent="Remove?";r.classList.add("armed");setTimeout(()=>{if(r.isConnected){r.dataset.armed="";r.textContent="×";r.classList.remove("armed")}},3000);return;}
+  boxes.splice(i,1);save("aura.boxes.v2",boxes);renderRules();renderTable();});
+$("btnAddBox").onclick=()=>{const id="b"+Date.now().toString(36);boxes.push({id,label:"New box",pn:"",dims:"",cap:5,minFill:"",color:"none"});
+  save("aura.boxes.v2",boxes);renderRules();renderTable();const el=$(`r-${id}-label`);if(el){el.focus();el.select()}};
+$("btnReset").onclick=()=>{boxes=clone(DEFAULT_BOXES);save("aura.boxes.v2",boxes);renderRules();renderTable();};
+
+/* ---------- table ---------- */
+function renderTable(){
+  const head=`<thead><tr>${FIELDS.map(f=>`<th class="${f[2]}">${f[1]}</th>`).join("")}<th>Box Dims</th><th>Uline P/N</th><th>Boxes</th><th aria-label="Remove"></th></tr></thead>`;
+  let body="",total=0;const counts=new Map();
+  rows.forEach((r,i)=>{
+    const p=pack(r.qty);total+=qtyNum(r.qty);
+    const lines=p.length?p:[{box:null,count:0}];
+    const span=lines.length;
+    lines.forEach((ln,j)=>{
+      if(ln.box)counts.set(ln.box.id,(counts.get(ln.box.id)||0)+ln.count);
+      body+=`<tr class="${i%2?"alt":""}${j===0?" gs":""}">`;
+      if(j===0){
+        body+=FIELDS.map(([k])=>`<td rowspan="${span}"><input id="c-${i}-${k}" data-i="${i}" data-k="${k}" value="${esc(r[k])}" aria-label="${k} row ${i+1}"${k==="qty"?' inputmode="numeric"':""}></td>`).join("");
+      }
+      const b=ln.box, tint=b&&TINTS[b.color]&&(i%2?TINTS[b.color].alt:TINTS[b.color].css), st=tint?` class="calc tinted" style="background:${tint}"`:' class="calc"';
+      body+=`<td${st}>${b?esc(b.dims):"—"}</td><td${st}>${b?esc(boxName(b)):""}</td><td${st}>${b?ln.count:""}</td>`;
+      if(j===0)body+=`<td class="del" rowspan="${span}"><button data-del="${i}" aria-label="Remove row ${i+1}">×</button></td>`;
+      body+="</tr>";
+    });
+  });
+  const foot=`<tfoot><tr><td colspan="3" style="text-align:right">Total</td><td>${total}</td><td colspan="9"></td></tr></tfoot>`;
+  if(!rows.length)body=`<tr><td colspan="13" class="empty">No locations yet. Copy the customer's table in Excel and paste it in the box above.</td></tr>`;
+  $("tbl").innerHTML=head+"<tbody>"+body+"</tbody>"+foot;
+  $("summary").innerHTML=boxes.map(b=>`<div class="chip" style="background:${TINTS[b.color]?.css||"var(--panel)"}"><b>${counts.get(b.id)||0}</b> Ea ${esc(boxName(b))} <span style="color:var(--muted)">${esc(b.dims)}</span></div>`).join("")+
+    `<div class="chip"><b>${rows.length}</b> locations · <b>${total}</b> units</div>`;
+  $("exampleTag").textContent=isExample?"· example rows, paste a table to replace them":"";
+}
+$("tbl").addEventListener("change",e=>{const t=e.target;if(t.dataset.i==null)return;
+  rows[+t.dataset.i][t.dataset.k]=t.value.trim();isExample=false;renderTable();});
+$("tbl").addEventListener("click",e=>{const d=e.target.closest("[data-del]");if(!d)return;rows.splice(+d.dataset.del,1);renderTable();});
+$("btnAdd").onclick=()=>{rows.push(toRow([]));isExample=false;renderTable();const el=$(`c-${rows.length-1}-po`);if(el)el.focus();};
+let clearArmed=false;
+$("btnClear").onclick=()=>{ if(!clearArmed){clearArmed=true;$("btnClear").textContent="Click again to clear";setTimeout(()=>{clearArmed=false;$("btnClear").textContent="Clear all"},3000);return;}
+  clearArmed=false;$("btnClear").textContent="Clear all";rows=[];isExample=false;renderTable();};
+
+/* ---------- paste intake ---------- */
+const status=(msg,cls="")=>{const s=$("status");s.textContent=msg;s.className="status "+cls};
+const HEAD_MATCH={po:/purchas|^po\b|document/i,type:/destination|type/i,building:/building|store|bldg/i,qty:/^qty|quantity/i,
+  name:/delivery|name/i,street:/street|address/i,city:/city/i,state:/^state$|^st$/i,zip:/postal|zip/i};
+function parseCells(t){
+  const lines=t.replace(/\r/g,"").split("\n").filter(l=>l.replace(/\t/g,"").trim());
+  let grid=lines.map(l=>l.split("\t").map(c=>c.trim().replace(/^"(.*)"$/,"$1")));
+  let map=FIELDS.map((_,i)=>i), header=false;
+  const first=grid[0]||[], hits=first.filter(c=>c&&Object.values(HEAD_MATCH).some(rx=>rx.test(c))).length;
+  if(hits>=3){
+    header=true;
+    const used=new Set();
+    map=FIELDS.map(([k])=>{const i=first.findIndex((c,ci)=>!used.has(ci)&&HEAD_MATCH[k].test(c));if(i>=0)used.add(i);return i});
+    grid=grid.slice(1);
+  }
+  const out=grid.filter(r=>!r.some(c=>/^total$/i.test(c)))
+    .map(r=>{const o={};FIELDS.forEach(([k],i)=>o[k]=map[i]>=0?(r[map[i]]||""):"");return o})
+    .filter(o=>o.qty||o.name||o.po);
+  return {out,header,missing:FIELDS.filter((f,i)=>map[i]<0).map(f=>f[1])};
+}
+$("paste").addEventListener("paste",e=>{
+  const t=e.clipboardData&&e.clipboardData.getData("text/plain");
+  if(!t)return;
+  e.preventDefault();
+  const {out,header,missing}=parseCells(t);
+  if(!out.length){status("No rows found in that paste. Copy the table cells in Excel (header row included) and paste again.","err");return;}
+  rows=out;isExample=false;renderTable();
+  const total=out.reduce((a,r)=>a+qtyNum(r.qty),0);
+  let msg=`Loaded ${out.length} locations, ${total} units. Check the total against the customer's sheet.`;
+  if(!header)msg+=" No header row found, so columns were read in the standard order.";
+  if(header&&missing.length)msg+=` Missing columns: ${missing.join(", ")}.`;
+  status(msg,header&&missing.length?"err":"ok");
+});
+$("paste").addEventListener("input",e=>{ if(e.target.value){const v=e.target.value;e.target.value="";
+  const {out}=parseCells(v);if(out.length){rows=out;isExample=false;renderTable();status(`Loaded ${out.length} locations.`,"ok");}}});
+
+/* ---------- Excel export ---------- */
+function buildWorkbook(rows,bx){
+  const RED="FF1F3A68",GRAY="FFDDDDDD";
+  const headers=[...FIELDS.map(f=>f[1]),"Box Dims","Uline P/N","Boxes"];const nC=headers.length;
+  const grid=[],merges=[],gStart=new Set(),gEnd=new Set();
+  grid.push(headers.map(h=>({v:h,s:{bold:true,size:12,color:"FFFFFFFF",fill:RED,align:"center",wrap:true}})));
+  const counts=new Map();let total=0;
+  const numOrText=(k,v)=>(k==="qty"||k==="building")&&/^\d+$/.test(v)?Number(v):v;
+  rows.forEach((r,ri)=>{
+    const zebra=ri%2?GRAY:null;
+    const p=pack(r.qty,bx);const lines=p.length?p:[{box:null,count:0}];total+=qtyNum(r.qty);
+    const start=grid.length;
+    lines.forEach((ln,j)=>{
+      const b=ln.box;if(b)counts.set(b.id,(counts.get(b.id)||0)+ln.count);
+      const tint=b&&TINTS[b.color]?(ri%2?TINTS[b.color].altArgb:TINTS[b.color].argb):null;
+      const loc=FIELDS.map(([k])=>({v:j===0?numOrText(k,r[k]):null,s:{size:12,align:"center",text:k!=="qty"&&k!=="building",fill:zebra}}));
+      const box=[b?b.dims:"",b?boxName(b):"",b?ln.count:""].map(v=>({v,s:{size:12,align:"center",fill:tint||zebra}}));
+      grid.push([...loc,...box]);
+    });
+    gStart.add(start);gEnd.add(start+lines.length-1);
+    if(lines.length>1)for(let c=0;c<FIELDS.length;c++)merges.push([start,c,start+lines.length-1,c]);
+  });
+  const last=grid.length-1;
+  for(let r=0;r<=last;r++)for(let c=0;c<nC;c++){
+    const s=grid[r][c].s;
+    s.border={t:gStart.has(r)?"medium":"thin",b:gEnd.has(r)?"medium":"thin",l:"thin",r:"thin"};
+    if(r===0){s.border.t="medium";s.border.tc=RED}
+    if(r===last){s.border.b="medium";s.border.bc=RED}
+    if(c===0){s.border.l="medium";s.border.lc=RED}
+    if(c===nC-1){s.border.r="medium";s.border.rc=RED}
+  }
+  // summary block: one blank row under the table, then Total and the package counts start on the same row
+  grid.push([]);
+  const sum={bold:true,size:13,align:"center"};
+  const firstSum=grid.length;
+  bx.forEach(b=>{const n=counts.get(b.id);if(!n)return;const r=Array(nC).fill(null);
+    const tint=TINTS[b.color]?TINTS[b.color].argb:null;
+    const cs={...sum,fill:tint,border:{t:"thin",b:"thin",l:"thin",r:"thin"}};
+    r[9]={v:n+" Ea",s:cs};r[10]={v:boxName(b),s:cs};r[11]={v:b.dims,s:cs};grid.push(r);});
+  if(grid.length===firstSum)grid.push(Array(nC).fill(null));
+  grid[firstSum][2]={v:"Total",s:sum};grid[firstSum][3]={v:total,s:sum};
+  return MiniXlsx.build({sheetName:"Packing List",cells:grid,merges,widths:[20,18,10,10,38,28,15,7,13,12,12,11],freezeRows:1,rowHeights:{0:32}});
+}
+
+$("btnExport").onclick=async()=>{
+  if(!rows.length){status("Nothing to export yet. Paste a table first.","err");return;}
+  const btn=$("btnExport");btn.disabled=true;
+  try{
+    const blob=buildWorkbook(rows,boxes);
+    const d=new Date();const stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const filename=`Aura Packing List ${stamp}.xlsx`;
+    let dl=null;
+    try{ if(window.claude&&window.claude.use) dl=await window.claude.use("downloads"); }catch(e){}
+    if(dl){ await dl.save({filename,data:blob}); }
+    else{
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;
+      document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+    }
+    status(`Saved ${filename}.`,"ok");
+  }catch(e){
+    status(e&&e.code==="declined"?"Save cancelled.":"Couldn't save the Excel file"+(e&&e.message?": "+e.message:"."),e&&e.code==="declined"?"":"err");
+  }finally{btn.disabled=false;}
+};
+
+renderRules();renderTable();
+</script>
+
+</body>
+</html>
