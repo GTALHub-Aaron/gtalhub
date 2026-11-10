@@ -281,9 +281,10 @@ const SHARE_FIELDS = [
   ["lbs","Pounds lost"],
   ["trend","History over time (their chart shows your line), not just your latest"],
   ["goal","Progress toward my goal, as a percent"],
-  ["weights","My actual weights (start, current and every weigh-in)"]
+  ["weights","My actual weights (start, current and every weigh-in)"],
+  ["edit","Let them add and remove my weigh-ins for me (they'll also see my actual weights)"]
 ];
-const DEFAULT_SHARE = {pct:true, lbs:false, trend:true, goal:false, weights:false};
+const DEFAULT_SHARE = {pct:true, lbs:false, trend:true, goal:false, weights:false, edit:false};
 function shareHTML(prefix, val, legend="What they can see about you"){
   val = {...DEFAULT_SHARE, ...(val||{})};
   return `<fieldset class="share" data-share="${prefix}"><legend>${esc(legend)}</legend>
@@ -295,6 +296,8 @@ function readShare(root){
   const out={}; root.querySelectorAll("input[data-k]").forEach(i=>out[i.dataset.k]=i.checked); return out;
 }
 function syncShareWarn(fs){
+  const wt=fs.querySelector('input[data-k="weights"]'), ed=fs.querySelector('input[data-k="edit"]');
+  if(wt && ed){ if(ed.checked) wt.checked=true; wt.disabled=ed.checked; }
   const v=readShare(fs); const w=fs.querySelector("[data-warn]");
   if(w) w.hidden = !(v.pct && v.lbs && !v.weights);
 }
@@ -331,6 +334,11 @@ async function loadPairings(){
   const acc=S.pairings.filter(p=>p.status==="accepted");
   const res=await Promise.all(acc.map(p=>sb.rpc("partner_progress",{p_id:p.id})));
   S.partner={}; acc.forEach((p,i)=>{ if(!res[i].error) S.partner[p.id]=res[i].data; });
+  S.names={}; S.pairings.forEach(p=>{ if(p.partner_id) S.names[p.partner_id]=p.partner_name; });
+  // weigh-ins of people who let you log for them
+  const editable=acc.filter(p=>p.their_share && p.their_share.edit);
+  const pw=await Promise.all(editable.map(p=>sb.from("weighins").select("*").eq("user_id",p.partner_id).order("date",{ascending:false}).order("created_at",{ascending:false})));
+  S.pw={}; editable.forEach((p,i)=>{ if(!pw[i].error) S.pw[p.id]=pw[i].data||[]; });
 }
 async function refresh(msg){
   try{ await loadAll(); if(msg) $("status").textContent=msg; }
@@ -397,7 +405,7 @@ function partnerCard(d, leading){
     goal=`<div><div class="goalbar"><i style="width:${d.goal_pct}%"></i></div><div class="goalline num"><span>${d.goal_pct}% of the way to their goal</span></div></div>`;
   }
   const SHORT={pct:"percent lost", lbs:"pounds lost", trend:"history over time", goal:"goal progress", weights:"actual weights"};
-  const hiddenBits=SHARE_FIELDS.filter(([k])=>!sh[k]).map(([k])=>SHORT[k]);
+  const hiddenBits=SHARE_FIELDS.filter(([k])=>k!=="edit" && !sh[k]).map(([k])=>SHORT[k]);
   return `<article class="card player them${leading?" is-leading":""}">${head}${big}
     <div class="stats num">${stats.map(([l,v])=>`<div class="stat"><div class="label">${l}</div><div class="v">${v}</div></div>`).join("")}</div>${goal}
     ${!sh.pct&&!sh.lbs?'<div class="hidden-note">They\'re keeping their progress numbers private.</div>':""}
@@ -465,6 +473,8 @@ function renderPairings(){
       ${m && (d.share.trend) ? `<div><div class="chart-head"><span class="label">${m==="pct"?"Percent lost":"Pounds lost"} over time</span>
         <div class="legend"><span><i style="background:var(--plum)"></i>You</span><span><i style="background:var(--orchid)"></i>${esc(d.name)}</span></div></div>
         <div class="chartbox" data-chart="${p.id}"></div></div>` : ""}
+      ${manageHTML(p,d)}
+      ${p.my_share && p.my_share.edit ? `<div class="small muted">${esc(d.name)} can add and remove your weigh-ins. Entries they make show "logged by ${esc(d.name)}" in your history.</div>` : ""}
       <details><summary>What ${esc(d.name)} can see about you</summary>
         <div class="form">${shareHTML("sh-"+p.id, p.my_share, "Shared with "+d.name)}
         <div class="actions"><button class="btn sm" data-act="saveShare" data-id="${p.id}">Save sharing</button>${endBtn}</div>
@@ -483,6 +493,31 @@ function renderPairings(){
     series.push({name:d.name, color:"var(--orchid)", pts: d.points.filter(x=>x[m]!=null).map(x=>({date:x.date, v:+x[m]}))});
     drawChart(box, series, m==="pct"?"%":" lb", `${m==="pct"?"Percent":"Pounds"} lost over time: you and ${d.name}`);
   });
+}
+
+/* logging for a partner who granted edit */
+function manageHTML(p, d){
+  if(!(p.their_share && p.their_share.edit) || !d.started) return "";
+  const list=S.pw[p.id]||[];
+  const rows=list.map(w=>{
+    const by = w.entered_by===S.user.id ? "you" : (w.entered_by===p.partner_id ? esc(d.name) : "someone else");
+    const del = S.confirmPDel===w.id
+      ? `<span class="actions"><button class="btn danger sm" data-act="pdelYes" data-id="${w.id}">Delete</button><button class="btn ghost sm" data-act="pdelNo">Keep</button></span>`
+      : `<button class="linkbtn" data-act="pdel" data-id="${w.id}" aria-label="Remove ${esc(d.name)}'s weigh-in on ${fmtDate(w.date)}">Remove</button>`;
+    return `<tr><td>${fmtDate(w.date)}</td><td class="r">${n1(+w.weight)}</td><td class="muted">${by}</td><td class="r">${del}</td></tr>`;
+  }).join("");
+  return `<details class="req" data-manage="${p.id}"${S.openManage===p.id?" open":""}><summary>Log or remove ${esc(d.name)}'s weigh-ins</summary>
+    <form class="form" data-plog="${p.id}" data-start="${esc(d.start_date)}" novalidate>
+      <div class="row">
+        <label class="field"><span>Date</span><input type="date" name="d" value="${todayStr()}" required></label>
+        <label class="field"><span>${esc(d.name)}'s weight (lbs)</span><input type="number" name="w" step="0.1" min="50" max="700" inputmode="decimal" required></label>
+      </div>
+      <div class="actions"><button class="btn sm" type="submit">Add for ${esc(d.name)}</button></div>
+      <div class="note" id="pNote-${p.id}"></div>
+    </form>
+    <div class="tablebox"><table><thead><tr><th>Date</th><th class="r">Weight</th><th>Logged by</th><th></th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="4" class="empty">No weigh-ins yet.</td></tr>`}</tbody></table></div>
+  </details>`;
 }
 
 function renderMyChart(){
@@ -538,7 +573,8 @@ function renderHistory(){
     const del=S.confirmDel===r.id
       ? `<span class="actions"><button class="btn danger sm" data-act="delYes" data-id="${r.id}">Delete</button><button class="btn ghost sm" data-act="delNo">Keep</button></span>`
       : `<button class="linkbtn" data-act="del" data-id="${r.id}" aria-label="Remove weigh-in on ${fmtDate(r.date)}">Remove</button>`;
-    return `<tr><td>${fmtDate(r.date)}</td><td class="r">${n1(r.weight)}</td><td class="r">${ch}</td><td class="r">${n1(r.lost)} lbs</td><td class="r"><strong>${n1(r.pct)}%</strong></td><td class="r">${del}</td></tr>`;
+    const by = r.entered_by && r.entered_by!==S.user.id ? ` <span class="pill">logged by ${esc((S.names||{})[r.entered_by]||"a partner")}</span>` : "";
+    return `<tr><td>${fmtDate(r.date)}${by}</td><td class="r">${n1(r.weight)}</td><td class="r">${ch}</td><td class="r">${n1(r.lost)} lbs</td><td class="r"><strong>${n1(r.pct)}%</strong></td><td class="r">${del}</td></tr>`;
   }).join("");
 }
 
@@ -640,6 +676,12 @@ document.addEventListener("click", async e=>{
     if(act==="del"){ S.confirmDel=id; renderHistory(); return; }
     if(act==="delNo"){ S.confirmDel=null; renderHistory(); return; }
     if(act==="delYes"){ S.confirmDel=null; const {error}=await sb.from("weighins").delete().eq("id",id); if(error) throw error; await refresh(); return; }
+    if(act==="pdel"||act==="pdelNo"){ S.confirmPDel= act==="pdel"?id:null; S.openManage=b.closest("[data-manage]").dataset.manage; renderPairings(); return; }
+    if(act==="pdelYes"){
+      S.openManage=b.closest("[data-manage]").dataset.manage; S.confirmPDel=null; b.disabled=true;
+      const {error}=await sb.from("weighins").delete().eq("id",id); if(error) throw error;
+      await loadPairings(); renderPairings(); return;
+    }
     if(act==="end"){ S.confirmEnd=id; renderPairings(); keepOpen(id); return; }
     if(act==="endNo"){ const was=S.confirmEnd; S.confirmEnd=null; renderPairings(); keepOpen(was); return; }
     if(act==="endYes"||act==="cancel"||act==="decline"){
@@ -662,6 +704,20 @@ document.addEventListener("click", async e=>{
   }catch(err){ $("status").textContent=errMsg(err); b.disabled=false; }
 });
 function keepOpen(id){ const d=document.querySelector(`.cmp[data-id="${id}"] details`); if(d) d.open=true; }
+
+document.addEventListener("submit", async e=>{
+  const f=e.target; if(!f.dataset.plog) return;
+  e.preventDefault();
+  const pid=f.dataset.plog, p=S.pairings.find(x=>x.id===pid); if(!p) return;
+  const w=parseFloat(f.elements.w.value), d=f.elements.d.value, nid="pNote-"+pid;
+  if(!(w>=50&&w<=700)) return note(nid,"Enter a weight between 50 and 700 lbs.","err");
+  if(!d) return note(nid,"Pick a date.","err");
+  if(f.dataset.start && d<f.dataset.start) return note(nid,`That date is before ${p.partner_name}'s start date.`,"err");
+  const {error}=await sb.from("weighins").insert({user_id:p.partner_id, date:d, weight:Math.round(w*10)/10});
+  if(error) return note(nid,"Couldn't save: "+errMsg(error),"err");
+  S.openManage=pid; await loadPairings(); renderPairings();
+  note(nid,`Logged ${n1(w)} lbs for ${p.partner_name}.`,"ok");
+});
 
 document.addEventListener("submit", async e=>{
   if(e.target.id!=="editForm") return;
