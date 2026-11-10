@@ -10,23 +10,24 @@
 <style>
 /* Layout: hero, then your card and log form, your chart and history, then comparisons (requests and head-to-head boards). */
 :root{
-  --bg:#f6f2fb; --surface:#ffffff; --surface-2:#efe8f8; --line:#e0d5ee;
-  --fg:#2a1d3a; --muted:#6e6082;
-  --plum:#5b2a86; --plum-soft:#ece0f7;
-  --orchid:#b0469a; --orchid-soft:#f8e3f1;
-  --lav:#9b87f5; --good:#2f8f5b; --bad:#c2410c; --warn:#a15c00;
-  --hero-a:#3b1a5c; --hero-b:#6a2f8f; --hero-fg:#fbf7ff;
+  /* neutral base: used on the sign-in screens; signed-in users get their theme on top */
+  --bg:#f4f4f5; --surface:#ffffff; --surface-2:#ececee; --line:#dedee3;
+  --fg:#1d1d22; --muted:#6b6b76;
+  --plum:#3f3f46; --plum-soft:#e7e7ea;
+  --orchid:#71717a; --orchid-soft:#ededf0;
+  --lav:#8a8aa0; --good:#2f8f5b; --bad:#c2410c; --warn:#a15c00;
+  --hero-a:#27272a; --hero-b:#3f3f46; --hero-fg:#fafafa; --hero-em:#d4d4d8; --hero-glow:rgba(255,255,255,.10);
   --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:16px;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#17111f; --surface:#211830; --surface-2:#2a1f3b; --line:#3a2d4f;
-  --fg:#f1eaf9; --muted:#b3a5c7;
-  --plum:#b78cf0; --plum-soft:#33244a;
-  --orchid:#f08ad6; --orchid-soft:#3d2140;
-  --lav:#a594ff; --good:#5fd394; --bad:#ff8a5b; --warn:#e2a146;
-  --hero-a:#2a1242; --hero-b:#4b2170; --hero-fg:#fbf7ff;
+  --bg:#141416; --surface:#1c1c1f; --surface-2:#26262a; --line:#34343a;
+  --fg:#ededf0; --muted:#a1a1aa;
+  --plum:#d4d4d8; --plum-soft:#2e2e33;
+  --orchid:#a1a1aa; --orchid-soft:#2a2a2f;
+  --lav:#a5a5c0; --good:#5fd394; --bad:#ff8a5b; --warn:#e2a146;
+  --hero-a:#18181b; --hero-b:#2e2e33; --hero-fg:#fafafa; --hero-em:#d4d4d8; --hero-glow:rgba(255,255,255,.08);
   color-scheme:dark;
 }}
 *{box-sizing:border-box}
@@ -42,12 +43,14 @@ h3{font-size:20px}
 
 /* hero */
 .hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:var(--hero-fg);border-radius:22px;padding:22px 24px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:end;justify-content:space-between;position:relative;overflow:hidden}
-.hero::after{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(240,138,214,.35),transparent 70%);pointer-events:none}
+.hero::after{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--hero-glow),transparent 70%);pointer-events:none}
 .hero h1{font-size:clamp(30px,6vw,46px);font-weight:800;line-height:1.05}
-.hero h1 em{font-style:normal;color:#f3b6e6}
+.hero h1 em{font-style:normal;color:var(--hero-em)}
 .hero p{margin:6px 0 0;opacity:.85;max-width:50ch}
 .who{position:relative;z-index:1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
 .who .btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.who select{font:inherit;font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:5px 8px}
+.who select option{color:#000}
 .home{position:relative;z-index:1;color:rgba(255,255,255,.8);font-size:13px;text-decoration:none}
 .home:hover{color:#fff}
 
@@ -154,6 +157,8 @@ tr:last-child td{border-bottom:0}
     </div>
     <div class="who" id="who" hidden>
       <span id="whoName"></span>
+      <label id="themeWrap" hidden><span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Theme</span>
+        <select id="themeSel" aria-label="Theme"></select></label>
       <button class="btn sm" id="btnExport" type="button">Export my data</button>
       <button class="btn sm" id="btnSignOut" type="button">Sign out</button>
     </div>
@@ -273,12 +278,51 @@ const fmtShort = s => { const [y,m,d]=s.split("-").map(Number); return new Date(
 const note = (id,msg,cls="") => { const el=$(id); el.textContent=msg; el.className="note"+(cls?" "+cls:""); };
 const errMsg = e => (e && (e.message || e.error_description)) || "Something went wrong. Try again.";
 
+/* ---------- themes ----------
+   Plum is Gerry's original. Each theme has a light and a dark set; the device's dark-mode setting picks one.
+   Variables: bg surface s2 line fg muted | me meSoft (your color) | them themSoft (partner color) | lav (focus) | heroA heroB heroEm glow */
+const THEMES = {
+  plum: { label:"Plum",
+    light:{bg:"#f6f2fb",surface:"#ffffff",s2:"#efe8f8",line:"#e0d5ee",fg:"#2a1d3a",muted:"#6e6082",me:"#5b2a86",meSoft:"#ece0f7",them:"#b0469a",themSoft:"#f8e3f1",lav:"#9b87f5",heroA:"#3b1a5c",heroB:"#6a2f8f",heroEm:"#f3b6e6",glow:"rgba(240,138,214,.35)"},
+    dark: {bg:"#17111f",surface:"#211830",s2:"#2a1f3b",line:"#3a2d4f",fg:"#f1eaf9",muted:"#b3a5c7",me:"#b78cf0",meSoft:"#33244a",them:"#f08ad6",themSoft:"#3d2140",lav:"#a594ff",heroA:"#2a1242",heroB:"#4b2170",heroEm:"#f3b6e6",glow:"rgba(240,138,214,.30)"} },
+  ocean: { label:"Ocean",
+    light:{bg:"#f1f6fb",surface:"#ffffff",s2:"#e6eef7",line:"#d3e0ee",fg:"#13253a",muted:"#5a6b80",me:"#1f5f99",meSoft:"#dcebf8",them:"#0f8f84",themSoft:"#d8f3ef",lav:"#5aa2e6",heroA:"#0f2f52",heroB:"#1f6aa5",heroEm:"#9fe3dc",glow:"rgba(120,210,230,.35)"},
+    dark: {bg:"#0f161e",surface:"#16212c",s2:"#1d2b39",line:"#2a3b4d",fg:"#e6eef7",muted:"#9fb2c6",me:"#7fb6ec",meSoft:"#1d3247",them:"#5fd3c6",themSoft:"#173a37",lav:"#7fb6ec",heroA:"#0b2238",heroB:"#174a75",heroEm:"#9fe3dc",glow:"rgba(120,210,230,.25)"} },
+  forest: { label:"Forest",
+    light:{bg:"#f3f7f2",surface:"#ffffff",s2:"#e7efe5",line:"#d4e2d1",fg:"#1d2b1f",muted:"#5d6f5f",me:"#2f6b3a",meSoft:"#e0efe2",them:"#b06f12",themSoft:"#f7ead3",lav:"#7bbf86",heroA:"#1a3620",heroB:"#3a7a46",heroEm:"#f3d38a",glow:"rgba(243,211,138,.30)"},
+    dark: {bg:"#111811",surface:"#182219",s2:"#1f2c20",line:"#2c3d2d",fg:"#e7f0e5",muted:"#a3b7a4",me:"#86c993",meSoft:"#1f3a24",them:"#e9b25a",themSoft:"#3a2d16",lav:"#86c993",heroA:"#122916",heroB:"#2a5a33",heroEm:"#f3d38a",glow:"rgba(243,211,138,.22)"} },
+  sunset: { label:"Sunset",
+    light:{bg:"#fdf5f0",surface:"#ffffff",s2:"#f8e9df",line:"#f0d8c8",fg:"#3a1f14",muted:"#8a6252",me:"#c2410c",meSoft:"#fde5d6",them:"#be185d",themSoft:"#fbe0ec",lav:"#f59e6b",heroA:"#6b2410",heroB:"#c2410c",heroEm:"#fcd34d",glow:"rgba(252,211,77,.35)"},
+    dark: {bg:"#1a120e",surface:"#241914",s2:"#30211a",line:"#453026",fg:"#fbece4",muted:"#c9a89a",me:"#fb8a55",meSoft:"#43231a",them:"#f472b6",themSoft:"#45192f",lav:"#fb8a55",heroA:"#4a1a0b",heroB:"#8f300d",heroEm:"#fcd34d",glow:"rgba(252,211,77,.25)"} },
+  graphite: { label:"Graphite",
+    light:{bg:"#f4f4f5",surface:"#ffffff",s2:"#ececee",line:"#dedee3",fg:"#1d1d22",muted:"#6b6b76",me:"#27272a",meSoft:"#e4e4e7",them:"#2563eb",themSoft:"#dde7fb",lav:"#8a8aa0",heroA:"#18181b",heroB:"#3f3f46",heroEm:"#93c5fd",glow:"rgba(147,197,253,.25)"},
+    dark: {bg:"#121214",surface:"#1b1b1e",s2:"#252529",line:"#333338",fg:"#ededf0",muted:"#a1a1aa",me:"#e4e4e7",meSoft:"#2e2e33",them:"#7aa7f7",themSoft:"#1c2840",lav:"#a5a5c0",heroA:"#0f0f11",heroB:"#2a2a2f",heroEm:"#93c5fd",glow:"rgba(147,197,253,.18)"} }
+};
+const VAR_MAP={bg:"--bg",surface:"--surface",s2:"--surface-2",line:"--line",fg:"--fg",muted:"--muted",me:"--plum",meSoft:"--plum-soft",them:"--orchid",themSoft:"--orchid-soft",lav:"--lav",heroA:"--hero-a",heroB:"--hero-b",heroEm:"--hero-em",glow:"--hero-glow"};
+const darkMQ = window.matchMedia("(prefers-color-scheme: dark)");
+let currentTheme = null;   // null = neutral (signed out)
+function applyTheme(name){
+  currentTheme = THEMES[name] ? name : null;
+  const st=document.documentElement.style;
+  Object.values(VAR_MAP).forEach(v=>st.removeProperty(v));
+  if(currentTheme){
+    const set=THEMES[currentTheme][darkMQ.matches?"dark":"light"];
+    Object.entries(VAR_MAP).forEach(([k,v])=>st.setProperty(v,set[k]));
+  }
+  try{ currentTheme ? localStorage.setItem("wo-theme",currentTheme) : localStorage.removeItem("wo-theme"); }catch(e){}
+  const sel=document.getElementById("themeSel"); if(sel && currentTheme) sel.value=currentTheme;
+}
+darkMQ.addEventListener("change", ()=>applyTheme(currentTheme));
+
 const S = { user:null, profile:null, weighins:[], pairings:[], partner:{}, editing:false, confirmDel:null, confirmEnd:null, authTab:"in" };
 
 /* ---------- views ---------- */
 function show(view){
   ["vLoading","vAuth","vReset","vSetup","vApp"].forEach(v => $(v).hidden = v!==view);
   $("who").hidden = !(view==="vApp" || view==="vSetup");
+  $("themeWrap").hidden = view!=="vApp";
+  if(view==="vApp") applyTheme((S.profile && S.profile.theme) || "plum");
+  else if(view!=="vLoading") applyTheme(null);
 }
 
 /* ---------- share settings ---------- */
@@ -783,7 +827,19 @@ $("btnExport").addEventListener("click", ()=>{
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
 });
 
+/* ---------- theme picker ---------- */
+$("themeSel").innerHTML=Object.entries(THEMES).map(([k,t])=>`<option value="${k}">${t.label}${k==="plum"?" (original)":""}</option>`).join("");
+$("themeSel").addEventListener("change", async e=>{
+  const t=e.target.value, prev=S.profile.theme;
+  applyTheme(t); S.profile.theme=t;
+  const {error}=await sb.from("profiles").update({theme:t}).eq("id",S.user.id);
+  if(error){ S.profile.theme=prev; applyTheme(prev); $("status").textContent="Couldn't save your theme: "+errMsg(error); }
+  else $("status").textContent=`Theme set to ${THEMES[t].label}. It'll load whenever you sign in.`;
+});
+
 /* ---------- start ---------- */
+// signed-in visitors get their last theme right away instead of a neutral flash
+try{ if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))){ const t=localStorage.getItem("wo-theme"); if(t) applyTheme(t); } }catch(e){}
 $("lDate").value=todayStr();
 sb.auth.onAuthStateChange((event, session)=>{
   if(event==="PASSWORD_RECOVERY"){ S.user=session.user; show("vReset"); return; }
