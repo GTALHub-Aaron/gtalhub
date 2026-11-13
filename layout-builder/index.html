@@ -5,54 +5,76 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Building Layout Builder | GTALHub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f4f5f7; --panel:#ffffff; --ink:#1f2933; --muted:#66727f; --line:#dde1e6;
   --accent:#2563eb; --accent-soft:#e7efff; --danger:#c2410c;
-  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --hover:#eef1f5; --icon:#4b5563; --canvas:#fbfbfc; --hintbg:rgba(255,255,255,.92); --warnbg:#fff4e5; --warnfg:#9a3412; --accent-ink:#1d4ed8; --field:#ffffff;
+  color-scheme:light;
+  --mono:'JetBrains Mono','Cascadia Mono',Consolas,Menlo,monospace; --sans:Barlow,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+[data-theme=dark]{
+  --bg:#0f1318; --panel:#171c22; --ink:#e6eaef; --muted:#9aa5b1; --line:#2a313a;
+  --accent:#3b82f6; --accent-soft:#1c2a44; --danger:#f97316;
+  --hover:#222a33; --icon:#b4bec9; --canvas:#14181e; --hintbg:rgba(23,28,34,.92); --warnbg:#3a2614; --warnfg:#fdba74; --accent-ink:#93b4ff; --field:#0f1318;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 var(--sans)}
 button,input,select{font:inherit;color:inherit}
+input[type=text],select,textarea{background:var(--field);color:var(--ink)}
 .app{display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:52px 1fr 300px;height:100vh}
 header{grid-column:1/4;display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
-#title{font-weight:600;font-size:16px;border:1px solid transparent;border-radius:6px;padding:4px 6px;min-width:180px;background:transparent}
+#title{font-weight:600;font-size:17px;letter-spacing:.02em;border:1px solid transparent;border-radius:6px;padding:4px 6px;min-width:180px;background:transparent}
 #title:hover,#title:focus{border-color:var(--line);outline:none}
 .group{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px}
 .btn{border:0;background:transparent;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
-.btn:hover{background:#e9ecf0}
+.btn:hover{background:var(--hover)}
 .btn.on{background:var(--accent);color:#fff}
 .btn:disabled{opacity:.4;cursor:default;background:transparent}
 .btn.outline{border:1px solid var(--line);background:var(--panel)}
-.btn.outline:hover{background:#f0f2f5}
+.btn.outline:hover{background:var(--hover)}
 .btn.danger{color:var(--danger)}
 .spacer{flex:1}
 label.inline{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
 select{border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--panel)}
 .rail{grid-column:1;grid-row:2;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:var(--panel);border-right:1px solid var(--line);z-index:6}
-.tb{position:relative;width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:#4b5563;cursor:pointer;padding:0}
-.tb:hover{background:#eef1f5;color:var(--ink)}
+.tb{position:relative;width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:var(--icon);cursor:pointer;padding:0}
+.tb:hover{background:var(--hover);color:var(--ink)}
 .tb.on{background:var(--accent);color:#fff}
 .tb:disabled{opacity:.35;cursor:default;background:transparent}
 .tb:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .tb::after{content:attr(data-tip);position:absolute;left:46px;top:50%;transform:translateY(-50%);white-space:nowrap;background:#1f2933;color:#fff;font-size:12.5px;padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:20}
 .tb[data-key]::after{content:attr(data-tip) "  ·  " attr(data-key)}
 .tb:hover::after,.tb:focus-visible::after{opacity:1;transition-delay:.25s}
+.tgl{position:relative;display:inline-flex;align-items:center;cursor:pointer}
+.tgl input{position:absolute;opacity:0;width:0;height:0}
+.tgl .track{width:46px;height:24px;border-radius:12px;background:#d5dae1;border:1px solid var(--line);position:relative;transition:background .15s}
+.tgl .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;color:#d97706;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+.tgl input:checked+.track{background:var(--accent)}
+.tgl input:checked+.track .knob{left:24px;color:#1e3a8a}
+.tgl input:focus-visible+.track{outline:2px solid var(--accent);outline-offset:2px}
+.tgl .ic-moon{display:none}.tgl input:checked+.track .ic-moon{display:grid}.tgl input:checked+.track .ic-sun{display:none}
+.tgl::after,.hb::after{content:attr(data-tip);position:absolute;right:0;left:auto;top:calc(100% + 8px);transform:none;white-space:nowrap;background:#1f2933;color:#fff;font-size:12.5px;padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:20}
+.tgl:hover::after{opacity:1;transition-delay:.25s}
+header .tb.hb{width:32px;height:32px}
+header .tb.hb[data-key]::after{content:attr(data-tip) "  ·  " attr(data-key)}
+.hsep{width:1px;height:22px;background:var(--line);margin:0 2px}
 .rail .sep{width:26px;height:1px;background:var(--line);margin:4px 0}
-.stage{position:relative;overflow:hidden;background:#fbfbfc}
-svg#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;user-select:none;display:block}
-.hint{position:absolute;left:12px;top:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px;color:var(--muted);pointer-events:none;max-width:70%}
+.stage{position:relative;overflow:hidden;background:var(--canvas)}
+svg#cv{font-family:var(--sans);position:absolute;inset:0;width:100%;height:100%;touch-action:none;user-select:none;display:block}
+.hint{position:absolute;left:12px;top:10px;background:var(--hintbg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px;color:var(--muted);pointer-events:none;max-width:70%}
 aside{background:var(--panel);border-left:1px solid var(--line);overflow:auto;grid-row:2/4;grid-column:3}
 .sec{padding:14px;border-bottom:1px solid var(--line)}
 .sec h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
 .total{font:600 30px/1.1 var(--mono)}
 .total small{font:500 13px var(--sans);color:var(--muted);margin-left:4px}
-.warn{margin-top:8px;padding:7px 9px;border-radius:6px;background:#fff4e5;color:#9a3412;font-size:12.5px}
+.warn{margin-top:8px;padding:7px 9px;border-radius:6px;background:var(--warnbg);color:var(--warnfg);font-size:12.5px}
 .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
 .rooms{list-style:none;margin:0;padding:0}
 .rooms li{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:6px;cursor:pointer}
-.rooms li:hover{background:#f2f4f7}
+.rooms li:hover{background:var(--hover)}
 .rooms li.sel{background:var(--accent-soft)}
 .rooms li.excl .nm,.rooms li.excl .ar{color:#9aa3ad;text-decoration:line-through}
 .sw{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.25);flex:none}
@@ -60,7 +82,7 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow:auto;gr
 .ar{font-family:var(--mono);font-size:13px}
 .tag{font-size:10.5px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px}
 .ar .under,.ar .over{font-size:11px;margin-left:6px;padding:0 4px;border-radius:4px}
-.ar .under{background:#fff4e5;color:#9a3412}.ar .over{background:#e8f1ff;color:#1d4ed8}
+.ar .under{background:var(--warnbg);color:var(--warnfg)}.ar .over{background:var(--accent-soft);color:var(--accent-ink)}
 .lg{display:flex;align-items:center;gap:8px;font-size:13px;padding:2px 0}.lg i{width:16px;height:6px;border-radius:2px;flex:none}.lg b{margin-left:auto;font-family:var(--mono);font-weight:500}
 .empty{color:var(--muted);font-size:13px}
 .field{display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;margin-bottom:8px}
@@ -85,7 +107,7 @@ footer b{font-family:var(--mono);font-weight:500;color:var(--ink)}
 .card p{margin:0 0 10px;color:var(--muted);font-size:13px}
 .card textarea{width:100%;height:220px;font:12px var(--mono);border:1px solid var(--line);border-radius:8px;padding:8px}
 .card img{max-width:100%;border:1px solid var(--line);border-radius:6px}
-kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fafbfc}
+kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--bg)}
 @media (max-width:820px){
   .app{grid-template-columns:44px 1fr;grid-template-rows:auto 1fr auto 40vh}
   .rail{overflow-y:auto}.tb{width:34px;height:34px}
@@ -112,6 +134,9 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
     <button class="btn outline" id="save">Save plan</button>
     <button class="btn outline" id="load">Open plan</button>
     <button class="btn outline danger" id="clear">New</button>
+    <span class="hsep"></span>
+    <label class="tgl" id="themeL" data-tip="Dark mode"><input type="checkbox" id="themeT" aria-label="Dark mode"><span class="track"><span class="knob"><span class="ic-sun"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="ic-moon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span></span></span></label>
+    <button class="tb hb" id="helpB" data-tip="Help &amp; shortcuts" data-key="?" aria-label="Help and shortcuts"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
   </header>
 
   <nav class="rail" role="toolbar" aria-label="Tools">
@@ -192,20 +217,6 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
     <div class="sec">
       <h3>Rooms</h3>
       <ul class="rooms" id="list"></ul>
-    </div>
-    <div class="sec">
-      <h3>Shortcuts</h3>
-      <div class="sub" style="line-height:1.9">
-        <kbd>V</kbd> select · <kbd>B</kbd> building · <kbd>R</kbd> rectangle · <kbd>P</kbd> shape<br>
-        Double-click a room to rename or recolor it · click a wall dimension to type a length<br>
-        Right-click a corner to lock it so resizing never moves it<br>
-        Drag empty space or hold <kbd>Space</kbd> to pan · scroll to zoom<br>
-        Shape tool: click points, click the first point or press <kbd>Enter</kbd> to close · <kbd>Shift</kbd> keeps lines straight<br>
-        <kbd>Shift</kbd>-click or <kbd>Shift</kbd>-drag a box to select several rooms<br>
-        Walls, corners and rooms snap to nearby walls (pink guide)<br>
-        Arrow keys nudge · <kbd>Del</kbd> delete · <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicate<br>
-        <kbd>Ctrl</kbd>+<kbd>M</kbd> merge selected rooms · <kbd>Ctrl</kbd>+<kbd>C</kbd> copy · <kbd>Ctrl</kbd>+<kbd>X</kbd> cut · <kbd>Ctrl</kbd>+<kbd>V</kbd> paste
-      </div>
     </div>
   </aside>
 
@@ -317,7 +328,11 @@ function zoomAt(f,cx,cy){const [w,h]=size();cx??=w/2;cy??=h/2;const wx=cx/view.s
 // ---------- drawing ----------
 const fitText=(t,w,fs)=>{const m=Math.floor(w/(fs*0.56));return t.length<=m?t:(m<4?'':t.slice(0,m-1)+'…')};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function drawPlan(v,w,h,o){
+let theme='light';
+const PAL={light:{bg:'#fbfbfc',minor:'#eceef1',major:'#d9dde2',floor:'#ffffff',wall:'#1f2933',roomStroke:'#3b4856',dim:'#5b6673',selDim:'#1d4ed8',halo:'#ffffff',selDoor:'#111827'},
+  dark:{bg:'#14181e',minor:'#1d232b',major:'#2a323d',floor:'#1a1f26',wall:'#cbd5e1',roomStroke:'#0f1318',dim:'#a3adb9',selDim:'#93b4ff',halo:'#14181e',selDoor:'#f1f5f9'}};
+const pal=o=>o&&o.export?{...PAL.light,bg:'#ffffff'}:PAL[theme];
+function drawPlan(v,w,h,o){const C_=pal(o);
   const X=x=>((x-v.ox)*v.sc).toFixed(2),Y=y=>((y-v.oy)*v.sc).toFixed(2);
   let g='';
   // grid
@@ -327,16 +342,16 @@ function drawPlan(v,w,h,o){
   let minor='',maj='';
   for(let x=x0;x<=x1;x+=st){const m=Math.abs(x/major-Math.round(x/major))<1e-6;(m?(maj+=`M${X(x)} 0V${h}`):(minor+=`M${X(x)} 0V${h}`))}
   for(let y=y0;y<=y1;y+=st){const m=Math.abs(y/major-Math.round(y/major))<1e-6;(m?(maj+=`M0 ${Y(y)}H${w}`):(minor+=`M0 ${Y(y)}H${w}`))}
-  g+=`<rect width="${w}" height="${h}" fill="${o.export?'#ffffff':'#fbfbfc'}"/>`;
-  g+=`<path d="${minor}" stroke="#eceef1" stroke-width="1"/><path d="${maj}" stroke="#d9dde2" stroke-width="1"/>`;
+  g+=`<rect width="${w}" height="${h}" fill="${C_.bg}"/>`;
+  g+=`<path d="${minor}" stroke="${C_.minor}" stroke-width="1"/><path d="${maj}" stroke="${C_.major}" stroke-width="1"/>`;
   // rooms
   for(const r of S.rooms.filter(r=>r.kind==='building')){
     const pts=r.pts.map(p=>`${X(p[0])},${Y(p[1])}`).join(' ');const isSel=!o.export&&multi.has(r.id);
-    g+=`<polygon data-id="${r.id}" points="${pts}" fill="#ffffff" fill-opacity=".85" stroke="${isSel?'#2563eb':'#1f2933'}" stroke-width="${isSel?5:4}" pointer-events="stroke" style="cursor:move"/>`;
+    g+=`<polygon data-id="${r.id}" points="${pts}" fill="${C_.floor}" fill-opacity=".85" stroke="${isSel?'#2563eb':C_.wall}" stroke-width="${isSel?5:4}" pointer-events="stroke" style="cursor:move"/>`;
   }
   for(const r of S.rooms.filter(r=>r.kind!=='building')){
     const pts=r.pts.map(p=>`${X(p[0])},${Y(p[1])}`).join(' ');const isSel=!o.export&&multi.has(r.id);
-    g+=`<polygon data-id="${r.id}" points="${pts}" fill="${r.color}" fill-opacity="${r.count===false?0.45:0.9}" stroke="${isSel?'#2563eb':'#3b4856'}" stroke-width="${isSel?2.5:1.5}" ${r.count===false?'stroke-dasharray="6 4"':''} style="cursor:${tool==='select'?'move':'crosshair'}"/>`;
+    g+=`<polygon data-id="${r.id}" points="${pts}" fill="${r.color}" fill-opacity="${r.count===false?0.45:0.9}" stroke="${isSel?'#2563eb':C_.roomStroke}" stroke-width="${isSel?2.5:1.5}" ${r.count===false?'stroke-dasharray="6 4"':''} style="cursor:${tool==='select'?'move':'crosshair'}"/>`;
   }
   // dimensions
   if(showDims){
@@ -348,7 +363,7 @@ function drawPlan(v,w,h,o){
         const off=13*k/v.sc;const tx=+X(mx-nx*off),ty=+Y(my-ny*off);
         let ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
         const ed=!o.export&&tool==='select'&&(Math.abs(a[0]-b[0])<1e-6||Math.abs(a[1]-b[1])<1e-6);
-        g+=`<text ${ed?`data-dim="${r.id}:${i}" pointer-events="all" style="cursor:text"`:'pointer-events="none"'} x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${ang.toFixed(1)} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-size="${11*k}" font-family="IBM Plex Mono,ui-monospace,monospace" fill="${r.id===sel&&!o.export?'#1d4ed8':'#5b6673'}" paint-order="stroke" stroke="#fff" stroke-width="3">${fmtLen(L)}</text>`;});
+        g+=`<text ${ed?`data-dim="${r.id}:${i}" pointer-events="all" style="cursor:text"`:'pointer-events="none"'} x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${ang.toFixed(1)} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-size="${11*k}" font-family="JetBrains Mono,Cascadia Mono,Consolas,Menlo,monospace" fill="${r.id===sel&&!o.export?C_.selDim:C_.dim}" paint-order="stroke" stroke="${C_.halo}" stroke-width="3">${fmtLen(L)}</text>`;});
     }
   }
   // labels (anchored to a fixed spot in the room, so they don't drift when zooming)
@@ -362,9 +377,9 @@ function drawPlan(v,w,h,o){
     const ar_=!two?'':(along-6>=full.length*af*0.62?full:along-6>=fmtArea(a).length*af*0.62?fmtArea(a):'');
     const px=+X(L_.x),py=+Y(L_.y);const tr=L_.rot?` transform="rotate(-90 ${px.toFixed(1)} ${py.toFixed(1)})"`:'';
     const y1=ar_?py-2:py+fs*0.35,y2=py+fs+1;
-    g+=`<g pointer-events="none" font-family="IBM Plex Sans,system-ui,sans-serif" text-anchor="middle"${tr}>`+
-       `<text x="${px.toFixed(1)}" y="${y1.toFixed(1)}" font-size="${fs}" font-weight="600" fill="#1f2933" paint-order="stroke" stroke="${halo?'#ffffff':r.color}" stroke-width="${halo?3:2.5}" stroke-linejoin="round">${esc(nm_)}</text>`+
-       (ar_?`<text x="${px.toFixed(1)}" y="${y2.toFixed(1)}" font-size="${af}" font-family="IBM Plex Mono,ui-monospace,monospace" fill="#4b5563">${ar_}</text>`:'')+`</g>`;
+    g+=`<g pointer-events="none" font-family="Barlow,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif" text-anchor="middle"${tr}>`+
+       `<text x="${px.toFixed(1)}" y="${y1.toFixed(1)}" font-size="${fs}" font-weight="600" fill="#1f2933" paint-order="stroke" stroke="${halo?C_.halo:r.color}" stroke-width="${halo?3:2.5}" stroke-linejoin="round">${esc(nm_)}</text>`+
+       (ar_?`<text x="${px.toFixed(1)}" y="${y2.toFixed(1)}" font-size="${af}" font-family="JetBrains Mono,Cascadia Mono,Consolas,Menlo,monospace" fill="#4b5563">${ar_}</text>`:'')+`</g>`;
   }
   // doors
   const cnt={};
@@ -374,7 +389,7 @@ function drawPlan(v,w,h,o){
     const dep=Math.max(5*v.sc,7*k);const ox=o.nx*dep,oy=o.ny*dep;const sw=Math.max(o.w*v.sc,6*k);
     const mx=+X(o.x),my=+Y(o.y);const ex=o.ux*sw/2,ey=o.uy*sw/2;
     g+=`<g data-o="${o.id}" style="cursor:${tool==='select'?'grab':'crosshair'}">`;
-    g+=`<line x1="${(mx-ex).toFixed(1)}" y1="${(my-ey).toFixed(1)}" x2="${(mx+ex).toFixed(1)}" y2="${(my+ey).toFixed(1)}" stroke="#ffffff" stroke-width="${8*k}" data-o="${o.id}"/>`;
+    g+=`<line x1="${(mx-ex).toFixed(1)}" y1="${(my-ey).toFixed(1)}" x2="${(mx+ex).toFixed(1)}" y2="${(my+ey).toFixed(1)}" stroke="${C_.floor}" stroke-width="${8*k}" data-o="${o.id}"/>`;
     if(o.type==='dock'||o.type==='drivein'){
       g+=`<polygon data-o="${o.id}" points="${(mx-ex).toFixed(1)},${(my-ey).toFixed(1)} ${(mx+ex).toFixed(1)},${(my+ey).toFixed(1)} ${(mx+ex+ox).toFixed(1)},${(my+ey+oy).toFixed(1)} ${(mx-ex+ox).toFixed(1)},${(my-ey+oy).toFixed(1)}" fill="${D.color}" fill-opacity="${o.type==='dock'?0.9:0.35}" stroke="${D.color}" stroke-width="${1.5*k}"/>`;
     }else if(o.type==='entrance'){
@@ -383,12 +398,12 @@ function drawPlan(v,w,h,o){
     }else{
       g+=`<line data-o="${o.id}" x1="${(mx).toFixed(1)}" y1="${(my).toFixed(1)}" x2="${(mx+ox).toFixed(1)}" y2="${(my+oy).toFixed(1)}" stroke="${D.color}" stroke-width="${2*k}"/>`;
     }
-    g+=`<line data-o="${o.id}" x1="${(mx-ex).toFixed(1)}" y1="${(my-ey).toFixed(1)}" x2="${(mx+ex).toFixed(1)}" y2="${(my+ey).toFixed(1)}" stroke="${isSel?'#111827':D.color}" stroke-width="${(isSel?6:4)*k}" stroke-linecap="butt"/>`;
+    g+=`<line data-o="${o.id}" x1="${(mx-ex).toFixed(1)}" y1="${(my-ey).toFixed(1)}" x2="${(mx+ex).toFixed(1)}" y2="${(my+ey).toFixed(1)}" stroke="${isSel?C_.selDoor:D.color}" stroke-width="${(isSel?6:4)*k}" stroke-linecap="butt"/>`;
     if(!EXP)g+=`<circle data-o="${o.id}" cx="${(mx+ox/2).toFixed(1)}" cy="${(my+oy/2).toFixed(1)}" r="${Math.max(sw/2,10)}" fill="#000" fill-opacity="0"/>`;
     if(isSel)g+=`<circle cx="${mx}" cy="${my}" r="${Math.max(sw,14)/2+5}" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
     const lab=o.label||(o.type==='dock'?'D'+cnt.dock:o.type==='drivein'?'OH'+cnt.drivein:o.type==='entrance'?'ENT':'EX');
     if(v.sc*Math.max(o.w,6)>=10*k||o.label){const off_=(o.type==='entrance'?dep*1.8:dep)+10*k;const lx=mx+o.nx*off_,ly=my+o.ny*off_;
-      g+=`<text pointer-events="none" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${o.nx>0.5?'start':o.nx<-0.5?'end':'middle'}" dominant-baseline="middle" font-size="${10.5*k}" font-weight="600" font-family="IBM Plex Sans,system-ui,sans-serif" fill="${D.color}" paint-order="stroke" stroke="#fff" stroke-width="3">${esc(lab)}</text>`}
+      g+=`<text pointer-events="none" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${o.nx>0.5?'start':o.nx<-0.5?'end':'middle'}" dominant-baseline="middle" font-size="${10.5*k}" font-weight="600" font-family="Barlow,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif" fill="${D.color}" paint-order="stroke" stroke="${C_.halo}" stroke-width="3">${esc(lab)}</text>`}
     g+=`</g>`;
   }
   return g;
@@ -405,18 +420,18 @@ function render(){
       g+=`<line data-e="${r.id}:${i}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#2563eb" stroke-opacity="0" stroke-width="12" style="cursor:${cur}"/>`;
       g+=`<rect data-e="${r.id}:${i}" x="${mx-(v_?4:11)}" y="${my-(v_?11:4)}" width="${v_?8:22}" height="${v_?22:8}" rx="3" fill="#2563eb" stroke="#fff" stroke-width="1.5" style="cursor:${cur}"/>`});}
   if(drag&&drag.type==='edge'){for(const it of drag.set){const rr=byId(it.id);if(!rr)continue;const a=rr.pts[it.i],b=rr.pts[(it.i+1)%rr.pts.length];g+=`<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="#2563eb" stroke-width="3" pointer-events="none"/>`}
-    g+=`<text x="${drag.lx+12}" y="${drag.ly-12}" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1d4ed8" paint-order="stroke" stroke="#fff" stroke-width="3" pointer-events="none">${drag.set.length>1?drag.set.length+' rooms · ':''}${drag.axis==='x'?'x':'y'} = ${fmtLen(drag.cur)}</text>`}
+    g+=`<text x="${drag.lx+12}" y="${drag.ly-12}" font-size="12" font-family="JetBrains Mono,Cascadia Mono,Consolas,Menlo,monospace" fill="#1d4ed8" paint-order="stroke" stroke="${PAL[theme].halo}" stroke-width="3" pointer-events="none">${drag.set.length>1?drag.set.length+' rooms · ':''}${drag.axis==='x'?'x':'y'} = ${fmtLen(drag.cur)}</text>`}
   if(r&&tool==='select'){r.pts.forEach((p,i)=>{const L=isLocked(r,p);g+=L?`<rect data-h="${r.id}:${i}" x="${X(p[0])-7}" y="${Y(p[1])-7}" width="14" height="14" rx="3" fill="#1f2933" stroke="#fff" stroke-width="2" style="cursor:not-allowed"><title>Locked corner (right-click to unlock)</title></rect><path d="M${X(p[0])-3} ${Y(p[1])-1}v-2a3 3 0 0 1 6 0v2" fill="none" stroke="#fff" stroke-width="1.4" pointer-events="none"/>`:`<circle data-h="${r.id}:${i}" cx="${X(p[0])}" cy="${Y(p[1])}" r="6" fill="#fff" stroke="#2563eb" stroke-width="2" style="cursor:pointer"><title>Drag to move · right-click to lock</title></circle>`})}
   if(tool==='select')for(const q of S.rooms){if(!q.locks||q===r)continue;for(const p of q.locks)g+=`<rect x="${X(p[0])-3.5}" y="${Y(p[1])-3.5}" width="7" height="7" rx="1.5" fill="#1f2933" pointer-events="none"/>`}
   if(drag&&drag.type==='newrect'){const p=rectPts(drag.p0[0],drag.p0[1],drag.p1[0],drag.p1[1]);
     g+=`<polygon points="${p.map(q=>X(q[0])+','+Y(q[1])).join(' ')}" fill="#2563eb" fill-opacity=".12" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4" pointer-events="none"/>`;
     const W=Math.abs(drag.p1[0]-drag.p0[0]),H=Math.abs(drag.p1[1]-drag.p0[1]);
-    g+=`<text x="${X(Math.max(drag.p0[0],drag.p1[0]))+8}" y="${Y(Math.max(drag.p0[1],drag.p1[1]))+16}" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1d4ed8" paint-order="stroke" stroke="#fff" stroke-width="3" pointer-events="none">${fmtLen(W)} × ${fmtLen(H)} = ${fmtArea(W*H)} sq ft</text>`;}
+    g+=`<text x="${X(Math.max(drag.p0[0],drag.p1[0]))+8}" y="${Y(Math.max(drag.p0[1],drag.p1[1]))+16}" font-size="12" font-family="JetBrains Mono,Cascadia Mono,Consolas,Menlo,monospace" fill="#1d4ed8" paint-order="stroke" stroke="${PAL[theme].halo}" stroke-width="3" pointer-events="none">${fmtLen(W)} × ${fmtLen(H)} = ${fmtArea(W*H)} sq ft</text>`;}
   if(draft&&draft.length){const pts=[...draft,...(hover?[hover]:[])];
     g+=`<polyline points="${pts.map(q=>X(q[0])+','+Y(q[1])).join(' ')}" fill="${pts.length>2?'rgba(37,99,235,.08)':'none'}" stroke="#2563eb" stroke-width="2" pointer-events="none"/>`;
     draft.forEach((p,i)=>g+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${i===0?7:4}" fill="${i===0?'#fff':'#2563eb'}" stroke="#2563eb" stroke-width="2" pointer-events="none"/>`);
     if(hover){const a=draft[draft.length-1],L=Math.hypot(hover[0]-a[0],hover[1]-a[1]);
-      g+=`<text x="${X(hover[0])+10}" y="${Y(hover[1])-10}" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1d4ed8" paint-order="stroke" stroke="#fff" stroke-width="3" pointer-events="none">${fmtLen(L)}${draft.length>=2?' · '+fmtArea(Math.abs(area(pts)))+' sq ft':''}</text>`;}}
+      g+=`<text x="${X(hover[0])+10}" y="${Y(hover[1])-10}" font-size="12" font-family="JetBrains Mono,Cascadia Mono,Consolas,Menlo,monospace" fill="#1d4ed8" paint-order="stroke" stroke="${PAL[theme].halo}" stroke-width="3" pointer-events="none">${fmtLen(L)}${draft.length>=2?' · '+fmtArea(Math.abs(area(pts)))+' sq ft':''}</text>`;}}
   if(hover&&tool!=='select'&&!drag&&!(draft&&draft.length))g+=`<circle cx="${X(hover[0])}" cy="${Y(hover[1])}" r="3.5" fill="#2563eb" pointer-events="none"/>`;
   if(tool==='door'&&hover&&!drag){const W=nearestWall(hover);if(W&&W.d*view.sc<40){const D=DOORS[doorType];const q=onWall(W,hover,D.w);const ex=q.ux*D.w/2,ey=q.uy*D.w/2;
     g+=`<line x1="${X(q.x-ex)}" y1="${Y(q.y-ey)}" x2="${X(q.x+ex)}" y2="${Y(q.y+ey)}" stroke="${D.color}" stroke-width="7" stroke-opacity=".55" pointer-events="none"/>`}}
@@ -426,7 +441,7 @@ function render(){
   // panel + footer
   panel();syncClip();
   $('zoom').textContent=Math.round(view.sc)+' px/ft';
-  $('hint').textContent=tool==='bld'?(draft&&draft.length?'Keep clicking the building\u2019s corners. Click the first corner or press Enter to finish. Hold Shift for straight walls. Backspace removes the last corner. Esc cancels.':'Building tool: click each outside corner of the building in order. Hold Shift to keep walls straight.'):tool==='door'?`Click on a building wall to add a ${DOORS[doorType].label.toLowerCase()}. Change the type in the sidebar.`:tool==='rect'?'Drag to draw a rectangular room.':tool==='poly'?(draft&&draft.length?'Keep clicking corners. Click the first point or press Enter to finish. Esc cancels.':'Click to place the first corner of the shape.'):(S.rooms.length?(multi.size>1?'Drag a room to move the group, or drag a blue wall handle to move that wall for every selected room on the same line. Unselected rooms stay put.':sel&&byId(sel)?'Drag a blue wall handle to move that wall. Rooms sharing the wall move with it; hold Alt to move only this room. Drag corners to reshape.':(S.rooms.some(r=>r.kind==='building')?'Click a room to edit it. Shift-click or Shift-drag a box to select several. Drag empty space to pan.':'Start with the Building tool to draw the outside walls, then add rooms inside.')):'Start with the Building tool above: click each outside corner of the building. Then add rooms with Rectangle or Shape.');
+  $('hint').textContent=tool==='bld'?(draft&&draft.length?'Keep clicking the building\u2019s corners. Click the first corner or press Enter to finish. Hold Shift for straight walls. Backspace removes the last corner. Esc cancels.':'Building tool: click each outside corner of the building in order. Hold Shift to keep walls straight.'):tool==='door'?`Click on a building wall to add a ${DOORS[doorType].label.toLowerCase()}. Change the type in the sidebar.`:tool==='rect'?'Drag to draw a rectangular room.':tool==='poly'?(draft&&draft.length?'Keep clicking corners. Click the first point or press Enter to finish. Esc cancels.':'Click to place the first corner of the shape.'):(S.rooms.length?(multi.size>1?'Drag a room to move the group, or drag a blue wall handle to move that wall for every selected room on the same line. Unselected rooms stay put.':sel&&byId(sel)?'Drag a blue wall handle to move that wall. Rooms sharing the wall move with it; hold Alt to move only this room. Drag corners to reshape.':(S.rooms.some(r=>r.kind==='building')?'Click a room to edit it. Shift-click or Shift-drag a box to select several. Drag empty space to pan.':'Start with the Building tool to draw the outside walls, then add rooms inside.')):'Start with the Building tool on the left: click each outside corner of the building. Then add rooms with Rectangle or Shape.');
 }
 
 // ---------- overlap (sampled) ----------
@@ -493,6 +508,9 @@ function mergeSel(){const rs=[...multi].map(byId).filter(r=>r&&r.kind!=='buildin
     S.rooms=S.rooms.filter(r=>!ids.has(r.id));S.rooms.splice(Math.min(idx,S.rooms.length),0,m);selOnly(m.id)});
   status(`Merged ${rs.length} rooms into “${big.name}”`+(U.holes?' (an enclosed gap inside was filled in)':''))}
 let dlP=null;function useDownloads(){if(!dlP){dlP=(async()=>{try{if(window.claude&&typeof window.claude.use==='function')return await window.claude.use('downloads')}catch(_){}return null})()}return dlP}
+const HELP_HTML='<kbd>V</kbd> select · <kbd>B</kbd> building · <kbd>R</kbd> rectangle · <kbd>P</kbd> shape · <kbd>D</kbd> door · <kbd>F</kbd> fit · <kbd>?</kbd> this help<br>Double-click a room to rename or recolor it · click a wall dimension to type a length<br>Right-click a corner to lock it so resizing never moves it<br>Drag empty space or hold <kbd>Space</kbd> to pan · scroll to zoom<br>Shape tool: click points, click the first point or press <kbd>Enter</kbd> to close · <kbd>Shift</kbd> keeps lines straight<br><kbd>Shift</kbd>-click or <kbd>Shift</kbd>-drag a box to select several rooms<br>Walls, corners and rooms snap to nearby walls (pink guide)<br>Arrow keys nudge · <kbd>Del</kbd> delete · <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicate<br><kbd>Ctrl</kbd>+<kbd>M</kbd> merge selected rooms · <kbd>Ctrl</kbd>+<kbd>C</kbd> copy · <kbd>Ctrl</kbd>+<kbd>X</kbd> cut · <kbd>Ctrl</kbd>+<kbd>V</kbd> paste';
+function openHelp(){openModal(`<h2>Help &amp; shortcuts</h2><div class="sub" style="line-height:1.95;font-size:13.5px;color:var(--ink)">${HELP_HTML}</div><div class="row"><span class="spacer"></span><button class="btn on" id="mClose">Close</button></div>`);$('mClose').onclick=closeModal}
+function setTheme(t){theme=t;document.documentElement.dataset.theme=t;$('themeT').checked=t==='dark';$('themeL').dataset.tip=t==='dark'?'Switch to light mode':'Switch to dark mode';try{localStorage.setItem(STORE+'-theme',t)}catch(_){}render()}
 function showMsg(t,m){openModal(`<h2>${esc(t)}</h2><p>${esc(m)}</p><div class="row"><span class="spacer"></span><button class="btn on" id="mClose">OK</button></div>`);$('mClose').onclick=closeModal}
 
 // ---------- side panel ----------
@@ -689,6 +707,7 @@ addEventListener('keydown',e=>{
   if(mod&&k==='m'){e.preventDefault();mergeSel();return}
   if(mod&&k==='v'){if(clip){e.preventDefault();paste()}return}
   if(mod)return;
+  if(e.key==='?'){openHelp();return}
   if(k===' '){spaceDown=true;svg.style.cursor='grab';e.preventDefault();return}
   if(k==='v')setTool('select');else if(k==='r')setTool('rect');else if(k==='p')setTool('poly');else if(k==='b')setTool('bld');else if(k==='d')setTool('door');
   else if(k==='f')fit();
@@ -702,6 +721,7 @@ addEventListener('keyup',e=>{if(e.key===' '){spaceDown=false;svg.style.cursor=''
 
 // ---------- toolbar + panel wiring ----------
 document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+$('helpB').onclick=openHelp;$('themeT').onchange=e=>setTheme(e.target.checked?'dark':'light');
 $('zin').onclick=()=>zoomAt(1.25);$('zout').onclick=()=>zoomAt(0.8);$('copyB').onclick=()=>copySel(false);$('pasteB').onclick=paste;$('undo').onclick=doUndo;$('redo').onclick=doRedo;$('fit').onclick=fit;
 $('snap').onchange=e=>{snap=+e.target.value;try{localStorage.setItem(STORE+'-snap',e.target.value)}catch(_){}};
 $('dims').onchange=e=>{showDims=e.target.checked;render()};
@@ -755,7 +775,7 @@ $('img').onclick=()=>{
   const v={sc,ox:b[0]-pad/sc,oy:b[1]-(pad+head)/sc};
   const counted=S.rooms.filter(r=>r.count!==false&&r.kind!=='building');const tot=counted.reduce((s,r)=>s+Math.abs(area(r.pts)),0);
   const bA=S.rooms.filter(r=>r.kind==='building').reduce((s,r)=>s+Math.abs(area(r.pts)),0);
-  const K=Math.max(1,w/1700),FS='IBM Plex Sans,system-ui,sans-serif',FM='IBM Plex Mono,ui-monospace,monospace';
+  const K=Math.max(1,w/1700),FS='Barlow,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif',FM='JetBrains Mono,Cascadia Mono,Consolas,Menlo,monospace';
   const list=[];
   const colW=560*K,cols=Math.max(1,Math.floor((w-2*pad)/colW)),rowH=36*K,rows=Math.ceil(list.length/cols);
   const schTop=h,schH=list.length?rows*rowH+150*K:0,H=h+schH;
@@ -768,7 +788,7 @@ $('img').onclick=()=>{
         `<text x="${x+colW-40*K}" y="${y}" text-anchor="end" font-size="${18*K}" font-family="${FM}" fill="#1f2933">${fmtArea(A)} sq ft</text>`});
     const ty=schTop+100*K+rows*rowH+14*K;
     sch+=`<line x1="${pad}" y1="${ty-22*K}" x2="${w-pad}" y2="${ty-22*K}" stroke="#d9dde2" stroke-width="${K}"/><text x="${pad}" y="${ty+6*K}" font-size="${20*K}" font-weight="600" font-family="${FS}" fill="#1f2933">Total area</text><text x="${w-pad}" y="${ty+6*K}" text-anchor="end" font-size="${20*K}" font-weight="600" font-family="${FM}" fill="#1f2933">${fmtArea(tot)} sq ft${bA?` of ${fmtArea(bA)} (${(tot/bA*100).toFixed(1)}%)`:''}</text>`}
-  const s=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${H}" viewBox="0 0 ${w} ${H}"><rect width="${w}" height="${H}" fill="#ffffff"/>${drawPlan(v,w,h,{export:true})}<rect width="${w}" height="${head}" fill="#fff"/>`+
+  const s=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" font-family="Barlow,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif"><rect width="${w}" height="${H}" fill="#ffffff"/>${drawPlan(v,w,h,{export:true})}<rect width="${w}" height="${head}" fill="#fff"/>`+
     `<text x="${pad}" y="${62*K}" font-size="${40*K}" font-weight="600" font-family="${FS}" fill="#1f2933">${esc(S.title)}</text>`+
     `<text x="${w-pad}" y="${40*K}" text-anchor="end" font-size="${16*K}" font-weight="600" letter-spacing="${1.5*K}" font-family="${FS}" fill="#66727f">${bA?'AREA USED':'TOTAL AREA'}</text>`+
     `<text x="${w-pad}" y="${96*K}" text-anchor="end" font-size="${52*K}" font-weight="600" font-family="${FM}" fill="#1f2933">${fmtArea(tot)}<tspan font-size="${22*K}" fill="#66727f" font-family="${FS}">${bA?` of ${fmtArea(bA)} sq ft available (${(tot/bA*100).toFixed(1)}%)`:' sq ft'}</tspan></text>`+sch+`</svg>`;
@@ -791,6 +811,8 @@ const SEED_REV='public-1';
 S=JSON.parse(JSON.stringify(SEED));
 try{const d=JSON.parse(localStorage.getItem(STORE)||'null');if(d&&Array.isArray(d.rooms)&&d.rev===SEED_REV)S=d;S.rev=SEED_REV;const sv=localStorage.getItem(STORE+'-snap');if(sv!==null){snap=+sv;$('snap').value=sv}}catch(_){}
 for(const r of S.rooms||[])if(typeof r.name==='string')r.name=r.name.replace(/(\s+copy)+\s*$/i,'')||r.name;
+try{const t=localStorage.getItem(STORE+'-theme');theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}
+document.documentElement.dataset.theme=theme;$('themeT').checked=theme==='dark';$('themeL').dataset.tip=theme==='dark'?'Switch to light mode':'Switch to dark mode';
 $('title').value=S.title;
 new ResizeObserver(()=>render()).observe(stage);
 syncHist();
