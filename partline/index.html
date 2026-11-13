@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partline · GTALHub</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0f;--panel:#111118;--line:#1e1e2e;--text:#f5f5f5;--muted:#8888aa;
+  --green:#00ff88;--cyan:#00ccff;--yellow:#ffcc00;--red:#ff5a6a;
+  --display:"Bebas Neue",-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:"Roboto Mono",ui-monospace,"SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:14px/1.6 var(--mono);display:flex;flex-direction:column;
+  background-image:linear-gradient(rgba(0,255,136,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.035) 1px,transparent 1px);background-size:44px 44px}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--line)}
+.logo{font:32px/1 var(--display);letter-spacing:.04em;color:var(--green);text-decoration:none}
+header a.back{color:var(--muted);text-decoration:none;font-size:13px}
+header a.back:hover{color:var(--text)}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:30px 18px}
+.box{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:28px;position:relative}
+.box::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--green),transparent)}
+h1{font:44px/1 var(--display);letter-spacing:.03em;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 22px;font-size:13px}
+label{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px}
+input[type=email],input[type=password]{width:100%;padding:10px 12px;border-radius:6px;border:1px solid var(--line);background:#0c0c12;color:var(--text);font:14px var(--mono)}
+input:focus{outline:none;border-color:var(--green)}
+.btn{display:inline-block;padding:10px 18px;border-radius:6px;border:1px solid var(--line);background:#16161f;color:var(--text);font:600 13px var(--mono);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:rgba(0,255,136,.45)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#04130b}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.msg{margin:14px 0 0;font-size:13px}
+.msg.err{color:var(--red)} .msg.ok{color:var(--green)}
+.who{color:var(--muted);font-size:12px;margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+.who a{color:var(--cyan);cursor:pointer}
+.admin{margin-top:18px;border:1px dashed rgba(255,204,0,.45);border-radius:6px;padding:12px 14px;font-size:12.5px}
+.admin b{color:var(--yellow)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><a class="logo" href="/">GTALHub</a><a class="back" href="/">← All apps</a></header>
+<main>
+  <div class="box">
+    <h1>Partline</h1>
+    <p class="sub">3D renderings for manuals and cutsheets. Members only.</p>
+
+    <div id="vLoading"><span class="spin"></span>Checking your sign-in…</div>
+
+    <form id="vSignIn" hidden>
+      <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
+      <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+      <div class="row"><button class="btn primary" type="submit">Sign in</button></div>
+      <p class="msg err" id="signErr" hidden></p>
+      <p class="sub" style="margin:16px 0 0">Use your GTALHub account, the same one as Weigh-Off. Partline only opens for accounts that have been given access.</p>
+    </form>
+
+    <div id="vNoAccess" hidden>
+      <p class="msg err">This account doesn’t have access to Partline.</p>
+      <p class="sub">Ask Aaron to add your email.</p>
+    </div>
+
+    <div id="vReady" hidden>
+      <div class="row"><button class="btn primary" id="openBtn">Open Partline</button></div>
+      <p class="msg" id="readyMsg"></p>
+      <div class="admin" id="adminBox" hidden>
+        <b>Admin</b> · <span id="verInfo">checking the current version…</span>
+        <div class="row" style="margin-top:10px">
+          <label class="btn" style="margin:0;color:var(--text);font-size:13px">Upload a new version…<input type="file" id="upFile" accept=".html,text/html" hidden></label>
+        </div>
+        <p class="msg" id="upMsg"></p>
+      </div>
+    </div>
+
+    <div class="who" id="who" hidden></div>
+  </div>
+</main>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const SB_URL = "https://hjwuluhdiczmssldyeus.supabase.co";
+const SB_KEY = "sb_publishable_zAZpo7UDyx1eHD_HpayR-g_RRjdgtO9";
+const BUCKET = "partline", FILE = "partline.html";
+const sb = createClient(SB_URL, SB_KEY);
+const $ = id => document.getElementById(id);
+const views = ["vLoading", "vSignIn", "vNoAccess", "vReady"];
+const show = v => views.forEach(x => $(x).hidden = x !== v);
+let role = null;
+
+async function refresh() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $("who").hidden = true; show("vSignIn"); setTimeout(() => $("em").focus(), 0); return; }
+  $("who").hidden = false;
+  $("who").innerHTML = `Signed in as <b>${escapeHtml(session.user.email)}</b> · <a id="out">Sign out</a>`;
+  $("out").onclick = async () => { await sb.auth.signOut(); refresh(); };
+  // access is a list of emails kept in Supabase; the file itself can only be read by those accounts
+  const { data, error } = await sb.from("partline_access").select("role").maybeSingle();
+  if (error || !data) { show("vNoAccess"); return; }
+  role = data.role;
+  show("vReady");
+  if (role === "admin") { $("adminBox").hidden = false; versionInfo(); }
+  else openApp();                                   // members go straight in
+}
+
+async function openApp() {
+  $("openBtn").disabled = true;
+  $("readyMsg").className = "msg"; $("readyMsg").innerHTML = '<span class="spin"></span>Loading Partline…';
+  const { data, error } = await sb.storage.from(BUCKET).download(FILE);
+  if (error || !data) {
+    $("openBtn").disabled = false;
+    $("readyMsg").className = "msg err";
+    $("readyMsg").textContent = role === "admin" ? "No version uploaded yet. Upload partline.html below." : "Partline isn’t available right now. Try again later.";
+    return;
+  }
+  const html = await data.text();
+  // swap this page for the app; the address stays gtalhub.com/partline/, so a refresh comes straight back here
+  document.open(); document.write(html); document.close();
+}
+
+async function versionInfo() {
+  const { data } = await sb.storage.from(BUCKET).list("", { search: FILE });
+  const f = (data || []).find(x => x.name === FILE);
+  $("verInfo").textContent = f ? `current version uploaded ${new Date(f.updated_at || f.created_at).toLocaleString()} (${Math.round((f.metadata?.size || 0) / 1024)} KB)` : "no version uploaded yet";
+}
+
+$("openBtn").onclick = openApp;
+$("upFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const text = await f.text();
+  if (!/<title>\s*Partline/i.test(text)) { $("upMsg").className = "msg err"; $("upMsg").textContent = "That doesn’t look like partline.html."; return; }
+  $("upMsg").className = "msg"; $("upMsg").innerHTML = '<span class="spin"></span>Uploading…';
+  const { error } = await sb.storage.from(BUCKET).upload(FILE, new Blob([text], { type: "text/html" }), { upsert: true, contentType: "text/html", cacheControl: "60" });
+  if (error) { $("upMsg").className = "msg err"; $("upMsg").textContent = "Upload failed: " + error.message; return; }
+  $("upMsg").className = "msg ok"; $("upMsg").textContent = "Uploaded. Everyone gets this version the next time they open Partline.";
+  versionInfo();
+};
+
+$("vSignIn").onsubmit = async e => {
+  e.preventDefault();
+  const btn = e.target.querySelector("button"); btn.disabled = true; $("signErr").hidden = true;
+  const { error } = await sb.auth.signInWithPassword({ email: $("em").value.trim(), password: $("pw").value });
+  btn.disabled = false;
+  if (error) { $("signErr").textContent = error.message === "Invalid login credentials" ? "That email and password don’t match a GTALHub account." : error.message; $("signErr").hidden = false; return; }
+  show("vLoading"); refresh();
+};
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+refresh();
+</script>
+</body>
+</html>
