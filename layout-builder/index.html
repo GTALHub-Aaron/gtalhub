@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Building Layout Builder | GTALHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --ink:#1f2933; --muted:#66727f; --line:#dde1e6;
+  --accent:#2563eb; --accent-soft:#e7efff; --danger:#c2410c;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 var(--sans)}
+button,input,select{font:inherit;color:inherit}
+.app{display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:52px 1fr 300px;height:100vh}
+header{grid-column:1/4;display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+#title{font-weight:600;font-size:16px;border:1px solid transparent;border-radius:6px;padding:4px 6px;min-width:180px;background:transparent}
+#title:hover,#title:focus{border-color:var(--line);outline:none}
+.group{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px}
+.btn{border:0;background:transparent;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#e9ecf0}
+.btn.on{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.4;cursor:default;background:transparent}
+.btn.outline{border:1px solid var(--line);background:var(--panel)}
+.btn.outline:hover{background:#f0f2f5}
+.btn.danger{color:var(--danger)}
+.spacer{flex:1}
+label.inline{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+select{border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--panel)}
+.rail{grid-column:1;grid-row:2;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;background:var(--panel);border-right:1px solid var(--line);z-index:6}
+.tb{position:relative;width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:#4b5563;cursor:pointer;padding:0}
+.tb:hover{background:#eef1f5;color:var(--ink)}
+.tb.on{background:var(--accent);color:#fff}
+.tb:disabled{opacity:.35;cursor:default;background:transparent}
+.tb:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.tb::after{content:attr(data-tip);position:absolute;left:46px;top:50%;transform:translateY(-50%);white-space:nowrap;background:#1f2933;color:#fff;font-size:12.5px;padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:20}
+.tb[data-key]::after{content:attr(data-tip) "  ·  " attr(data-key)}
+.tb:hover::after,.tb:focus-visible::after{opacity:1;transition-delay:.25s}
+.rail .sep{width:26px;height:1px;background:var(--line);margin:4px 0}
+.stage{position:relative;overflow:hidden;background:#fbfbfc}
+svg#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;user-select:none;display:block}
+.hint{position:absolute;left:12px;top:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px;color:var(--muted);pointer-events:none;max-width:70%}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow:auto;grid-row:2/4;grid-column:3}
+.sec{padding:14px;border-bottom:1px solid var(--line)}
+.sec h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.total{font:600 30px/1.1 var(--mono)}
+.total small{font:500 13px var(--sans);color:var(--muted);margin-left:4px}
+.warn{margin-top:8px;padding:7px 9px;border-radius:6px;background:#fff4e5;color:#9a3412;font-size:12.5px}
+.sub{color:var(--muted);font-size:12.5px;margin-top:4px}
+.rooms{list-style:none;margin:0;padding:0}
+.rooms li{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:6px;cursor:pointer}
+.rooms li:hover{background:#f2f4f7}
+.rooms li.sel{background:var(--accent-soft)}
+.rooms li.excl .nm,.rooms li.excl .ar{color:#9aa3ad;text-decoration:line-through}
+.sw{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.25);flex:none}
+.nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ar{font-family:var(--mono);font-size:13px}
+.tag{font-size:10.5px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px}
+.ar .under,.ar .over{font-size:11px;margin-left:6px;padding:0 4px;border-radius:4px}
+.ar .under{background:#fff4e5;color:#9a3412}.ar .over{background:#e8f1ff;color:#1d4ed8}
+.lg{display:flex;align-items:center;gap:8px;font-size:13px;padding:2px 0}.lg i{width:16px;height:6px;border-radius:2px;flex:none}.lg b{margin-left:auto;font-family:var(--mono);font-weight:500}
+.empty{color:var(--muted);font-size:13px}
+.field{display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;margin-bottom:8px}
+.field>span{color:var(--muted);font-size:13px}
+.field input[type=text]{border:1px solid var(--line);border-radius:6px;padding:5px 7px;width:100%}
+.field input.num{font-family:var(--mono)}
+.field input.bad{border-color:var(--danger)}
+.colors{display:flex;gap:5px;flex-wrap:wrap}
+.colors button{width:22px;height:22px;border-radius:5px;border:1px solid rgba(0,0,0,.2);cursor:pointer;padding:0}
+.colors button.on{outline:2px solid var(--accent);outline-offset:1px}
+.stat{display:flex;justify-content:space-between;font-size:13px;padding:2px 0}
+.stat b{font-family:var(--mono);font-weight:500}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+footer{grid-column:1/3;display:flex;gap:16px;align-items:center;padding:5px 12px;background:var(--panel);border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+footer b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.pop{position:absolute;z-index:5;width:280px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px 10px;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.pop .field{grid-template-columns:60px 1fr}
+.modal{position:fixed;inset:0;background:rgba(20,26,33,.45);display:none;align-items:center;justify-content:center;z-index:10}
+.modal.open{display:flex}
+.card{background:var(--panel);border-radius:12px;padding:18px;width:min(640px,92vw);max-height:88vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.card h2{margin:0 0 6px;font-size:17px}
+.card p{margin:0 0 10px;color:var(--muted);font-size:13px}
+.card textarea{width:100%;height:220px;font:12px var(--mono);border:1px solid var(--line);border-radius:8px;padding:8px}
+.card img{max-width:100%;border:1px solid var(--line);border-radius:6px}
+kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fafbfc}
+@media (max-width:820px){
+  .app{grid-template-columns:44px 1fr;grid-template-rows:auto 1fr auto 40vh}
+  .rail{overflow-y:auto}.tb{width:34px;height:34px}
+  aside{grid-row:4;grid-column:1/3;border-left:0;border-top:1px solid var(--line)}
+  header{grid-column:1/3}footer{grid-column:1/3}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <input id="title" value="Untitled plan" aria-label="Plan name">
+    <label class="inline">Snap
+      <select id="snap">
+        <option value="1">1 ft</option>
+        <option value="0.5">6 in</option>
+        <option value="0.0833333333333">1 in</option>
+        <option value="0">Off</option>
+      </select>
+    </label>
+    <label class="inline"><input type="checkbox" id="dims" checked> Dimensions</label>
+    <div class="spacer"></div>
+    <button class="btn outline" id="img">Image</button>
+    <button class="btn outline" id="save">Save plan</button>
+    <button class="btn outline" id="load">Open plan</button>
+    <button class="btn outline danger" id="clear">New</button>
+  </header>
+
+  <nav class="rail" role="toolbar" aria-label="Tools">
+    <button class="tb on" data-tool="select" data-tip="Select / move" data-key="V" aria-label="Select"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 8-6.5 1.5L10 19z"/></svg></button>
+    <button class="tb" data-tool="bld" data-tip="Building outline" data-key="B" aria-label="Building outline"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18v9h-8v7H3z" stroke-width="2.6"/></svg></button>
+    <button class="tb" data-tool="rect" data-tip="Rectangle room" data-key="R" aria-label="Rectangle room"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1"/></svg></button>
+    <button class="tb" data-tool="poly" data-tip="Shape room (click corners)" data-key="P" aria-label="Shape room"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h10v5h6v9H4z"/><circle cx="4" cy="5" r="1.4" fill="currentColor"/><circle cx="14" cy="5" r="1.4" fill="currentColor"/><circle cx="20" cy="19" r="1.4" fill="currentColor"/></svg></button>
+    <button class="tb" data-tool="door" data-tip="Door / dock door" data-key="D" aria-label="Door"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><path d="M6 20V5h9v15"/><circle cx="12.5" cy="12.5" r=".9" fill="currentColor"/></svg></button>
+    <span class="sep"></span>
+    <button class="tb" id="undo" data-tip="Undo" data-key="Ctrl+Z" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="tb" id="redo" data-tip="Redo" data-key="Ctrl+Shift+Z" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+    <button class="tb" id="copyB" data-tip="Copy" data-key="Ctrl+C" aria-label="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>
+    <button class="tb" id="pasteB" data-tip="Paste" data-key="Ctrl+V" aria-label="Paste"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2"/><path d="M9 11h6M9 15h4"/></svg></button>
+    <span class="sep"></span>
+    <button class="tb" id="zin" data-tip="Zoom in" data-key="+" aria-label="Zoom in"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M8 11h6M11 8v6"/></svg></button>
+    <button class="tb" id="zout" data-tip="Zoom out" data-key="−" aria-label="Zoom out"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M8 11h6"/></svg></button>
+    <button class="tb" id="fit" data-tip="Zoom to fit" data-key="F" aria-label="Zoom to fit"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </nav>
+  <div class="stage" id="stage">
+    <svg id="cv" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="hint" id="hint"></div>
+    <div class="pop" id="pop" hidden>
+      <div class="field"><span>Name</span><input type="text" id="qName"></div>
+      <div class="field"><span>Color</span><div class="colors" id="qColors"></div></div>
+      <div class="field"><span>Custom</span><input type="color" id="qCustom" style="width:44px;height:26px;border:1px solid var(--line);border-radius:6px;padding:0;background:none"></div>
+      <div class="field"><span>Target</span><input type="text" class="num" id="qT" placeholder="sq ft (optional)"></div>
+      <div class="row" style="justify-content:flex-end;margin-top:4px"><button class="btn on" id="qDone">Done</button></div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="sec">
+      <h3>Total area</h3>
+      <div class="total" id="total">0<small>sq ft</small></div>
+      <div class="sub" id="totalSub">Draw a room to start</div>
+      <div class="warn" id="ovWarn" hidden></div>
+      <div id="bldSec" hidden style="margin-top:10px"><div style="height:8px;border-radius:4px;background:#e9ecf0;overflow:hidden"><div id="bldBar" style="height:100%;width:0"></div></div><div class="sub" id="bldTxt" style="margin-top:6px"></div><div class="sub" id="bldTgt"></div></div>
+    </div>
+    <div class="sec" id="doorSec" hidden>
+      <h3>Selected door</h3>
+      <div class="field"><span>Type</span><select id="dType"></select></div>
+      <div class="field"><span>Width</span><input type="text" class="num" id="dW"></div>
+      <div class="field"><span>Label</span><input type="text" id="dLabel" placeholder="optional, e.g. Dock 4"></div>
+      <div class="sub" style="margin-bottom:8px">Drag the door along the wall, or use the arrow keys.</div>
+      <div class="row"><button class="btn outline" id="dDup">Duplicate</button><button class="btn outline danger" id="dDel">Delete</button></div>
+    </div>
+    <div class="sec" id="multiSec" hidden>
+      <h3>Selection</h3>
+      <div class="stat"><span id="mCount"></span><b id="mArea"></b></div>
+      <div class="sub" style="margin:6px 0 4px">Drag a room to move them all. Drag a wall handle to move that wall line for all selected rooms. Shift-click a room to add or remove it.</div>
+      <div class="row"><button class="btn outline" id="mMerge" title="Join the selected rooms into one (Ctrl+M)">Merge</button><button class="btn outline" id="mTouch">Select touching</button><button class="btn outline" id="mNone">Clear</button><button class="btn outline danger" id="mDel">Delete</button></div>
+    </div>
+    <div class="sec" id="propSec" hidden>
+      <h3>Selected room</h3>
+      <div class="field"><span>Name</span><input type="text" id="pName"></div>
+      <div class="field" id="wRow"><span>Width</span><input type="text" class="num" id="pW" title="e.g. 12' 6&quot;, 12.5, or 150&quot;"></div>
+      <div class="field" id="lRow"><span>Length</span><input type="text" class="num" id="pL"></div>
+      <div class="field" id="tRow"><span>Target</span><input type="text" class="num" id="pT" placeholder="sq ft (optional)"></div>
+      <div class="field" id="cRow"><span>Color</span><div class="colors" id="pColors"></div></div>
+      <div class="field"><span>Outline</span><label class="inline" style="color:var(--ink)"><input type="checkbox" id="pBld"> Building outline</label></div>
+      <div class="field" id="inRow"><span>In total</span><label class="inline" style="color:var(--ink)"><input type="checkbox" id="pCount"> Count toward total</label></div>
+      <div class="stat"><span>Area</span><b id="pArea"></b></div>
+      <div class="stat" id="pDiffRow"><span>vs target</span><b id="pDiff"></b></div>
+      <div class="stat"><span>Perimeter</span><b id="pPer"></b></div>
+      <div class="row">
+        <button class="btn outline" id="pRot" title="Rotate 90°">Rotate 90°</button>
+        <button class="btn outline" id="pRotL" title="Rotate the whole plan 90° counter-clockwise" hidden>Rotate ⟲</button>
+        <button class="btn outline" id="pLock" title="Lock or unlock every corner of this room">Lock corners</button>
+        <button class="btn outline" id="pDup" title="Duplicate (Ctrl+D)">Duplicate</button>
+        <button class="btn outline" id="pTouch" title="Add rooms that share a wall with this one">Select touching</button>
+        <button class="btn outline danger" id="pDel" title="Delete (Del)">Delete</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Doors</h3>
+      <div id="doorLegend"></div>
+    </div>
+    <div class="sec">
+      <h3>Rooms</h3>
+      <ul class="rooms" id="list"></ul>
+    </div>
+    <div class="sec">
+      <h3>Shortcuts</h3>
+      <div class="sub" style="line-height:1.9">
+        <kbd>V</kbd> select · <kbd>B</kbd> building · <kbd>R</kbd> rectangle · <kbd>P</kbd> shape<br>
+        Double-click a room to rename or recolor it · click a wall dimension to type a length<br>
+        Right-click a corner to lock it so resizing never moves it<br>
+        Drag empty space or hold <kbd>Space</kbd> to pan · scroll to zoom<br>
+        Shape tool: click points, click the first point or press <kbd>Enter</kbd> to close · <kbd>Shift</kbd> keeps lines straight<br>
+        <kbd>Shift</kbd>-click or <kbd>Shift</kbd>-drag a box to select several rooms<br>
+        Walls, corners and rooms snap to nearby walls (pink guide)<br>
+        Arrow keys nudge · <kbd>Del</kbd> delete · <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicate<br>
+        <kbd>Ctrl</kbd>+<kbd>M</kbd> merge selected rooms · <kbd>Ctrl</kbd>+<kbd>C</kbd> copy · <kbd>Ctrl</kbd>+<kbd>X</kbd> cut · <kbd>Ctrl</kbd>+<kbd>V</kbd> paste
+      </div>
+    </div>
+  </aside>
+
+  <footer>
+    <span>Cursor <b id="cur">–</b></span>
+    <span>Zoom <b id="zoom">–</b></span>
+    <span id="status"></span>
+  </footer>
+</div>
+
+<div class="modal" id="modal"><div class="card" id="modalCard"></div></div>
+
+<script>
+(()=>{
+const COLORS=['#cfe3f7','#d6efd8','#fbe3c4','#ead9f5','#f7d4d4','#fff1b8','#cdeeea','#e4e6ea'];
+const STORE='layout-builder-v2';
+const $=id=>document.getElementById(id);
+const svg=$('cv'), stage=$('stage');
+
+let S={title:'Untitled plan',rooms:[],seq:1};
+let view={ox:-4,oy:-4,sc:22};      // world (ft) at top-left, px per ft
+let tool='select', sel=null, snap=1, showDims=true;
+let drag=null, draft=null, hover=null, spaceDown=false, pending=null;
+const undo=[], redo=[];
+
+// ---------- geometry ----------
+const area=p=>{let a=0;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1]}return a/2};
+const perim=p=>p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+Math.hypot(b[0]-a[0],b[1]-a[1])},0);
+function centroid(p){const A=area(p);if(Math.abs(A)<1e-9){const n=p.length;return[p.reduce((s,q)=>s+q[0],0)/n,p.reduce((s,q)=>s+q[1],0)/n]}
+  let cx=0,cy=0;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length],f=a[0]*b[1]-b[0]*a[1];cx+=(a[0]+b[0])*f;cy+=(a[1]+b[1])*f}return[cx/(6*A),cy/(6*A)]}
+const bbox=p=>{const xs=p.map(q=>q[0]),ys=p.map(q=>q[1]);return[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]};
+const rectPts=(x0,y0,x1,y1)=>{const a=Math.min(x0,x1),b=Math.min(y0,y1),c=Math.max(x0,x1),d=Math.max(y0,y1);return[[a,b],[c,b],[c,d],[a,d]]};
+const r4=v=>Math.round(v*10000)/10000;
+const sn=v=>snap>0?r4(Math.round(v/snap)*snap):r4(Math.round(v*96)/96);
+const snapPt=p=>[sn(p[0]),sn(p[1])];
+
+// ---------- units ----------
+function fmtLen(ft){const neg=ft<0;let ti=Math.round(Math.abs(ft)*12*4)/4;let f=Math.floor(ti/12),i=r4(ti-f*12);
+  if(i>=12){f++;i=0}const s=i===0?`${f}'`:(f===0?`${i}"`:`${f}' ${i}"`);return(neg?'-':'')+s}
+const fmtArea=a=>Math.abs(a)>=100?Math.round(a).toLocaleString():(Math.round(a*10)/10).toLocaleString();
+function parseLen(s){s=String(s).trim().toLowerCase().replace(/feet|foot/g,"'").replace(/ft/g,"'").replace(/inches|inch|in/g,'"').replace(/[’′]/g,"'").replace(/[”″]/g,'"');
+  let m;
+  if((m=s.match(/^(\d+(?:\.\d+)?)\s*"$/)))return +m[1]/12;
+  if((m=s.match(/^(\d+(?:\.\d+)?)\s*'?\s*-?\s*(?:(\d+(?:\.\d+)?)\s*"?)?$/))){const v=+m[1]+(m[2]?+m[2]/12:0);return v>0?v:null}
+  return null}
+
+// ---------- state / history ----------
+const snapState=()=>JSON.stringify(S);
+function begin(){pending=snapState()}
+function end(){if(pending!==null&&pending!==snapState()){undo.push(pending);if(undo.length>200)undo.shift();redo.length=0;persist()}pending=null;syncHist()}
+function act(fn){begin();fn();end();render()}
+function syncHist(){$('undo').disabled=!undo.length;$('redo').disabled=!redo.length}
+function syncClip(){const c=$('copyB'),p=$('pasteB');if(c){c.disabled=!([...multi].some(id=>{const r=byId(id);return r&&r.kind!=='building'})||(sel&&byO(sel)));p.disabled=!clip}}
+function doUndo(){if(!undo.length)return;redo.push(snapState());S=JSON.parse(undo.pop());pruneSel();persist();syncHist();render()}
+function doRedo(){if(!redo.length)return;undo.push(snapState());S=JSON.parse(redo.pop());pruneSel();persist();syncHist();render()}
+function persist(){try{S.rev=SEED_REV;localStorage.setItem(STORE,snapState())}catch(e){}}
+const byId=id=>S.rooms.find(r=>r.id===id);
+const DOORS={dock:{label:'Dock door',color:'#2563eb',w:9},drivein:{label:'Drive-in door',color:'#ea580c',w:12},entrance:{label:'Entrance',color:'#15803d',w:6},exit:{label:'Exit / man door',color:'#dc2626',w:3}};
+let doorType='dock';
+let multi=new Set(),guides=[];
+let clip=null,pasteN=0;
+const newId=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function copySel(cut){const rs=[...multi].map(byId).filter(r=>r&&r.kind!=='building');const od=sel&&byO(sel);
+  if(rs.length)clip={rooms:JSON.parse(JSON.stringify(rs))};else if(od)clip={door:JSON.parse(JSON.stringify(od))};else return false;
+  pasteN=0;if(cut)del();status((cut?'Cut ':'Copied ')+(clip.rooms?`${clip.rooms.length} room${clip.rooms.length>1?'s':''}`:'1 door'));render();return true}
+function paste(){if(!clip)return;pasteN++;
+  if(clip.rooms){const d=Math.max(5,snap||1)*pasteN;act(()=>{const ids=[];for(const r of clip.rooms){const c={...JSON.parse(JSON.stringify(r)),id:newId('r'),name:r.name};c.pts=c.pts.map(p=>[r4(p[0]+d),r4(p[1]+d)]);mapLocks(c,p=>[r4(p[0]+d),r4(p[1]+d)]);S.rooms.push(c);ids.push(c.id)}
+    multi=new Set(ids);sel=ids[0]});status(`Pasted ${clip.rooms.length} room${clip.rooms.length>1?'s':''}`)}
+  else if(clip.door){const o=clip.door;const W=nearestWall([o.x,o.y]);if(!W)return;act(()=>{const c={...o,id:newId('o')};delete c.label;Object.assign(c,onWall(W,[o.x+o.ux*(o.w+3)*pasteN,o.y+o.uy*(o.w+3)*pasteN],o.w));(S.openings??=[]).push(c);selOnly(null);sel=c.id});status('Pasted 1 door')}}
+let stT;function status(t){$('status').textContent=t;clearTimeout(stT);stT=setTimeout(()=>$('status').textContent='',2500)}
+function selOnly(id){sel=id;multi=new Set(id&&byId(id)?[id]:[])}
+function toggleSel(id){if(multi.has(id)){multi.delete(id);sel=multi.size?[...multi][multi.size-1]:null}else{if(sel&&!byId(sel))multi.clear();multi.add(id);sel=id}}
+function pruneSel(){multi=new Set([...multi].filter(id=>byId(id)));if(sel&&!byId(sel)&&!byO(sel))sel=multi.size?[...multi][0]:null}
+function touching(ids){const out=new Set(ids);const segs=r=>r.pts.map((p,i)=>[p,r.pts[(i+1)%r.pts.length]]);
+  const rooms=S.rooms.filter(r=>r.kind!=='building');
+  for(const id of ids){const a=byId(id);if(!a)continue;for(const b of rooms){if(out.has(b.id))continue;let hit=false;
+    for(const [p,q] of segs(a)){for(const [u,v] of segs(b)){for(const k of [0,1]){const o=1-k;
+      if(Math.abs(p[k]-q[k])<1e-6&&Math.abs(u[k]-v[k])<1e-6&&Math.abs(p[k]-u[k])<1e-3){const lo=Math.max(Math.min(p[o],q[o]),Math.min(u[o],v[o])),hi=Math.min(Math.max(p[o],q[o]),Math.max(u[o],v[o]));if(hi-lo>0.01)hit=true}}
+      if(hit)break}if(hit)break}
+    if(hit)out.add(b.id)}}
+  return out}
+function magnetLists(ex){const xs=new Set(),ys=new Set();for(const r of S.rooms){if(ex&&ex.has(r.id))continue;for(const p of r.pts){xs.add(p[0]);ys.add(p[1])}}
+  return[[...xs].sort((a,b)=>a-b),[...ys].sort((a,b)=>a-b)]}
+function nearestIn(arr,v){let lo=0,hi=arr.length-1;if(hi<0)return null;while(lo<hi){const m=(lo+hi)>>1;if(arr[m]<v)lo=m+1;else hi=m}
+  let best=arr[lo];if(lo>0&&Math.abs(arr[lo-1]-v)<Math.abs(best-v))best=arr[lo-1];return best}
+const magTol=()=>8/view.sc;
+function magAxis(v,arr,axis,g){const n=nearestIn(arr,v);if(n!=null&&Math.abs(n-v)<=magTol()){g&&g.push({axis,v:n});return n}return sn(v)}
+function magPt(p,L,g){return[magAxis(p[0],L[0],'x',g),magAxis(p[1],L[1],'y',g)]}
+const byO=id=>(S.openings||[]).find(o=>o.id===id);
+function nearestWall(p){let best=null;
+  for(const b of S.rooms.filter(r=>r.kind==='building')){const P=b.pts;
+    for(let i=0;i<P.length;i++){const a=P[i],c=P[(i+1)%P.length];const L=Math.hypot(c[0]-a[0],c[1]-a[1]);if(L<1e-6)continue;
+      const ux=(c[0]-a[0])/L,uy=(c[1]-a[1])/L;let t=(p[0]-a[0])*ux+(p[1]-a[1])*uy;t=Math.max(0,Math.min(L,t));
+      const qx=a[0]+ux*t,qy=a[1]+uy*t,d=Math.hypot(p[0]-qx,p[1]-qy);
+      if(!best||d<best.d){let nx=-uy,ny=ux;if(inside(P,qx+nx*0.5,qy+ny*0.5)){nx=-nx;ny=-ny}best={d,a,L,ux,uy,nx,ny}}}}
+  return best}
+function onWall(W,p,w){let t=(p[0]-W.a[0])*W.ux+(p[1]-W.a[1])*W.uy;t=sn(t);t=Math.max(w/2,Math.min(W.L-w/2,t));
+  return{x:r4(W.a[0]+W.ux*t),y:r4(W.a[1]+W.uy*t),ux:W.ux,uy:W.uy,nx:W.nx,ny:W.ny}}
+
+// ---------- view ----------
+const size=()=>{const r=svg.getBoundingClientRect();return[r.width,r.height]};
+function toWorld(e){const r=svg.getBoundingClientRect();return[(e.clientX-r.left)/view.sc+view.ox,(e.clientY-r.top)/view.sc+view.oy]}
+function fit(){const [w,h]=size();if(!S.rooms.length){view={ox:-4,oy:-4,sc:22};render();return}
+  const b=bbox(S.rooms.flatMap(r=>r.pts));const bw=Math.max(b[2]-b[0],4),bh=Math.max(b[3]-b[1],4);
+  const sc=Math.min((w-120)/bw,(h-120)/bh,120);view={sc:Math.max(sc,1),ox:(b[0]+b[2])/2-w/2/Math.max(sc,1),oy:(b[1]+b[3])/2-h/2/Math.max(sc,1)};render()}
+function zoomAt(f,cx,cy){const [w,h]=size();cx??=w/2;cy??=h/2;const wx=cx/view.sc+view.ox,wy=cy/view.sc+view.oy;
+  view.sc=Math.min(400,Math.max(1,view.sc*f));view.ox=wx-cx/view.sc;view.oy=wy-cy/view.sc;render()}
+
+// ---------- drawing ----------
+const fitText=(t,w,fs)=>{const m=Math.floor(w/(fs*0.56));return t.length<=m?t:(m<4?'':t.slice(0,m-1)+'…')};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function drawPlan(v,w,h,o){
+  const X=x=>((x-v.ox)*v.sc).toFixed(2),Y=y=>((y-v.oy)*v.sc).toFixed(2);
+  let g='';
+  // grid
+  const steps=[0.5,1,2,5,10,25,50,100,250];let st=steps.find(s=>s*v.sc>=12)||500;
+  const major=st<=2?10:st<=10?50:500;
+  const x0=Math.floor(v.ox/st)*st,x1=v.ox+w/v.sc,y0=Math.floor(v.oy/st)*st,y1=v.oy+h/v.sc;
+  let minor='',maj='';
+  for(let x=x0;x<=x1;x+=st){const m=Math.abs(x/major-Math.round(x/major))<1e-6;(m?(maj+=`M${X(x)} 0V${h}`):(minor+=`M${X(x)} 0V${h}`))}
+  for(let y=y0;y<=y1;y+=st){const m=Math.abs(y/major-Math.round(y/major))<1e-6;(m?(maj+=`M0 ${Y(y)}H${w}`):(minor+=`M0 ${Y(y)}H${w}`))}
+  g+=`<rect width="${w}" height="${h}" fill="${o.export?'#ffffff':'#fbfbfc'}"/>`;
+  g+=`<path d="${minor}" stroke="#eceef1" stroke-width="1"/><path d="${maj}" stroke="#d9dde2" stroke-width="1"/>`;
+  // rooms
+  for(const r of S.rooms.filter(r=>r.kind==='building')){
+    const pts=r.pts.map(p=>`${X(p[0])},${Y(p[1])}`).join(' ');const isSel=!o.export&&multi.has(r.id);
+    g+=`<polygon data-id="${r.id}" points="${pts}" fill="#ffffff" fill-opacity=".85" stroke="${isSel?'#2563eb':'#1f2933'}" stroke-width="${isSel?5:4}" pointer-events="stroke" style="cursor:move"/>`;
+  }
+  for(const r of S.rooms.filter(r=>r.kind!=='building')){
+    const pts=r.pts.map(p=>`${X(p[0])},${Y(p[1])}`).join(' ');const isSel=!o.export&&multi.has(r.id);
+    g+=`<polygon data-id="${r.id}" points="${pts}" fill="${r.color}" fill-opacity="${r.count===false?0.45:0.9}" stroke="${isSel?'#2563eb':'#3b4856'}" stroke-width="${isSel?2.5:1.5}" ${r.count===false?'stroke-dasharray="6 4"':''} style="cursor:${tool==='select'?'move':'crosshair'}"/>`;
+  }
+  // dimensions
+  if(showDims){
+    for(const r of S.rooms){
+      if(!(r.kind==='building'||(!o.export&&multi.has(r.id))||S.rooms.length<=12||(o.export&&S.rooms.length<=30)))continue;
+      const sgn=Math.sign(area(r.pts))||1;
+      r.pts.forEach((a,i)=>{const b=r.pts[(i+1)%r.pts.length];const k=o.export?1.6:1;const L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L*v.sc<46*k)return;
+        const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;let nx=(b[1]-a[1])/L*sgn,ny=-(b[0]-a[0])/L*sgn;
+        const off=13*k/v.sc;const tx=+X(mx-nx*off),ty=+Y(my-ny*off);
+        let ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
+        const ed=!o.export&&tool==='select'&&(Math.abs(a[0]-b[0])<1e-6||Math.abs(a[1]-b[1])<1e-6);
+        g+=`<text ${ed?`data-dim="${r.id}:${i}" pointer-events="all" style="cursor:text"`:'pointer-events="none"'} x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" transform="rotate(${ang.toFixed(1)} ${tx.toFixed(1)} ${ty.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" font-size="${11*k}" font-family="IBM Plex Mono,ui-monospace,monospace" fill="${r.id===sel&&!o.export?'#1d4ed8':'#5b6673'}" paint-order="stroke" stroke="#fff" stroke-width="3">${fmtLen(L)}</text>`;});
+    }
+  }
+  // labels (anchored to a fixed spot in the room, so they don't drift when zooming)
+  for(const r of S.rooms){if(r.kind==='building')continue;
+    const L_=labelSpot(r);const a=Math.abs(area(r.pts));const k=o.export?1.8:1;
+    const along=(L_.rot?L_.h:L_.w)*v.sc,across=(L_.rot?L_.w:L_.h)*v.sc;
+    if(along<24*k)continue;
+    const fs=Math.max(8,Math.min(15,across/2.6/k,along/7/k))*k;const halo=across<fs*1.6;
+    const nm_=fitText(r.name,along-8,fs);if(!nm_)continue;
+    const two=across>=fs*2.6;const af=fs-1.5;const full=fmtArea(a)+' sq ft';
+    const ar_=!two?'':(along-6>=full.length*af*0.62?full:along-6>=fmtArea(a).length*af*0.62?fmtArea(a):'');
+    const px=+X(L_.x),py=+Y(L_.y);const tr=L_.rot?` transform="rotate(-90 ${px.toFixed(1)} ${py.toFixed(1)})"`:'';
+    const y1=ar_?py-2:py+fs*0.35,y2=py+fs+1;
+    g+=`<g pointer-events="none" font-family="IBM Plex Sans,system-ui,sans-serif" text-anchor="middle"${tr}>`+
+       `<text x="${px.toFixed(1)}" y="${y1.toFixed(1)}" font-size="${fs}" font-weight="600" fill="#1f2933" paint-order="stroke" stroke="${halo?'#ffffff':r.color}" stroke-width="${halo?3:2.5}" stroke-linejoin="round">${esc(nm_)}</text>`+
+       (ar_?`<text x="${px.toFixed(1)}" y="${y2.toFixed(1)}" font-size="${af}" font-family="IBM Plex Mono,ui-monospace,monospace" fill="#4b5563">${ar_}</text>`:'')+`</g>`;
+  }
+  // doors
+  const cnt={};
+  const EXP=o.export;for(const o of (S.openings||[])){const D=DOORS[o.type]||DOORS.exit;cnt[o.type]=(cnt[o.type]||0)+1;
+    const isSel=!EXP&&o.id===sel;const k=EXP?1.6:1;
+    const hx=o.ux*o.w/2,hy=o.uy*o.w/2;const ax=+X(o.x-hx),ay=+Y(o.y-hy),bx=+X(o.x+hx),by=+Y(o.y+hy);
+    const dep=Math.max(5*v.sc,7*k);const ox=o.nx*dep,oy=o.ny*dep;const sw=Math.max(o.w*v.sc,6*k);
+    const mx=+X(o.x),my=+Y(o.y);const ex=o.ux*sw/2,ey=o.uy*sw/2;
+    g+=`<g data-o="${o.id}" style="cursor:${tool==='select'?'grab':'crosshair'}">`;
+    g+=`<line x1="${(mx-ex).toFixed(1)}" y1="${(my-ey).toFixed(1)}" x2="${(mx+ex).toFixed(1)}" y2="${(my+ey).toFixed(1)}" stroke="#ffffff" stroke-width="${8*k}" data-o="${o.id}"/>`;
+    if(o.type==='dock'||o.type==='drivein'){
+      g+=`<polygon data-o="${o.id}" points="${(mx-ex).toFixed(1)},${(my-ey).toFixed(1)} ${(mx+ex).toFixed(1)},${(my+ey).toFixed(1)} ${(mx+ex+ox).toFixed(1)},${(my+ey+oy).toFixed(1)} ${(mx-ex+ox).toFixed(1)},${(my-ey+oy).toFixed(1)}" fill="${D.color}" fill-opacity="${o.type==='dock'?0.9:0.35}" stroke="${D.color}" stroke-width="${1.5*k}"/>`;
+    }else if(o.type==='entrance'){
+      const tl=Math.max(8*k,dep*1.2);
+      g+=`<polygon data-o="${o.id}" points="${(mx+ox*1.8-ex*0.8).toFixed(1)},${(my+oy*1.8-ey*0.8).toFixed(1)} ${(mx+ox*1.8+ex*0.8).toFixed(1)},${(my+oy*1.8+ey*0.8).toFixed(1)} ${(mx+o.nx*2).toFixed(1)},${(my+o.ny*2).toFixed(1)}" fill="${D.color}"/>`;
+    }else{
+      g+=`<line data-o="${o.id}" x1="${(mx).toFixed(1)}" y1="${(my).toFixed(1)}" x2="${(mx+ox).toFixed(1)}" y2="${(my+oy).toFixed(1)}" stroke="${D.color}" stroke-width="${2*k}"/>`;
+    }
+    g+=`<line data-o="${o.id}" x1="${(mx-ex).toFixed(1)}" y1="${(my-ey).toFixed(1)}" x2="${(mx+ex).toFixed(1)}" y2="${(my+ey).toFixed(1)}" stroke="${isSel?'#111827':D.color}" stroke-width="${(isSel?6:4)*k}" stroke-linecap="butt"/>`;
+    if(!EXP)g+=`<circle data-o="${o.id}" cx="${(mx+ox/2).toFixed(1)}" cy="${(my+oy/2).toFixed(1)}" r="${Math.max(sw/2,10)}" fill="#000" fill-opacity="0"/>`;
+    if(isSel)g+=`<circle cx="${mx}" cy="${my}" r="${Math.max(sw,14)/2+5}" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
+    const lab=o.label||(o.type==='dock'?'D'+cnt.dock:o.type==='drivein'?'OH'+cnt.drivein:o.type==='entrance'?'ENT':'EX');
+    if(v.sc*Math.max(o.w,6)>=10*k||o.label){const off_=(o.type==='entrance'?dep*1.8:dep)+10*k;const lx=mx+o.nx*off_,ly=my+o.ny*off_;
+      g+=`<text pointer-events="none" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${o.nx>0.5?'start':o.nx<-0.5?'end':'middle'}" dominant-baseline="middle" font-size="${10.5*k}" font-weight="600" font-family="IBM Plex Sans,system-ui,sans-serif" fill="${D.color}" paint-order="stroke" stroke="#fff" stroke-width="3">${esc(lab)}</text>`}
+    g+=`</g>`;
+  }
+  return g;
+}
+
+function render(){
+  const [w,h]=size();svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  const X=x=>(x-view.ox)*view.sc,Y=y=>(y-view.oy)*view.sc;
+  let g=drawPlan(view,w,h,{});
+  const r=multi.size===1&&sel&&byId(sel);
+  const edgeRooms=tool!=='select'?[]:multi.size>1?[...multi].map(byId).filter(Boolean):r?[r]:[];
+  for(const r of edgeRooms){r.pts.forEach((a,i)=>{const b=r.pts[(i+1)%r.pts.length];const v_=Math.abs(a[0]-b[0])<1e-6,h_=Math.abs(a[1]-b[1])<1e-6;if(!(v_||h_))return;
+      const x1=X(a[0]),y1=Y(a[1]),x2=X(b[0]),y2=Y(b[1]);if(Math.hypot(x2-x1,y2-y1)<14)return;const cur=v_?'ew-resize':'ns-resize';const mx=(x1+x2)/2,my=(y1+y2)/2;
+      g+=`<line data-e="${r.id}:${i}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#2563eb" stroke-opacity="0" stroke-width="12" style="cursor:${cur}"/>`;
+      g+=`<rect data-e="${r.id}:${i}" x="${mx-(v_?4:11)}" y="${my-(v_?11:4)}" width="${v_?8:22}" height="${v_?22:8}" rx="3" fill="#2563eb" stroke="#fff" stroke-width="1.5" style="cursor:${cur}"/>`});}
+  if(drag&&drag.type==='edge'){for(const it of drag.set){const rr=byId(it.id);if(!rr)continue;const a=rr.pts[it.i],b=rr.pts[(it.i+1)%rr.pts.length];g+=`<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="#2563eb" stroke-width="3" pointer-events="none"/>`}
+    g+=`<text x="${drag.lx+12}" y="${drag.ly-12}" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1d4ed8" paint-order="stroke" stroke="#fff" stroke-width="3" pointer-events="none">${drag.set.length>1?drag.set.length+' rooms · ':''}${drag.axis==='x'?'x':'y'} = ${fmtLen(drag.cur)}</text>`}
+  if(r&&tool==='select'){r.pts.forEach((p,i)=>{const L=isLocked(r,p);g+=L?`<rect data-h="${r.id}:${i}" x="${X(p[0])-7}" y="${Y(p[1])-7}" width="14" height="14" rx="3" fill="#1f2933" stroke="#fff" stroke-width="2" style="cursor:not-allowed"><title>Locked corner (right-click to unlock)</title></rect><path d="M${X(p[0])-3} ${Y(p[1])-1}v-2a3 3 0 0 1 6 0v2" fill="none" stroke="#fff" stroke-width="1.4" pointer-events="none"/>`:`<circle data-h="${r.id}:${i}" cx="${X(p[0])}" cy="${Y(p[1])}" r="6" fill="#fff" stroke="#2563eb" stroke-width="2" style="cursor:pointer"><title>Drag to move · right-click to lock</title></circle>`})}
+  if(tool==='select')for(const q of S.rooms){if(!q.locks||q===r)continue;for(const p of q.locks)g+=`<rect x="${X(p[0])-3.5}" y="${Y(p[1])-3.5}" width="7" height="7" rx="1.5" fill="#1f2933" pointer-events="none"/>`}
+  if(drag&&drag.type==='newrect'){const p=rectPts(drag.p0[0],drag.p0[1],drag.p1[0],drag.p1[1]);
+    g+=`<polygon points="${p.map(q=>X(q[0])+','+Y(q[1])).join(' ')}" fill="#2563eb" fill-opacity=".12" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4" pointer-events="none"/>`;
+    const W=Math.abs(drag.p1[0]-drag.p0[0]),H=Math.abs(drag.p1[1]-drag.p0[1]);
+    g+=`<text x="${X(Math.max(drag.p0[0],drag.p1[0]))+8}" y="${Y(Math.max(drag.p0[1],drag.p1[1]))+16}" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1d4ed8" paint-order="stroke" stroke="#fff" stroke-width="3" pointer-events="none">${fmtLen(W)} × ${fmtLen(H)} = ${fmtArea(W*H)} sq ft</text>`;}
+  if(draft&&draft.length){const pts=[...draft,...(hover?[hover]:[])];
+    g+=`<polyline points="${pts.map(q=>X(q[0])+','+Y(q[1])).join(' ')}" fill="${pts.length>2?'rgba(37,99,235,.08)':'none'}" stroke="#2563eb" stroke-width="2" pointer-events="none"/>`;
+    draft.forEach((p,i)=>g+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${i===0?7:4}" fill="${i===0?'#fff':'#2563eb'}" stroke="#2563eb" stroke-width="2" pointer-events="none"/>`);
+    if(hover){const a=draft[draft.length-1],L=Math.hypot(hover[0]-a[0],hover[1]-a[1]);
+      g+=`<text x="${X(hover[0])+10}" y="${Y(hover[1])-10}" font-size="12" font-family="IBM Plex Mono,monospace" fill="#1d4ed8" paint-order="stroke" stroke="#fff" stroke-width="3" pointer-events="none">${fmtLen(L)}${draft.length>=2?' · '+fmtArea(Math.abs(area(pts)))+' sq ft':''}</text>`;}}
+  if(hover&&tool!=='select'&&!drag&&!(draft&&draft.length))g+=`<circle cx="${X(hover[0])}" cy="${Y(hover[1])}" r="3.5" fill="#2563eb" pointer-events="none"/>`;
+  if(tool==='door'&&hover&&!drag){const W=nearestWall(hover);if(W&&W.d*view.sc<40){const D=DOORS[doorType];const q=onWall(W,hover,D.w);const ex=q.ux*D.w/2,ey=q.uy*D.w/2;
+    g+=`<line x1="${X(q.x-ex)}" y1="${Y(q.y-ey)}" x2="${X(q.x+ex)}" y2="${Y(q.y+ey)}" stroke="${D.color}" stroke-width="7" stroke-opacity=".55" pointer-events="none"/>`}}
+  for(const gd of guides){g+=gd.axis==='x'?`<line x1="${X(gd.v)}" y1="0" x2="${X(gd.v)}" y2="${h}" stroke="#db2777" stroke-width="1" stroke-dasharray="5 4" pointer-events="none"/>`:`<line x1="0" y1="${Y(gd.v)}" x2="${w}" y2="${Y(gd.v)}" stroke="#db2777" stroke-width="1" stroke-dasharray="5 4" pointer-events="none"/>`}
+  if(drag&&drag.type==='marquee'){const x0=Math.min(drag.a[0],drag.b[0]),y0=Math.min(drag.a[1],drag.b[1]);g+=`<rect x="${X(x0)}" y="${Y(y0)}" width="${Math.abs(drag.b[0]-drag.a[0])*view.sc}" height="${Math.abs(drag.b[1]-drag.a[1])*view.sc}" fill="#2563eb" fill-opacity=".08" stroke="#2563eb" stroke-dasharray="4 3" pointer-events="none"/>`}
+  svg.innerHTML=g;
+  // panel + footer
+  panel();syncClip();
+  $('zoom').textContent=Math.round(view.sc)+' px/ft';
+  $('hint').textContent=tool==='bld'?(draft&&draft.length?'Keep clicking the building\u2019s corners. Click the first corner or press Enter to finish. Hold Shift for straight walls. Backspace removes the last corner. Esc cancels.':'Building tool: click each outside corner of the building in order. Hold Shift to keep walls straight.'):tool==='door'?`Click on a building wall to add a ${DOORS[doorType].label.toLowerCase()}. Change the type in the sidebar.`:tool==='rect'?'Drag to draw a rectangular room.':tool==='poly'?(draft&&draft.length?'Keep clicking corners. Click the first point or press Enter to finish. Esc cancels.':'Click to place the first corner of the shape.'):(S.rooms.length?(multi.size>1?'Drag a room to move the group, or drag a blue wall handle to move that wall for every selected room on the same line. Unselected rooms stay put.':sel&&byId(sel)?'Drag a blue wall handle to move that wall. Rooms sharing the wall move with it; hold Alt to move only this room. Drag corners to reshape.':(S.rooms.some(r=>r.kind==='building')?'Click a room to edit it. Shift-click or Shift-drag a box to select several. Drag empty space to pan.':'Start with the Building tool to draw the outside walls, then add rooms inside.')):'Start with the Building tool above: click each outside corner of the building. Then add rooms with Rectangle or Shape.');
+}
+
+// ---------- overlap (sampled) ----------
+function inside(p,x,y){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+let ovKey='',ovVal=0;
+function overlap(rs){const key=JSON.stringify(rs.map(r=>r.pts));if(key===ovKey)return ovVal;let tot=0;
+  for(let i=0;i<rs.length;i++)for(let j=i+1;j<rs.length;j++){const A=bbox(rs[i].pts),B=bbox(rs[j].pts);
+    const x0=Math.max(A[0],B[0]),y0=Math.max(A[1],B[1]),x1=Math.min(A[2],B[2]),y1=Math.min(A[3],B[3]);if(x1-x0<=1e-6||y1-y0<=1e-6)continue;
+    const c=Math.max(1/12,Math.sqrt((x1-x0)*(y1-y0)/40000));let n=0;
+    for(let x=x0+c/2;x<x1;x+=c)for(let y=y0+c/2;y<y1;y+=c)if(inside(rs[i].pts,x,y)&&inside(rs[j].pts,x,y))n++;tot+=n*c*c}
+  ovKey=key;ovVal=tot;return tot}
+
+// ---------- label placement ----------
+const lblCache=new Map();
+function spanAt(P,x,y,axis){const k=axis==='h'?1:0,o=1-k,v=axis==='h'?y:x,q=axis==='h'?x:y;const hits=[];
+  for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];if((a[k]>v)!==(b[k]>v))hits.push(a[o]+(v-a[k])*(b[o]-a[o])/(b[k]-a[k]))}
+  hits.sort((m,n)=>m-n);for(let i=0;i+1<hits.length;i+=2)if(q>=hits[i]-1e-9&&q<=hits[i+1]+1e-9)return[hits[i],hits[i+1]];return null}
+function labelSpot(r){const key=JSON.stringify(r.pts);if(lblCache.has(key))return lblCache.get(key);
+  const P=r.pts,b=bbox(P);let res;
+  if(r.rect||P.length===4){const w=b[2]-b[0],h=b[3]-b[1];res={x:(b[0]+b[2])/2,y:(b[1]+b[3])/2,w,h,rot:h>w*2}}
+  else{
+    // label goes in the centre of the largest rectangle that fits inside the shape
+    const ortho=P.every((p,i)=>{const q=P[(i+1)%P.length];return Math.abs(p[0]-q[0])<1e-6||Math.abs(p[1]-q[1])<1e-6});
+    const uniq=a=>{a.sort((m,n)=>m-n);return a.filter((v,i)=>i===0||v-a[i-1]>1e-4)};
+    let xs,ys;if(ortho){xs=uniq(P.map(p=>p[0]));ys=uniq(P.map(p=>p[1]))}else{const N=40;xs=[];ys=[];for(let i=0;i<=N;i++){xs.push(b[0]+(b[2]-b[0])*i/N);ys.push(b[1]+(b[3]-b[1])*i/N)}}
+    const nx=xs.length-1,ny=ys.length-1;const F=[];for(let j=0;j<ny;j++){const row=[];for(let i=0;i<nx;i++)row.push(inside(P,(xs[i]+xs[i+1])/2,(ys[j]+ys[j+1])/2));F.push(row)}
+    let best=null;
+    for(let j0=0;j0<ny;j0++){const col=F[j0].slice();for(let j1=j0;j1<ny;j1++){if(j1>j0)for(let i=0;i<nx;i++)col[i]=col[i]&&F[j1][i];
+      const h=ys[j1+1]-ys[j0];let i=0;while(i<nx){if(!col[i]){i++;continue}let k=i;while(k<nx&&col[k])k++;const w=xs[k]-xs[i];
+        const sc=w*h;if(!best||sc>best.sc)best={sc,x0:xs[i],x1:xs[k],y0:ys[j0],y1:ys[j1+1]};i=k}}}
+    if(best){const w=best.x1-best.x0,h=best.y1-best.y0;res={x:(best.x0+best.x1)/2,y:(best.y0+best.y1)/2,w,h,rot:h>w*2}}
+    else{const [cx,cy]=centroid(P);res={x:cx,y:cy,w:b[2]-b[0],h:b[3]-b[1],rot:false}}}
+  lblCache.set(key,res);if(lblCache.size>500)lblCache.clear();return res}
+
+// ---------- merge ----------
+function unionRect(polys){const eps=1e-6;
+  for(const P of polys)for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];if(Math.abs(a[0]-b[0])>eps&&Math.abs(a[1]-b[1])>eps)return{err:'Merge works on rooms with straight horizontal and vertical walls only.'}}
+  const uniq=a=>{a.sort((p,q)=>p-q);return a.filter((v,i)=>i===0||v-a[i-1]>1e-4)};
+  const xs=uniq(polys.flatMap(P=>P.map(p=>p[0]))),ys=uniq(polys.flatMap(P=>P.map(p=>p[1])));const nx=xs.length-1,ny=ys.length-1;
+  const F=new Uint8Array(nx*ny);for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const cx=(xs[i]+xs[i+1])/2,cy=(ys[j]+ys[j+1])/2;if(polys.some(P=>inside(P,cx,cy)))F[j*nx+i]=1}
+  const f=(i,j)=>i>=0&&j>=0&&i<nx&&j<ny&&F[j*nx+i];
+  // connectivity
+  let start=-1,total=0;for(let k=0;k<F.length;k++)if(F[k]){total++;if(start<0)start=k}if(start<0)return{err:'Nothing to merge.'};
+  const seen=new Uint8Array(F.length),st=[start];seen[start]=1;let cnt=0;
+  while(st.length){const k=st.pop();cnt++;const i=k%nx,j=(k/nx)|0;for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){const a=i+di,b=j+dj;if(f(a,b)&&!seen[b*nx+a]){seen[b*nx+a]=1;st.push(b*nx+a)}}}
+  if(cnt<total)return{err:'Those rooms don\u2019t all touch, so they can\u2019t become one room.'};
+  // boundary edges, filled cell on the right when walking (screen coords: y down)
+  const E=new Map();const add=(a,b)=>{const k=a.join(',');(E.get(k)||E.set(k,[]).get(k)).push(b)};
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){if(!f(i,j))continue;
+    if(!f(i,j-1))add([i,j],[i+1,j]);if(!f(i+1,j))add([i+1,j],[i+1,j+1]);if(!f(i,j+1))add([i+1,j+1],[i,j+1]);if(!f(i-1,j))add([i,j+1],[i,j])}
+  const loops=[];
+  while(E.size){const k0=E.keys().next().value;let cur=k0.split(',').map(Number);const loop=[cur];let guard=0;
+    while(guard++<1e6){const k=cur.join(',');const arr=E.get(k);if(!arr||!arr.length)break;const nxt=arr.pop();if(!arr.length)E.delete(k);if(nxt.join(',')===k0)break;loop.push(nxt);cur=nxt}
+    loops.push(loop.map(([i,j])=>[xs[i],ys[j]]))}
+  const clean=L=>{let p=L.slice();let ch=true;while(ch&&p.length>3){ch=false;for(let i=0;i<p.length;i++){const a=p[(i+p.length-1)%p.length],b=p[i],c=p[(i+1)%p.length];
+    if((Math.abs(a[0]-b[0])<1e-6&&Math.abs(b[0]-c[0])<1e-6)||(Math.abs(a[1]-b[1])<1e-6&&Math.abs(b[1]-c[1])<1e-6)){p.splice(i,1);ch=true;break}}}return p};
+  const ls=loops.map(clean).sort((a,b)=>Math.abs(area(b))-Math.abs(area(a)));
+  return{pts:ls[0].map(p=>[r4(p[0]),r4(p[1])]),holes:ls.length-1}}
+function mergeSel(){const rs=[...multi].map(byId).filter(r=>r&&r.kind!=='building');if(rs.length<2){status('Select two or more rooms to merge');return}
+  const U=unionRect(rs.map(r=>r.pts));if(U.err){showMsg('Can\u2019t merge',U.err);return}
+  const big=rs.reduce((a,b)=>Math.abs(area(b.pts))>Math.abs(area(a.pts))?b:a);const tg=rs.every(r=>r.target)?rs.reduce((a,r)=>a+r.target,0):undefined;
+  const ids=new Set(rs.map(r=>r.id));
+  act(()=>{const idx=S.rooms.findIndex(r=>r.id===big.id);const m={id:newId('r'),name:big.name,color:big.color,pts:U.pts,rect:U.pts.length===4,count:rs.some(r=>r.count!==false)};const lk=rs.flatMap(r=>r.locks||[]).filter(q=>U.pts.some(p=>near(p,q)));if(lk.length)m.locks=lk;if(tg)m.target=tg;
+    S.rooms=S.rooms.filter(r=>!ids.has(r.id));S.rooms.splice(Math.min(idx,S.rooms.length),0,m);selOnly(m.id)});
+  status(`Merged ${rs.length} rooms into “${big.name}”`+(U.holes?' (an enclosed gap inside was filled in)':''))}
+let dlP=null;function useDownloads(){if(!dlP){dlP=(async()=>{try{if(window.claude&&typeof window.claude.use==='function')return await window.claude.use('downloads')}catch(_){}return null})()}return dlP}
+function showMsg(t,m){openModal(`<h2>${esc(t)}</h2><p>${esc(m)}</p><div class="row"><span class="spacer"></span><button class="btn on" id="mClose">OK</button></div>`);$('mClose').onclick=closeModal}
+
+// ---------- side panel ----------
+let lastPanel='';
+function panel(){
+  const bld=S.rooms.filter(r=>r.kind==='building');const rooms=S.rooms.filter(r=>r.kind!=='building');
+  const counted=rooms.filter(r=>r.count!==false);const tot=counted.reduce((s,r)=>s+Math.abs(area(r.pts)),0);
+  $('total').innerHTML=`${fmtArea(tot)}<small>sq ft</small>`;
+  const ex=rooms.length-counted.length;
+  const bA=bld.reduce((s,r)=>s+Math.abs(area(r.pts)),0);$('bldSec').hidden=!bA;
+  if(bA){const pct=Math.abs(bA-tot)<0.5?100:tot/bA*100;const rem=Math.abs(bA-tot)<0.5?0:bA-tot;$('bldBar').style.width=Math.min(100,pct)+'%';$('bldBar').style.background=pct>100?'var(--danger)':'var(--accent)';
+    $('bldTxt').innerHTML=`<b>${pct.toFixed(1)}%</b> of the ${fmtArea(bA)} sq ft building used · <b>${fmtArea(Math.abs(rem))}</b> sq ft ${rem<0?'over':'unassigned'}`;
+    const tg=counted.reduce((s,r)=>s+(r.target||0),0);$('bldTgt').textContent=tg?`Program target: ${fmtArea(tg)} sq ft (${(tg/bA*100).toFixed(1)}%)`:'';}const ov=overlap(counted);
+  $('ovWarn').hidden=ov<0.5;if(ov>=0.5)$('ovWarn').textContent=`Rooms overlap by about ${fmtArea(ov)} sq ft, so that area is counted twice in the total.`;
+  $('totalSub').textContent=rooms.length?`${counted.length} room${counted.length===1?'':'s'} counted${ex?` · ${ex} excluded`:''} · ${fmtArea(tot*0.092903)} m²`:'Draw a room to start';
+  const key=JSON.stringify([S.rooms.map(r=>[r.id,r.name,r.color,r.count,r.kind,r.target,fmtArea(Math.abs(area(r.pts)))]),[...multi]]);
+  if(key!==lastPanel){lastPanel=key;
+    $('list').innerHTML=S.rooms.length?[...S.rooms].sort((p,q)=>(q.kind==='building')-(p.kind==='building')).map(r=>{const A=Math.abs(area(r.pts));const d=r.target?A-r.target:0;const off=r.target&&Math.abs(d)>=Math.max(1,r.target*0.005);
+      return `<li data-id="${r.id}" class="${multi.has(r.id)?'sel':''} ${r.count===false&&r.kind!=='building'?'excl':''}"><span class="sw" style="background:${r.kind==='building'?'#fff;border:2px solid #1f2933':r.color}"></span><span class="nm">${esc(r.name)}</span><span class="ar">${fmtArea(A)}${off?`<span class="${d<0?'under':'over'}" title="Target ${fmtArea(r.target)} sq ft">${d>0?'+':'−'}${fmtArea(Math.abs(d))}</span>`:''}</span></li>`}).join(''):'<li class="empty" style="cursor:default">No rooms yet</li>';}
+  const cnt={};(S.openings||[]).forEach(o=>cnt[o.type]=(cnt[o.type]||0)+1);
+  const lgH=Object.entries(DOORS).map(([k,D])=>`<div class="lg"><i style="background:${D.color}"></i>${D.label}<b>${cnt[k]||0}</b></div>`).join('')+`<div class="sub" style="margin-top:6px">Use the Door tool (D) to add one, and pick its type before clicking:</div><select id="dNewType" style="margin-top:6px;width:100%">${Object.entries(DOORS).map(([k,D])=>`<option value="${k}" ${k===doorType?'selected':''}>${D.label}</option>`).join('')}</select>`;
+  if($('doorLegend').dataset.h!==lgH){$('doorLegend').dataset.h=lgH;$('doorLegend').innerHTML=lgH;}
+  $('dNewType').onchange=e=>{doorType=e.target.value;if(tool!=='door')setTool('door');else render()};
+  const od=sel&&byO(sel);$('doorSec').hidden=!od;
+  if(od){const ae=document.activeElement;$('dType').innerHTML=Object.entries(DOORS).map(([k,D])=>`<option value="${k}" ${k===od.type?'selected':''}>${D.label}</option>`).join('');
+    if(ae!==$('dW'))$('dW').value=fmtLen(od.w);if(ae!==$('dLabel'))$('dLabel').value=od.label||''}
+  $('multiSec').hidden=multi.size<2;
+  if(multi.size>1){const rs=[...multi].map(byId).filter(Boolean);$('mCount').textContent=`${rs.length} rooms selected`;$('mArea').textContent=fmtArea(rs.reduce((a,r)=>a+Math.abs(area(r.pts)),0))+' sq ft';$('propSec').hidden=true;return}
+  const r=multi.size===1&&sel&&byId(sel);$('propSec').hidden=!r;if(!r)return;
+  const act_=document.activeElement;
+  if(act_!==$('pName'))$('pName').value=r.name;
+  $('wRow').hidden=$('lRow').hidden=!r.rect;
+  if(r.rect){const b=bbox(r.pts);if(act_!==$('pW'))$('pW').value=fmtLen(b[2]-b[0]);if(act_!==$('pL'))$('pL').value=fmtLen(b[3]-b[1])}
+  $('pColors').innerHTML=COLORS.map(c=>`<button data-c="${c}" class="${c===r.color?'on':''}" style="background:${c}" title="${c}"></button>`).join('');
+  $('pCount').checked=r.count!==false;const isB=r.kind==='building';$('pRot').textContent=isB?'Rotate plan ⟳':'Rotate 90°';$('pRot').title=isB?'Rotate the whole plan 90° clockwise':'Rotate 90°';$('pRotL').hidden=!isB;$('pLock').textContent=r.pts.every(p=>isLocked(r,p))?'Unlock corners':'Lock corners';$('pBld').checked=isB;
+  $('tRow').hidden=$('cRow').hidden=$('inRow').hidden=isB;
+  if(act_!==$('pT'))$('pT').value=r.target?Math.round(r.target).toLocaleString():'';
+  const A=Math.abs(area(r.pts));$('pDiffRow').hidden=isB||!r.target;if(r.target){const d=A-r.target;$('pDiff').textContent=Math.abs(d)<1?'on target':`${d>0?'+':'−'}${fmtArea(Math.abs(d))} sq ft`;$('pDiff').style.color=Math.abs(d)<1?'#15803d':d<0?'#9a3412':'#1d4ed8'}
+  $('pArea').textContent=fmtArea(Math.abs(area(r.pts)))+' sq ft';
+  $('pPer').textContent=fmtLen(perim(r.pts));
+}
+
+// ---------- room ops ----------
+function addRoom(pts,rect){const n=S.seq++;const r={id:'r'+n+'_'+Date.now().toString(36),name:'Room '+n,color:COLORS[(n-1)%COLORS.length],pts,rect:!!rect,count:true};S.rooms.push(r);selOnly(r.id);return r}
+function del(){if(!sel&&!multi.size)return;act(()=>{const ids=new Set([...multi,sel]);S.rooms=S.rooms.filter(r=>!ids.has(r.id));S.openings=(S.openings||[]).filter(o=>o.id!==sel);selOnly(null)})}
+function dup(){const r=sel&&byId(sel);if(!r)return;act(()=>{const d=Math.max(snap||1,1);const c=addRoom(r.pts.map(p=>[r4(p[0]+d),r4(p[1]+d)]),r.rect);c.name=r.name;c.color=r.color;c.count=r.count;if(r.locks)c.locks=r.locks.map(p=>[r4(p[0]+d),r4(p[1]+d)])})}
+function rot(){const r=sel&&byId(sel);if(!r)return;if(r.kind==='building'){rotatePlan(1);return}act(()=>{const [cx,cy]=centroid(r.pts);let p=r.pts.map(q=>[cx-(q[1]-cy),cy+(q[0]-cx)]);
+  const d=[sn(p[0][0])-p[0][0],sn(p[0][1])-p[0][1]];p=p.map(q=>[r4(q[0]+d[0]),r4(q[1]+d[1])]);mapLocks(r,q=>{const z=[cx-(q[1]-cy),cy+(q[0]-cx)];return[r4(z[0]+d[0]),r4(z[1]+d[1])]});
+  if(r.rect){const b=bbox(p);p=rectPts(...b)}r.pts=p})}
+function nudge(dx,dy){const od=sel&&byO(sel);if(od){const W=nearestWall([od.x,od.y]);const s_=snap||1/12;const step=(dx*od.ux+dy*od.uy)||(dx*od.uy+dy*od.ux);if(!W||!step)return;act(()=>Object.assign(od,onWall(W,[od.x+od.ux*step*s_,od.y+od.uy*step*s_],od.w)));return}
+  const rs=[...multi].map(byId).filter(Boolean);if(!rs.length)return;const s=snap||1/12;act(()=>{for(const r of rs){const f=p=>[r4(p[0]+dx*s),r4(p[1]+dy*s)];r.pts=r.pts.map(f);mapLocks(r,f)}})}
+const near=(p,q)=>Math.abs(p[0]-q[0])<1e-3&&Math.abs(p[1]-q[1])<1e-3;
+const isLocked=(r,p)=>(r.locks||[]).some(q=>near(p,q));
+const locksOk=(r,P)=>(r.locks||[]).every(q=>P.some(p=>near(p,q)));
+function mapLocks(r,f){if(r.locks&&r.locks.length)r.locks=r.locks.map(f)}
+function toggleLock(r,i){const p=r.pts[i];act(()=>{if(isLocked(r,p))r.locks=r.locks.filter(q=>!near(p,q));else(r.locks??=[]).push([p[0],p[1]]);if(!r.locks.length)delete r.locks});status(isLocked(r,p)?'Corner locked':'Corner unlocked')}
+function rotatePlan(dir){act(()=>{const B=S.rooms.filter(r=>r.kind==='building');const all=S.rooms.flatMap(r=>r.pts);const b0=bbox(B.length?B.flatMap(r=>r.pts):all);const cx=(b0[0]+b0[2])/2,cy=(b0[1]+b0[3])/2;
+    const f=q=>dir>0?[cx-(q[1]-cy),cy+(q[0]-cx)]:[cx+(q[1]-cy),cy-(q[0]-cx)];
+    for(const r of S.rooms){r.pts=r.pts.map(f);mapLocks(r,f)}for(const o of S.openings||[]){[o.x,o.y]=f([o.x,o.y]);[o.ux,o.uy]=dir>0?[-o.uy,o.ux]:[o.uy,-o.ux];[o.nx,o.ny]=dir>0?[-o.ny,o.nx]:[o.ny,-o.nx]}
+    const b1=bbox(B.length?B.flatMap(r=>r.pts):S.rooms.flatMap(r=>r.pts));const dx=b0[0]-b1[0],dy=b0[1]-b1[1];const t=q=>[r4(q[0]+dx),r4(q[1]+dy)];
+    for(const r of S.rooms){r.pts=r.pts.map(t);if(r.rect){const bb=bbox(r.pts);r.pts=rectPts(...bb)}mapLocks(r,t);if(r.kind==='building')r.name=r.name.replace(/(\d+(?:\.\d+)?)' × (\d+(?:\.\d+)?)'/,"$2' × $1'")}
+    for(const o of S.openings||[]){[o.x,o.y]=t([o.x,o.y])}});setTimeout(fit,0);status('Plan rotated 90° '+(dir>0?'clockwise':'counter-clockwise'))}
+function wallSet(room,i,solo){const P=room.pts,a=P[i],b=P[(i+1)%P.length];const axis=Math.abs(a[0]-b[0])<1e-6?'x':'y';const k=axis==='x'?0:1,o=1-k;const c=a[k];
+  const seg=(r,j)=>{const p=r.pts[j],q=r.pts[(j+1)%r.pts.length];return(Math.abs(p[k]-q[k])<1e-6&&Math.abs(p[k]-c)<1e-3&&Math.abs(p[o]-q[o])>1e-6)?[Math.min(p[o],q[o]),Math.max(p[o],q[o])]:null};
+  const set=[{id:room.id,i,lo:Math.min(a[o],b[o]),hi:Math.max(a[o],b[o])}];
+  if(!solo&&room.kind!=='building'){const cand=[];for(const r of S.rooms){if(r.kind==='building')continue;for(let j=0;j<r.pts.length;j++){if(r.id===room.id&&j===i)continue;const sg=seg(r,j);if(sg)cand.push({id:r.id,i:j,lo:sg[0],hi:sg[1]})}}
+    let grew=true;while(grew){grew=false;for(let q=cand.length-1;q>=0;q--){const e_=cand[q];if(set.some(s_=>Math.min(s_.hi,e_.hi)-Math.max(s_.lo,e_.lo)>0.01)){set.push(e_);cand.splice(q,1);grew=true}}}}
+  return{axis,c,set}}
+function wallSetSel(room,i){const P=room.pts,a=P[i],b=P[(i+1)%P.length];const axis=Math.abs(a[0]-b[0])<1e-6?'x':'y';const k=axis==='x'?0:1,o=1-k;const c=a[k];const set=[];
+  for(const id of multi){const r=byId(id);if(!r)continue;r.pts.forEach((p,j)=>{const q=r.pts[(j+1)%r.pts.length];if(Math.abs(p[k]-q[k])<1e-6&&Math.abs(p[k]-c)<1e-3&&Math.abs(p[o]-q[o])>1e-6)set.push({id,i:j,lo:Math.min(p[o],q[o]),hi:Math.max(p[o],q[o])})})}
+  return{axis,c,set}}
+function setEdgeLength(room,i,L1,solo){const P=room.pts,n=P.length,a=P[i],b=P[(i+1)%n];const horiz=Math.abs(a[1]-b[1])<1e-6;const k=horiz?0:1;
+  // keep the left/top end fixed; move the wall at the right/bottom end
+  const la=isLocked(room,a),lb=isLocked(room,b);if(la&&lb)return 'Both ends of this wall are locked. Unlock one corner first.';
+  const moveB=la?true:lb?false:b[k]>a[k];const fixed=moveB?a:b;const j=moveB?(i+1)%n:(i-1+n)%n;
+  const p=P[j],q=P[(j+1)%n];if(!(Math.abs(p[k]-q[k])<1e-6))return 'That wall\u2019s end isn\u2019t square, so its length can\u2019t be typed in.';
+  const W_=solo||room.kind==='building'?wallSet(room,j,true):(multi.size>1&&multi.has(room.id)?wallSetSel(room,j):wallSet(room,j,false));
+  const mov=moveB?b:a;const sg=Math.sign(mov[k]-fixed[k])||1;const c=r4(fixed[k]+sg*L1);const nxt={};
+  for(const it of W_.set){const R_=byId(it.id);const Q=(nxt[it.id]??=R_.pts.map(p=>[...p]));const m=Q.length;Q[it.i][k]=c;Q[(it.i+1)%m][k]=c}
+  for(const id in nxt){const A0=area(byId(id).pts),A1=area(nxt[id]);const bb=bbox(nxt[id]);if(Math.sign(A1)!==Math.sign(A0)||Math.abs(A1)<1||bb[2]-bb[0]<1||bb[3]-bb[1]<1)return 'That length would collapse or flip '+(id===room.id?'this room':'a neighbouring room')+'.';if(!locksOk(byId(id),nxt[id]))return (id===room.id?'A locked corner':'A locked corner in a neighbouring room')+' is on the wall that would move. Unlock it, or lock the other end instead.'}
+  act(()=>{for(const id in nxt)byId(id).pts=nxt[id]});return null}
+function openDimEdit(key,e,solo){closeDimEdit();const [id,i]=key.split(':');const r=byId(id);if(!r)return;if(!multi.has(id))selOnly(id);
+  const P=r.pts,a=P[+i],b=P[(+i+1)%P.length];const L=Math.hypot(b[0]-a[0],b[1]-a[1]);
+  const st=stage.getBoundingClientRect();const box=document.createElement('div');box.id='dimEd';box.className='pop';box.style.width='220px';box.style.padding='8px';
+  box.innerHTML=`<div class="sub" style="margin-bottom:4px">Wall length${solo?' (this room only)':''}</div><input type="text" class="num" style="width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-family:var(--mono)" value="${fmtLen(L)}"><div class="sub" id="dimMsg" style="margin-top:4px">Enter to apply · Esc to cancel</div>`;
+  stage.appendChild(box);let x=e.clientX-st.left-110,y=e.clientY-st.top+14;x=Math.max(8,Math.min(st.width-230,x));if(y+90>st.height)y=e.clientY-st.top-100;box.style.left=x+'px';box.style.top=y+'px';
+  const inp=box.querySelector('input');setTimeout(()=>{inp.focus();inp.select()},0);
+  inp.addEventListener('keydown',ev=>{ev.stopPropagation();if(ev.key==='Escape'){ev.preventDefault();closeDimEdit();return}
+    if(ev.key==='Enter'){ev.preventDefault();const v=parseLen(inp.value);if(v==null){$('dimMsg').textContent='Type a length like 24\' 6", 24.5 or 294"';return}
+      const err=setEdgeLength(byId(id),+i,v,solo);if(err){$('dimMsg').textContent=err;return}closeDimEdit();render()}});
+  inp.addEventListener('blur',()=>setTimeout(closeDimEdit,150));render()}
+function closeDimEdit(){const d=$('dimEd');if(d)d.remove()}
+function closeDraft(){if(!draft)return;const p=draft.filter((q,i)=>i===0||q[0]!==draft[i-1][0]||q[1]!==draft[i-1][1]);
+  while(p.length>1&&p[p.length-1][0]===p[0][0]&&p[p.length-1][1]===p[0][1])p.pop();
+  if(p.length>=3&&Math.abs(area(p))>1e-6){const asB=tool==='bld';act(()=>{const r=addRoom(p,false);if(asB){r.kind='building';r.count=false;r.name='Building outline';r.color='#ffffff';S.seq--;S.rooms.splice(S.rooms.indexOf(r),1);S.rooms.unshift(r)}});if(asB)status('Building outline added: '+fmtArea(Math.abs(area(p)))+' sq ft');setTool('select')}draft=null;render()}
+function setTool(t){tool=t;draft=null;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t));render()}
+
+// ---------- pointer ----------
+svg.addEventListener('pointerdown',e=>{
+  const w=toWorld(e),t=e.target;svg.setPointerCapture(e.pointerId);
+  if(e.button===0&&tool==='select'&&!spaceDown&&e.shiftKey&&!t.dataset.h&&!t.dataset.o&&!t.dataset.e&&!(t.dataset.id&&byId(t.dataset.id)?.kind!=='building')){
+    drag={type:'marquee',a:w,b:w};return}
+  if(e.button===1||spaceDown||(e.button===0&&tool==='select'&&!t.dataset.id&&!t.dataset.h&&!t.dataset.o&&!t.dataset.e&&!t.dataset.dim)){
+    if(tool==='select'&&e.button===0&&!spaceDown&&(sel||multi.size)){selOnly(null);render()}
+    drag={type:'pan',sx:e.clientX,sy:e.clientY,ox:view.ox,oy:view.oy};svg.style.cursor='grabbing';return}
+  if(e.button!==0)return;
+  if(tool==='rect'){const L=magnetLists();const p=magPt(w,L);drag={type:'newrect',p0:p,p1:p,L};render();return}
+  if(tool==='poly'||tool==='bld'){let p=magPt(w,magnetLists());if(e.shiftKey&&draft&&draft.length)p=ortho(draft[draft.length-1],p);
+    if(draft&&draft.length>=3&&Math.hypot((p[0]-draft[0][0]),(p[1]-draft[0][1]))*view.sc<10){closeDraft();return}
+    (draft??=[]).push(p);render();return}
+  if(tool==='door'){const W=nearestWall(w);if(!W||W.d*view.sc>40)return;const D=DOORS[doorType];
+    act(()=>{(S.openings??=[]).push({id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),type:doorType,w:D.w,...onWall(W,w,D.w)});selOnly(null);sel=S.openings[S.openings.length-1].id});return}
+  if(t.dataset.o){selOnly(null);sel=t.dataset.o;begin();drag={type:'door',id:sel};render();return}
+  if(t.dataset.dim&&tool==='select'&&e.button===0){e.preventDefault();openDimEdit(t.dataset.dim,e,e.altKey);return}
+  if(t.dataset.e){const [id,i]=t.dataset.e.split(':');const W_=multi.size>1&&multi.has(id)?wallSetSel(byId(id),+i):wallSet(byId(id),+i,e.altKey);begin();
+    drag={type:'edge',...W_,L:magnetLists(new Set(W_.set.map(it=>it.id))),orig:Object.fromEntries(W_.set.map(it=>[it.id,byId(it.id).pts.map(p=>[...p])])),cur:W_.c,lx:e.clientX-svg.getBoundingClientRect().left,ly:e.clientY-svg.getBoundingClientRect().top};render();return}
+  if(t.dataset.h){const [id,i]=t.dataset.h.split(':');if(isLocked(byId(id),byId(id).pts[+i])){status('That corner is locked. Right-click it to unlock.');return}begin();drag={type:'vertex',id,i:+i,L:magnetLists(new Set([id]))};return}
+  if(t.dataset.id){const id=t.dataset.id;
+    const now=performance.now();if(!e.shiftKey&&lastTap.id===id&&now-lastTap.t<450&&Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<6&&byId(id).kind!=='building'){lastTap={t:0,id:null};if(drag&&drag.type==='move')drag=null;e.preventDefault();openPop(byId(id),e);setTimeout(()=>{$('qName').focus();$('qName').select()},0);return}
+    lastTap={t:now,id,x:e.clientX,y:e.clientY};
+    if(e.shiftKey||e.ctrlKey||e.metaKey){toggleSel(id);render();return}
+    if(!multi.has(id))selOnly(id);else sel=id;
+    const ids=[...multi];const ex=new Set(ids);const orig=Object.fromEntries(ids.map(i=>[i,byId(i).pts.map(p=>[...p])]));
+    const mx=new Set(),my=new Set();ids.forEach(i=>orig[i].forEach(p=>{mx.add(p[0]);my.add(p[1])}));
+    const origL=Object.fromEntries(ids.map(i=>[i,(byId(i).locks||[]).map(p=>[...p])]));
+    begin();drag={type:'move',ids,start:w,orig,origL,L:magnetLists(ex),mx:[...mx],my:[...my],ref:orig[id][0]};render()}
+});
+function ortho(a,p){return Math.abs(p[0]-a[0])>=Math.abs(p[1]-a[1])?[p[0],a[1]]:[a[0],p[1]]}
+svg.addEventListener('pointermove',e=>{
+  const w=toWorld(e);let s=snapPt(w);
+  if((tool==='poly'||tool==='bld')&&e.shiftKey&&draft&&draft.length)s=ortho(draft[draft.length-1],s);
+  $('cur').textContent=`${fmtLen(s[0])}, ${fmtLen(s[1])}`;
+  if(!drag){if(tool!=='select'){hover=tool==='door'?w:s;render()}return}
+  if(drag.type==='pan'){view.ox=drag.ox-(e.clientX-drag.sx)/view.sc;view.oy=drag.oy-(e.clientY-drag.sy)/view.sc;render();return}
+  if(drag.type==='marquee'){drag.b=w;render();return}
+  guides=[];
+  if(drag.type==='newrect'){drag.p1=magPt(w,drag.L,guides);render();return}
+  if(drag.type==='move'){const raw=[w[0]-drag.start[0],w[1]-drag.start[1]];const d=[0,0];
+    for(const k of [0,1]){const vals=k?drag.my:drag.mx,arr=drag.L[k];let best=null;
+      for(const v of vals){const n=nearestIn(arr,v+raw[k]);if(n!=null){const df=n-(v+raw[k]);if(Math.abs(df)<=magTol()&&(!best||Math.abs(df)<Math.abs(best.df)))best={df,n}}}
+      if(best){d[k]=raw[k]+best.df;guides.push({axis:k?'y':'x',v:best.n})}else d[k]=sn(drag.ref[k]+raw[k])-drag.ref[k]}
+    for(const id of drag.ids){const r=byId(id);if(r){r.pts=drag.orig[id].map(p=>[r4(p[0]+d[0]),r4(p[1]+d[1])]);if(drag.origL[id].length)r.locks=drag.origL[id].map(p=>[r4(p[0]+d[0]),r4(p[1]+d[1])])}}render();return}
+  if(drag.type==='edge'){const c=magAxis(drag.axis==='x'?w[0]:w[1],drag.L[drag.axis==='x'?0:1],drag.axis,guides);const k=drag.axis==='x'?0:1;const nxt={};let ok=true;
+    for(const it of drag.set){const P=(nxt[it.id]??=drag.orig[it.id].map(p=>[...p]));const n=P.length;P[it.i][k]=c;P[(it.i+1)%n][k]=c}
+    for(const id in nxt){const A0=area(drag.orig[id]),A1=area(nxt[id]);const bb=bbox(nxt[id]);if(Math.sign(A1)!==Math.sign(A0)||Math.abs(A1)<1||bb[2]-bb[0]<1||bb[3]-bb[1]<1)ok=false;if(!locksOk(byId(id),nxt[id])){ok=false;if(!drag.lockMsg){drag.lockMsg=1;status('A locked corner is on that wall, so it can\u2019t move')}}}
+    if(ok){for(const id in nxt)byId(id).pts=nxt[id];drag.cur=c}
+    const rc=svg.getBoundingClientRect();drag.lx=e.clientX-rc.left;drag.ly=e.clientY-rc.top;render();return}
+  if(drag.type==='door'){const o=byO(drag.id);const W=nearestWall(w);if(o&&W)Object.assign(o,onWall(W,w,o.w));render();return}
+  if(drag.type==='vertex'){const r=byId(drag.id);s=magPt(w,drag.L,guides);
+    if(r.rect){const o=r.pts[(drag.i+2)%4];if(s[0]===o[0]||s[1]===o[1])return;const np=rectPts(o[0],o[1],s[0],s[1]);if(!locksOk(r,np)){status('A locked corner is in the way');return}r.pts=np;drag.i=r.pts.findIndex(p=>p[0]===s[0]&&p[1]===s[1])}
+    else r.pts[drag.i]=s;render()}
+});
+svg.addEventListener('pointerup',e=>{
+  if(!drag)return;const d=drag;drag=null;svg.style.cursor='';guides=[];
+  if(d.type==='marquee'){const x0=Math.min(d.a[0],d.b[0]),x1=Math.max(d.a[0],d.b[0]),y0=Math.min(d.a[1],d.b[1]),y1=Math.max(d.a[1],d.b[1]);
+    if(!(e.ctrlKey||e.metaKey))multi=new Set();for(const r of S.rooms){if(r.kind==='building')continue;const b=bbox(r.pts);if(b[0]>=x0-1e-6&&b[2]<=x1+1e-6&&b[1]>=y0-1e-6&&b[3]<=y1+1e-6)multi.add(r.id)}
+    sel=multi.size?[...multi][0]:null;render();return}
+  if(d.type==='newrect'){const W=Math.abs(d.p1[0]-d.p0[0]),H=Math.abs(d.p1[1]-d.p0[1]);
+    if(W>0&&H>0){act(()=>addRoom(rectPts(d.p0[0],d.p0[1],d.p1[0],d.p1[1]),true));setTool('select')}else render();return}
+  if(d.type==='move'||d.type==='vertex'||d.type==='door'||d.type==='edge'){end();render()}
+});
+svg.addEventListener('pointerleave',()=>{if(!drag&&hover){hover=null;render()}});
+svg.addEventListener('contextmenu',e=>{const el=document.elementFromPoint(e.clientX,e.clientY);const h=el&&el.dataset&&el.dataset.h;if(h){e.preventDefault();const [id,i]=h.split(':');const r=byId(id);if(r)toggleLock(r,+i)}else e.preventDefault()});
+svg.addEventListener('dblclick',e=>{if(tool==='poly'||tool==='bld')closeDraft()});
+let lastTap={t:0,id:null,x:0,y:0};
+let popId=null;
+function openPop(r,e){if(popId)closePop();selOnly(r.id);popId=r.id;begin();render();
+  const pop=$('pop'),st=stage.getBoundingClientRect();pop.hidden=false;
+  $('qName').value=r.name;$('qT').value=r.target?Math.round(r.target).toLocaleString():'';$('qCustom').value=/^#[0-9a-f]{6}$/i.test(r.color)?r.color:'#cccccc';drawPopColors(r);
+  const pw=pop.offsetWidth,ph=pop.offsetHeight;let x=e.clientX-st.left+12,y=e.clientY-st.top+12;if(x+pw>st.width-8)x=e.clientX-st.left-pw-12;if(y+ph>st.height-8)y=Math.max(8,st.height-ph-8);
+  pop.style.left=Math.max(8,x)+'px';pop.style.top=y+'px';$('qName').focus();$('qName').select()}
+function drawPopColors(r){$('qColors').innerHTML=COLORS.map(c=>`<button data-c="${c}" class="${c===r.color?'on':''}" style="background:${c}" title="${c}"></button>`).join('')}
+function closePop(){if(!popId)return;const r=byId(popId);if(r){const t=$('qT').value.replace(/[, ]|sq|ft|sf/gi,'');if(t===''){delete r.target}else if(+t>0)r.target=+t}
+  popId=null;$('pop').hidden=true;end();render()}
+$('qName').oninput=e=>{const r=byId(popId);if(r){r.name=e.target.value||'Room';render()}};
+$('qColors').onclick=e=>{const c=e.target.dataset.c,r=byId(popId);if(c&&r){r.color=c;drawPopColors(r);render()}};
+$('qCustom').oninput=e=>{const r=byId(popId);if(r){r.color=e.target.value;drawPopColors(r);render()}};
+$('qDone').onclick=closePop;
+$('pop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();e.stopPropagation();closePop()}});
+svg.addEventListener('pointerdown',()=>{if(popId)closePop()},true);
+svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect();
+  const dy=e.deltaMode===1?e.deltaY*30:e.deltaY;zoomAt(Math.exp(-dy*0.0015),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+
+// ---------- keys ----------
+const typing=()=>/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&document.activeElement.type!=='checkbox';
+addEventListener('keydown',e=>{
+  if($('modal').classList.contains('open')){if(e.key==='Escape')closeModal();return}
+  if(typing()){if(e.key==='Escape'||e.key==='Enter')document.activeElement.blur();return}
+  const k=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
+  if(mod&&k==='z'){e.preventDefault();e.shiftKey?doRedo():doUndo();return}
+  if(mod&&k==='y'){e.preventDefault();doRedo();return}
+  if(mod&&k==='d'){e.preventDefault();dup();return}
+  if(mod&&(k==='c'||k==='x')){if(copySel(k==='x'))e.preventDefault();return}
+  if(mod&&k==='m'){e.preventDefault();mergeSel();return}
+  if(mod&&k==='v'){if(clip){e.preventDefault();paste()}return}
+  if(mod)return;
+  if(k===' '){spaceDown=true;svg.style.cursor='grab';e.preventDefault();return}
+  if(k==='v')setTool('select');else if(k==='r')setTool('rect');else if(k==='p')setTool('poly');else if(k==='b')setTool('bld');else if(k==='d')setTool('door');
+  else if(k==='f')fit();
+  else if(k==='escape'){if(draft){draft=null;render()}else if(sel||multi.size){selOnly(null);render()}else setTool('select')}
+  else if(k==='enter'&&(tool==='poly'||tool==='bld'))closeDraft();
+  else if(k==='delete'||k==='backspace'){if((tool==='poly'||tool==='bld')&&draft&&draft.length){draft.pop();render()}else del()}
+  else if(k.startsWith('arrow')&&(sel||multi.size)){e.preventDefault();nudge(k==='arrowleft'?-1:k==='arrowright'?1:0,k==='arrowup'?-1:k==='arrowdown'?1:0)}
+  else if(k==='+'||k==='=')zoomAt(1.25);else if(k==='-')zoomAt(0.8);
+});
+addEventListener('keyup',e=>{if(e.key===' '){spaceDown=false;svg.style.cursor=''}});
+
+// ---------- toolbar + panel wiring ----------
+document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+$('zin').onclick=()=>zoomAt(1.25);$('zout').onclick=()=>zoomAt(0.8);$('copyB').onclick=()=>copySel(false);$('pasteB').onclick=paste;$('undo').onclick=doUndo;$('redo').onclick=doRedo;$('fit').onclick=fit;
+$('snap').onchange=e=>{snap=+e.target.value;try{localStorage.setItem(STORE+'-snap',e.target.value)}catch(_){}};
+$('dims').onchange=e=>{showDims=e.target.checked;render()};
+$('title').onfocus=begin;$('title').oninput=e=>{S.title=e.target.value};$('title').onchange=()=>end();
+$('list').onclick=e=>{const li=e.target.closest('li[data-id]');if(!li)return;if(e.shiftKey||e.ctrlKey||e.metaKey)toggleSel(li.dataset.id);else selOnly(li.dataset.id);setTool('select')};
+$('pName').onfocus=begin;$('pName').oninput=e=>{const r=byId(sel);if(r){r.name=e.target.value||'Room';render()}};$('pName').onblur=()=>end();
+function dimEdit(axis){const el=axis==='w'?$('pW'):$('pL');el.onfocus=()=>{el.select()};
+  el.onchange=()=>{const r=byId(sel);if(!r||!r.rect)return;const v=parseLen(el.value);if(v==null){el.classList.add('bad');return}el.classList.remove('bad');
+    act(()=>{const b=bbox(r.pts);r.pts=axis==='w'?rectPts(b[0],b[1],r4(b[0]+v),b[3]):rectPts(b[0],b[1],b[2],r4(b[1]+v))})}}
+dimEdit('w');dimEdit('l');
+$('pColors').onclick=e=>{const c=e.target.dataset.c;const r=byId(sel);if(c&&r)act(()=>r.color=c)};
+$('pCount').onchange=e=>{const r=byId(sel);if(r)act(()=>r.count=e.target.checked)};
+$('pT').onfocus=e=>e.target.select();
+$('pT').onchange=e=>{const r=byId(sel);if(!r)return;const t=e.target.value.replace(/[, ]|sq|ft|sf/gi,'');if(t===''){act(()=>delete r.target);return}const v=+t;if(!(v>0)){e.target.classList.add('bad');return}e.target.classList.remove('bad');act(()=>r.target=v)};
+$('pBld').onchange=e=>{const r=byId(sel);if(!r)return;act(()=>{if(e.target.checked){r.kind='building';r.count=false}else{delete r.kind;r.count=true}})};
+$('dType').onchange=e=>{const o=byO(sel);if(o)act(()=>{o.type=e.target.value})};
+$('dW').onfocus=e=>e.target.select();
+$('dW').onchange=e=>{const o=byO(sel);if(!o)return;const v=parseLen(e.target.value);if(v==null){e.target.classList.add('bad');return}e.target.classList.remove('bad');act(()=>{o.w=v;const W=nearestWall([o.x,o.y]);if(W)Object.assign(o,onWall(W,[o.x,o.y],v))})};
+$('dLabel').onfocus=begin;$('dLabel').oninput=e=>{const o=byO(sel);if(o){if(e.target.value)o.label=e.target.value;else delete o.label;render()}};$('dLabel').onblur=()=>end();
+$('dDel').onclick=del;
+$('dDup').onclick=()=>{const o=byO(sel);if(!o)return;const W=nearestWall([o.x,o.y]);act(()=>{const c={...o,id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)};delete c.label;Object.assign(c,onWall(W,[o.x+o.ux*(o.w+3),o.y+o.uy*(o.w+3)],o.w));S.openings.push(c);sel=c.id})};
+const selTouch=()=>{const t_=touching(multi);multi=t_;if(!sel||!multi.has(sel))sel=[...multi][0];render()};
+$('pTouch').onclick=selTouch;$('mTouch').onclick=selTouch;$('mNone').onclick=()=>{selOnly(null);render()};$('mDel').onclick=del;$('mMerge').onclick=mergeSel;
+$('pRot').onclick=rot;$('pRotL').onclick=()=>rotatePlan(-1);
+$('pLock').onclick=()=>{const r=sel&&byId(sel);if(!r)return;const all=r.pts.every(p=>isLocked(r,p));act(()=>{if(all)delete r.locks;else r.locks=r.pts.map(p=>[p[0],p[1]])});status(all?'All corners unlocked':'All corners locked')};$('pDup').onclick=dup;$('pDel').onclick=del;
+
+// ---------- modals: save / open / image / new ----------
+const modal=$('modal'),card=$('modalCard');
+function openModal(html){card.innerHTML=html;modal.classList.add('open')}
+function closeModal(){modal.classList.remove('open')}
+modal.addEventListener('pointerdown',e=>{if(e.target===modal)closeModal()});
+$('save').onclick=()=>{const txt=JSON.stringify({app:'layout-builder',version:1,...S},null,1);
+  openModal(`<h2>Save plan</h2><p>Download it as a file, or copy the text and keep it somewhere safe. Open plan reads it back in. Your work also stays in this browser between visits.</p><textarea id="mTxt" readonly>${esc(txt)}</textarea><div class="row"><button class="btn on" id="mCopy">Copy to clipboard</button><button class="btn outline" id="mDlP">Download file</button><button class="btn outline" id="mClose">Close</button><span id="mMsg" class="sub"></span></div>`);
+  $('mDlP').onclick=async()=>{const dl=await useDownloads();if(!dl){$('mMsg').textContent='Downloading isn\u2019t available here. Copy the text instead.';return}
+    try{await dl.save({filename:((S.title||'plan').replace(/[\\/:*?"<>|]+/g,'').trim()||'plan')+'.json',data:txt});$('mMsg').textContent='Saved.'}catch(e){$('mMsg').textContent=e&&e.code==='declined'?'Download cancelled.':'Couldn\u2019t save the file.'}};
+  useDownloads().then(dl=>{if(!dl&&$('mDlP'))$('mDlP').hidden=true});
+  $('mClose').onclick=closeModal;$('mTxt').onfocus=e=>e.target.select();
+  $('mCopy').onclick=async()=>{try{await navigator.clipboard.writeText(txt);$('mMsg').textContent='Copied.'}catch(_){ $('mTxt').focus();$('mTxt').select();$('mMsg').textContent='Press Ctrl+C to copy.'}}};
+$('load').onclick=()=>{openModal(`<h2>Open plan</h2><p>Paste saved plan text, or pick a saved .txt / .json file. This replaces the current plan (Undo brings it back).</p><textarea id="mTxt" placeholder="Paste plan text here"></textarea><div class="row"><input type="file" id="mFile" accept=".txt,.json,application/json,text/plain"><span class="spacer"></span><button class="btn outline" id="mClose">Cancel</button><button class="btn on" id="mOpen">Open</button></div><div id="mMsg" class="sub" style="color:var(--danger)"></div>`);
+  $('mClose').onclick=closeModal;
+  $('mFile').onchange=async e=>{const f=e.target.files[0];if(f)$('mTxt').value=await f.text()};
+  $('mOpen').onclick=()=>{try{const d=JSON.parse($('mTxt').value);if(!Array.isArray(d.rooms))throw 0;
+      act(()=>{S={title:d.title||'Untitled plan',seq:d.seq||d.rooms.length+1,openings:(Array.isArray(d.openings)?d.openings:[]).filter(o=>DOORS[o.type]&&isFinite(o.x)&&isFinite(o.y)),rooms:d.rooms.filter(r=>Array.isArray(r.pts)&&r.pts.length>=3).map(r=>({id:r.id||('r'+Math.random().toString(36).slice(2)),name:r.name||'Room',color:r.color||COLORS[0],pts:r.pts.map(p=>[+p[0],+p[1]]),rect:!!r.rect,count:r.count!==false&&r.kind!=='building',...(r.kind==='building'?{kind:'building'}:{}),...(r.target>0?{target:+r.target}:{})}))};selOnly(null)});
+      $('title').value=S.title;closeModal();fit()}catch(_){$('mMsg').textContent='That text isn’t a saved plan.'}}};
+$('clear').onclick=()=>{openModal(`<h2>Start a new plan?</h2><p>This clears every room. You can still Undo it.</p><div class="row"><span class="spacer"></span><button class="btn outline" id="mClose">Cancel</button><button class="btn on" id="mGo" style="background:var(--danger)">Clear plan</button></div>`);
+  $('mClose').onclick=closeModal;$('mGo').onclick=()=>{act(()=>{S={title:'Untitled plan',rooms:[],openings:[],seq:1};selOnly(null)});$('title').value=S.title;closeModal();fit()}};
+$('img').onclick=()=>{
+  if(!S.rooms.length){openModal(`<h2>Nothing to export yet</h2><p>Draw at least one room first.</p><div class="row"><button class="btn outline" id="mClose">Close</button></div>`);$('mClose').onclick=closeModal;return}
+  const b=bbox(S.rooms.flatMap(r=>r.pts));const bw=b[2]-b[0],bh=b[3]-b[1];const sc=Math.max(8,Math.min(60,1400/Math.max(bw,bh)));
+  const pad=150,w=Math.round(bw*sc+pad*2),head=Math.round(130*Math.max(1,w/1700)),h=Math.round(bh*sc+pad*2+head);
+  const v={sc,ox:b[0]-pad/sc,oy:b[1]-(pad+head)/sc};
+  const counted=S.rooms.filter(r=>r.count!==false&&r.kind!=='building');const tot=counted.reduce((s,r)=>s+Math.abs(area(r.pts)),0);
+  const bA=S.rooms.filter(r=>r.kind==='building').reduce((s,r)=>s+Math.abs(area(r.pts)),0);
+  const K=Math.max(1,w/1700),FS='IBM Plex Sans,system-ui,sans-serif',FM='IBM Plex Mono,ui-monospace,monospace';
+  const list=[];
+  const colW=560*K,cols=Math.max(1,Math.floor((w-2*pad)/colW)),rowH=36*K,rows=Math.ceil(list.length/cols);
+  const schTop=h,schH=list.length?rows*rowH+150*K:0,H=h+schH;
+  let sch='';
+  if(list.length){sch+=`<line x1="${pad}" y1="${schTop+20*K}" x2="${w-pad}" y2="${schTop+20*K}" stroke="#d9dde2" stroke-width="${2*K}"/>`;
+    sch+=`<text x="${pad}" y="${schTop+64*K}" font-size="${24*K}" font-weight="600" font-family="${FS}" fill="#1f2933">Area schedule</text>`;
+    list.forEach((r,i)=>{const c=Math.floor(i/rows),rr=i%rows;const x=pad+c*colW,y=schTop+100*K+rr*rowH;const A=Math.abs(area(r.pts));
+      sch+=`<rect x="${x}" y="${y-16*K}" width="${18*K}" height="${18*K}" rx="${3*K}" fill="${r.color}" stroke="#55606e" stroke-width="${K}"/>`+
+        `<text x="${x+28*K}" y="${y}" font-size="${18*K}" font-family="${FS}" fill="#1f2933">${esc(fitText(r.name,colW-230*K,18*K))}</text>`+
+        `<text x="${x+colW-40*K}" y="${y}" text-anchor="end" font-size="${18*K}" font-family="${FM}" fill="#1f2933">${fmtArea(A)} sq ft</text>`});
+    const ty=schTop+100*K+rows*rowH+14*K;
+    sch+=`<line x1="${pad}" y1="${ty-22*K}" x2="${w-pad}" y2="${ty-22*K}" stroke="#d9dde2" stroke-width="${K}"/><text x="${pad}" y="${ty+6*K}" font-size="${20*K}" font-weight="600" font-family="${FS}" fill="#1f2933">Total area</text><text x="${w-pad}" y="${ty+6*K}" text-anchor="end" font-size="${20*K}" font-weight="600" font-family="${FM}" fill="#1f2933">${fmtArea(tot)} sq ft${bA?` of ${fmtArea(bA)} (${(tot/bA*100).toFixed(1)}%)`:''}</text>`}
+  const s=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${H}" viewBox="0 0 ${w} ${H}"><rect width="${w}" height="${H}" fill="#ffffff"/>${drawPlan(v,w,h,{export:true})}<rect width="${w}" height="${head}" fill="#fff"/>`+
+    `<text x="${pad}" y="${62*K}" font-size="${40*K}" font-weight="600" font-family="${FS}" fill="#1f2933">${esc(S.title)}</text>`+
+    `<text x="${w-pad}" y="${40*K}" text-anchor="end" font-size="${16*K}" font-weight="600" letter-spacing="${1.5*K}" font-family="${FS}" fill="#66727f">${bA?'AREA USED':'TOTAL AREA'}</text>`+
+    `<text x="${w-pad}" y="${96*K}" text-anchor="end" font-size="${52*K}" font-weight="600" font-family="${FM}" fill="#1f2933">${fmtArea(tot)}<tspan font-size="${22*K}" fill="#66727f" font-family="${FS}">${bA?` of ${fmtArea(bA)} sq ft available (${(tot/bA*100).toFixed(1)}%)`:' sq ft'}</tspan></text>`+sch+`</svg>`;
+  const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const sx_=Math.min(2,8000/Math.max(w,H));c.width=Math.round(w*sx_);c.height=Math.round(H*sx_);const x=c.getContext('2d');x.scale(sx_,sx_);x.drawImage(img,0,0);
+    let url;try{url=c.toDataURL('image/png')}catch(_){url=img.src}
+    openModal(`<h2>Plan image</h2><p id="mHelp">Download it as a PNG, or copy it to paste into an email or document.</p><img src="${url}" alt="Plan image"><div class="row"><button class="btn on" id="mDl">Download PNG</button><button class="btn outline" id="mCp">Copy image</button><span class="spacer"></span><button class="btn outline" id="mClose">Close</button></div><div class="sub" id="mMsg" style="margin-top:6px"></div>`);
+    $('mClose').onclick=closeModal;
+    const fname=(S.title||'plan').replace(/[\\/:*?"<>|]+/g,'').trim()||'plan';
+    const getBlob=()=>new Promise(res=>{try{c.toBlob(b=>res(b),'image/png')}catch(_){res(null)}});
+    $('mDl').onclick=async()=>{const msg=$('mMsg');const dl=await useDownloads();if(!dl){msg.textContent='Downloading isn\u2019t available here. Use Copy image instead.';return}
+      const b=await getBlob();if(!b){msg.textContent='Couldn\u2019t build the image file.';return}
+      try{await dl.save({filename:fname+'.png',data:b});msg.textContent='Saved.'}catch(e){msg.textContent=e&&e.code==='declined'?'Download cancelled.':'Couldn\u2019t save the file ('+((e&&e.code)||'error')+').'}};
+    $('mCp').onclick=async()=>{const msg=$('mMsg');try{const b=await getBlob();await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);msg.textContent='Image copied. Paste it with Ctrl+V.'}catch(_){msg.textContent='Your browser blocked copying the image here. Use Download PNG instead.'}};
+    useDownloads().then(dl=>{if(!dl&&$('mDl')){$('mDl').hidden=true}})};
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s)};
+
+// ---------- start ----------
+const SEED={"title": "Untitled plan", "seq": 1, "rooms": [], "openings": []};
+const SEED_REV='public-1';
+S=JSON.parse(JSON.stringify(SEED));
+try{const d=JSON.parse(localStorage.getItem(STORE)||'null');if(d&&Array.isArray(d.rooms)&&d.rev===SEED_REV)S=d;S.rev=SEED_REV;const sv=localStorage.getItem(STORE+'-snap');if(sv!==null){snap=+sv;$('snap').value=sv}}catch(_){}
+for(const r of S.rooms||[])if(typeof r.name==='string')r.name=r.name.replace(/(\s+copy)+\s*$/i,'')||r.name;
+$('title').value=S.title;
+new ResizeObserver(()=>render()).observe(stage);
+syncHist();
+requestAnimationFrame(()=>S.rooms.length?fit():render());
+})();
+</script>
+</body>
+</html>
