@@ -37,6 +37,35 @@ box-shadow:0 0 0 1px rgba(0,255,136,.06),0 0 40px rgba(0,255,136,.06)}
 .screen::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);z-index:1}
 canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-select:none;-webkit-user-select:none}
 .hint{margin-top:10px;font-size:12px;color:var(--muted);opacity:.8;min-height:1.6em}
+
+/* initials entry, over the game screen */
+.entry{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,15,.82);z-index:2}
+.entry[hidden]{display:none}
+.entry form{text-align:center}
+.entry h2{font:44px/1 var(--display);letter-spacing:.06em;color:var(--green);margin:0 0 6px;text-shadow:0 0 18px rgba(0,255,136,.4);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.entry .sc{font:22px/1 var(--display);letter-spacing:.06em;color:var(--text);margin:0 0 14px}
+.entry label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}
+.entry input{width:150px;text-align:center;font:44px/1 var(--display);letter-spacing:.35em;padding:6px 0 4px .35em;text-transform:uppercase;
+background:#0a0a0f;color:var(--green);border:1px solid rgba(0,255,136,.45);border-radius:4px;caret-color:var(--green)}
+.entry input:focus{outline:none;box-shadow:0 0 18px rgba(0,255,136,.25)}
+.entry .row{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.entry button{font:18px/1 var(--display);letter-spacing:.08em;padding:9px 18px 7px;border-radius:4px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--muted)}
+.entry button[type=submit]{background:var(--green);border-color:var(--green);color:#04130b}
+.entry .err{color:#ff5c7a;font-size:12px;min-height:1.4em;margin-top:8px}
+
+/* high score board */
+.board{margin:18px auto 0;max-width:360px;border:1px solid var(--line);border-radius:8px;padding:14px 18px 12px;background:rgba(17,17,24,.7);position:relative}
+.board::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.board h3{font:24px/1 var(--display);letter-spacing:.08em;margin:0 0 10px;color:var(--text)}
+.board h3 span{color:var(--green)}
+.board ol{list-style:none;margin:0;padding:0;font:13px/1.9 var(--mono)}
+.board li{display:grid;grid-template-columns:3ch 1fr auto;gap:12px;color:var(--muted);text-align:left}
+.board li b{color:var(--text);font-weight:700;letter-spacing:.2em}
+.board li .s{color:var(--green);font-variant-numeric:tabular-nums}
+.board li.me{background:rgba(0,255,136,.08);border-radius:3px}
+.board li.me b,.board li.me .s{color:var(--green);text-shadow:0 0 10px rgba(0,255,136,.5)}
+.board .empty{font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -50,8 +79,17 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
 <button role="tab" data-game="hop" aria-selected="false">Bit Hop</button>
 <button role="tab" data-game="bug" aria-selected="false">Bug Zapper</button>
 </div>
-<div class="screen"><canvas id="game" width="640" height="360" aria-label="Game screen"></canvas></div>
+<div class="screen"><canvas id="game" width="640" height="360" aria-label="Game screen"></canvas>
+<div class="entry" id="entry" hidden><form id="entryForm" autocomplete="off">
+<h2>NEW HIGH SCORE</h2>
+<p class="sc" id="entryScore"></p>
+<label for="ini">Enter your initials</label>
+<input id="ini" maxlength="3" inputmode="text" autocapitalize="characters" spellcheck="false" aria-label="Your initials, up to three letters">
+<div class="row"><button type="submit">Save</button><button type="button" id="skip">Skip</button></div>
+<p class="err" id="entryErr"></p>
+</form></div></div>
 <div class="hint" id="hint"></div>
+<div class="board" id="board" aria-live="polite"></div>
 </main>
 
 <script>
@@ -85,64 +123,217 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
   const keys = {};
   const toXY = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
 
-  /* ================= PADDLE BATTLE ================= */
+  /* ================= HIGH SCORES ================= */
+  // Top 10 per game, kept in Supabase (table arcade_scores). Anyone can read the boards and add a score;
+  // the table only accepts 1 to 3 letters for initials and a sensible score.
+  const SB_URL = "https://hjwuluhdiczmssldyeus.supabase.co", SB_KEY = "sb_publishable_zAZpo7UDyx1eHD_HpayR-g_RRjdgtO9";
+  const NAMES = { paddle: "Paddle Battle", hop: "Bit Hop", bug: "Bug Zapper" };
+  const BLOCK = ["ASS","FUK","FUC","FCK","FKU","SHT","CUM","DIK","DIC","COK","KKK","NIG","NGR","FAG","TIT","SEX","PUS","VAG","GAY","JIZ","WTF","STD","HOR","POO","PEE","XXX","KYS"];
+  const boards = {}, boardEl = document.getElementById("board");
+  let myEntry = null;   // the score just saved, to highlight it
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  async function loadBoard(g) {
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/arcade_scores?select=id,initials,score&game=eq.${g}&order=score.desc,created_at.asc&limit=10`,
+        { headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY } });
+      if (!r.ok) throw 0;
+      boards[g] = await r.json();
+    } catch (e) { if (!boards[g]) boards[g] = null; }
+    if (g === curName) renderBoard();
+  }
+  function renderBoard() {
+    const g = curName, list = boards[g];
+    let h = `<h3>HIGH SCORES <span>· ${esc(NAMES[g].toUpperCase())}</span></h3>`;
+    if (list === undefined) h += `<div class="empty">Loading…</div>`;
+    else if (list === null) h += `<div class="empty">The scoreboard is taking a nap. Try again later.</div>`;
+    else if (!list.length) h += `<div class="empty">No scores yet. The top spot is yours to take.</div>`;
+    else h += "<ol>" + list.map((s, i) => `<li${myEntry && s.id === myEntry ? ' class="me"' : ""}><span>${String(i + 1).padStart(2, "0")}</span><b>${esc(s.initials)}</b><span class="s">${String(s.score).padStart(6, "0")}</span></li>`).join("") + "</ol>";
+    boardEl.innerHTML = h;
+  }
+  const qualifies = (g, score) => score > 0 && Array.isArray(boards[g]) && (boards[g].length < 10 || score > boards[g][boards[g].length - 1].score);
+  const entry = document.getElementById("entry"), ini = document.getElementById("ini"), entryErr = document.getElementById("entryErr");
+  let pending = null;
+  function gameOver(g, score) {   // each game calls this when a run ends
+    if (!qualifies(g, score)) return;
+    pending = { g, score };
+    document.getElementById("entryScore").textContent = NAMES[g].toUpperCase() + "  ·  " + score;
+    ini.value = ""; entryErr.textContent = ""; entry.hidden = false;
+    for (const k in keys) keys[k] = false;
+    setTimeout(() => ini.focus(), 50);
+  }
+  ini.addEventListener("input", () => { ini.value = ini.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3); entryErr.textContent = ""; });
+  document.getElementById("skip").addEventListener("click", () => { entry.hidden = true; pending = null; });
+  document.getElementById("entryForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const v = ini.value;
+    if (!/^[A-Z]{1,3}$/.test(v)) { entryErr.textContent = "Letters only, up to three."; return; }
+    if (BLOCK.includes(v)) { entryErr.textContent = "Nice try. Pick different letters."; return; }
+    if (!pending) return;
+    const { g, score } = pending;
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/arcade_scores?select=id`, {
+        method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json", Prefer: "return=representation" },
+        body: JSON.stringify({ game: g, initials: v, score })
+      });
+      if (!r.ok) throw 0;
+      const [row] = await r.json(); myEntry = row && row.id;
+      entry.hidden = true; pending = null; loadBoard(g);
+    } catch (e2) { entryErr.textContent = "Couldn't save that one. Try again in a bit."; }
+  });
+
+  /* ================= PADDLE BATTLE (3D) ================= */
+  // Pong down a neon tunnel. Your see-through paddle is at the near end, the CPU's at the far end.
+  // Move your paddle as you hit the ball to put spin on it: the ball curves on the way back.
   const paddle = (() => {
-    const PW = 10, PH = 64, R = 6, CPU_SPEED = 4.2;
     const taunts = ["THE COMPUTER SAYS HI", "THAT WAS A WARM-UP, RIGHT?", "IT'S ONE PADDLE. ONE.", "THE BALL WAS RIGHT THERE", "BOLD STRATEGY", "YOU MISSED. LOUDLY.", "THE CPU IS NOT EVEN TRYING", "DID YOU BLINK?", "SKILL ISSUE", "THAT ONE'S GOING ON THE FRIDGE", "PADDLE WORKS BETTER IN FRONT OF IT", "GRAVITY ISN'T EVEN ON", "THE BALL SAYS YOU'RE WELCOME", "WAS THAT ON PURPOSE?", "CLOSE. NOT REALLY.", "CPU: 1. DIGNITY: 0.", "YOU HAD ONE JOB", "THE BALL WENT THAT WAY", "NEW STRAT: MOVE THE PADDLE", "EVEN THE NET FELT THAT", "I'LL WAIT", "INTERESTING TECHNIQUE", "YOUR PADDLE CALLED IN SICK", "RESPECTFULLY, NO", "THAT'S A BOLD WAY TO LOSE", "THE BALL IS ROUND. KEEP UP.", "ARE YOU USING YOUR ELBOWS?", "NOT EVEN CLOSE, BUDDY", "YOU MISSED THE WHOLE BALL", "SCREENSHOT THAT FOR LATER", "HAVE YOU TRIED NOT MISSING?", "TOUGH LOOK", "THE COMPUTER IS SMIRKING", "HUMANITY IS COUNTING ON YOU", "ALL THAT AND NOTHING", "TRY THE OTHER END OF THE PADDLE", "CPU DIDN'T EVEN LOOK", "WOW. JUST WOW.", "YOU AND THE BALL: NOT FRIENDS", "ANOTHER ONE FOR THE ROBOTS", "THAT WAS NOT THE PLAN", "YOUR PADDLE WAS ON VACATION", "SPEEDRUNNING A LOSS", "THE BALL GHOSTED YOU", "MAYBE TRY THE ARROW KEYS", "NO ONE SAW THAT. EXCEPT ME.", "CPU WINS AGAIN. SHOCKING.", "YOU'RE MAKING THIS EASY", "LET'S CALL THAT PRACTICE", "PROBABLY LAG. SURE.", "THE MOUSE MUST BE BROKEN", "POINT FOR THE MACHINES", "YOU REALLY WANTED THAT ONE", "ANYWAY.", "I'M NOT MAD, JUST DISAPPOINTED", "THE BALL WAS NOT INVISIBLE", "DEEP BREATHS", "THAT'S GOING IN THE HIGHLIGHTS", "YOU SURE YOU'RE NOT A BOT?", "THE CPU WOULD LIKE A CHALLENGE", "OOF", "YIKES", "HAVE YOU PLAYED PONG BEFORE?", "THE BALL SENDS ITS REGARDS", "MOVE FASTER. OR AT ALL.", "THAT'S ONE WAY TO DO IT", "HEY, AT LEAST YOU'RE CONSISTENT", "THE CPU IS GETTING BORED", "RIGHT PLACE, WRONG TIME", "WRONG PLACE, WRONG TIME", "CPU IS THINKING ABOUT LUNCH", "THE SCOREBOARD REMEMBERS", "YOU WAVED AT IT. NICE.", "SO CLOSE. WAIT, NO.", "THAT WAS PAINFUL TO WATCH", "KEEP YOUR EYE ON THE BALL", "THE BALL HAS LEFT THE BUILDING", "CPU WOULD LIKE TO THANK ITS FANS", "PRACTICE MAKES SLIGHTLY BETTER", "TELL NO ONE ABOUT THIS", "THE BALL FILED A RESTRAINING ORDER", "YOU AND THE PADDLE NEED COUNSELING", "THE CPU ISN'T EVEN PLUGGED IN", "THAT'S NOT HOW PHYSICS WORKS", "HAVE YOU CONSIDERED CHECKERS?", "CPU IS ON A COFFEE BREAK. STILL WON.", "MAYBE PLAY WITH YOUR EYES OPEN", "THE BALL DOESN'T BITE", "INCREDIBLE. INCREDIBLY BAD.", "THE PADDLE IS NOT DECORATIVE", "YOU'RE DOING GREAT. JK.", "YOU MISSED IT IN 4K", "THE CPU ALMOST FELT BAD", "THAT WAS A CRY FOR HELP", "THE REPLAY IS EVEN WORSE", "PONG: STILL UNDEFEATED", "DID YOUR CAT DO THAT?", "THE CPU ACCEPTS YOUR SURRENDER", "REMEMBER WHEN YOU HAD HOPE?", "THAT WAS VERY BRAVE OF YOU", "THE BALL ISN'T SHY. YOU ARE.", "WHO TAUGHT YOU TO PLAY PONG?", "YOUR PADDLE MISSED THE MEETING", "PLEASE HOLD. YOUR POINT IS LOST.", "ZERO STARS. WOULD NOT RECOMMEND.", "YOU GOT OUTPLAYED BY A RECTANGLE", "THE CPU IS A WHITE BAR. AND WINNING.", "CPU WOULD LIKE A HARDER OPPONENT", "THE BALL JUST WALKED PAST YOU", "MAYBE IT'S YOUR MONITOR", "CPU UPDATED ITS STATUS: WINNING", "NOTHING BUT AIR", "NOT YOUR FINEST MOMENT", "THAT'S A NO FROM ME, DAWG", "EVEN YOUR SHADOW MISSED IT", "THE BALL IS LAUGHING AT YOU", "DOES THE PADDLE MOVE? JUST CHECKING.", "TRY AGAIN. OR DON'T.", "THE CPU HAS NO NOTES", "SO MUCH EFFORT. SO LITTLE RESULT.", "AND THE CROWD GOES MILD", "YOU'RE THE CPU'S FAVORITE OPPONENT", "THE MACHINES THANK YOU", "CPU IS WRITING A BOOK ON YOU", "THAT ONE WAS FREE. SAD.", "YOU FLINCHED. ADMIT IT.", "WAS THE BALL TOO GREEN?", "THIS IS WHY WE CAN'T HAVE NICE THINGS", "THE CPU IS GETTING COMFORTABLE", "ARE YOU PLAYING OR WATCHING?", "THE PADDLE CAN'T DO IT ALONE", "YOU'RE MAKING THE CPU LOOK GOOD", "THE BALL WANTED TO BE CAUGHT", "EMBARRASSING, BUT IN A FUN WAY", "STATISTICALLY, THAT WAS BAD", "CPU HASN'T BROKEN A SWEAT", "ONE DAY YOU'LL HIT IT. NOT TODAY.", "THE BALL HAD SOMEWHERE TO BE", "YOUR PADDLE IS JUST A SUGGESTION", "WE'LL ADD THIS TO YOUR FILE", "CPU REMAINS UNBOTHERED", "A MASTERCLASS IN MISSING", "THE BALL SAID BYE", "THAT WAS PERSONAL", "THE PIXELS ARE DISAPPOINTED", "CPU WOULD LIKE TO SPEAK TO A HUMAN", "GOOD NEWS: IT'S ONLY PONG", "YOU MISSED WITH CONFIDENCE", "SOMEWHERE A PADDLE IS CRYING", "THE CPU DIDN'T EVEN DRAW A BREATH", "THAT'S ONE FOR THE BLOOPER REEL", "SPECTACULAR. IN THE WRONG WAY.", "YOU WERE SO SURE, TOO", "THE BALL WAS FAST. YOU WERE NOT.", "KEEP THAT AWAY FROM YOUR RESUME", "PLEASE TELL ME THAT WAS A TEST", "THE CPU EXPECTED MORE. NOT MUCH.", "GG. JUST KIDDING. KEEP LOSING.", "YOU'RE PROOF THE CPU WORKS", "THE BALL IS STILL WAITING FOR YOU"];
     const cheers = ["NICE.", "LUCKY.", "OK, SHOWOFF.", "DON'T GET COCKY.", "FINE. THAT ONE COUNTS.", "THE CPU WANTS A REMATCH", "WAS THAT SKILL OR AN ACCIDENT?", "BEGINNER'S LUCK", "EVEN A BROKEN CLOCK...", "THE CPU WASN'T READY", "WRITE THAT DOWN", "DON'T LET IT GO TO YOUR HEAD", "FLUKE", "THE CPU BLINKED", "ALRIGHT, ALRIGHT", "SOMEONE'S WARMED UP", "THE MACHINES TOOK NOTE", "LOOK AT YOU GO", "HUMANITY SCORES ONE", "CPU IS FILING A COMPLAINT", "SURE, TAKE THE POINT", "THAT WAS ALMOST IMPRESSIVE", "OKAY, THAT WAS CLEAN", "CPU DEMANDS A REVIEW", "ENJOY IT WHILE IT LASTS", "THE CPU IS RECALCULATING", "ONE POINT DOESN'T MAKE A STREAK", "DO IT AGAIN. I DARE YOU.", "WE'LL CALL THAT A FLUKE", "WHO TAUGHT YOU THAT?", "THE BALL FELT SORRY FOR YOU", "CPU IS PRETENDING IT LET YOU", "NOT BAD FOR A HUMAN", "EVERY DOG HAS ITS DAY", "THE CPU IS SULKING NOW", "HAPPY? YOU GOT ONE.", "CALM DOWN, CHAMP", "SAVE SOME POINTS FOR LATER", "THE CPU IS UNIMPRESSED", "GREAT. NOW IT'S PERSONAL.", "THE CPU SAW NOTHING", "WHATEVER. LUCKY ANGLE.", "THAT'S ONE. CONGRATS, I GUESS.", "OK, YOU CAN PLAY A LITTLE", "THE MACHINES ARE NERVOUS", "CPU NEEDS A MINUTE", "A RARE HUMAN VICTORY", "DON'T GET USED TO IT", "THAT WAS RUDE. NICE THOUGH.", "THE CPU WILL REMEMBER THAT", "THE CPU LET YOU HAVE THAT ONE", "NOW YOU'RE JUST SHOWING OFF", "THE BALL PICKED A SIDE", "CPU IS RETHINKING ITS LIFE", "SOMEBODY CALL THE PRESS", "CHECK YOU OUT", "POINT TAKEN. LITERALLY.", "FINE. YOU WIN THIS ROUND.", "CPU WAS DISTRACTED. OBVIOUSLY.", "SMOOTH", "THE HUMAN STRIKES BACK", "CPU WOULD LIKE TO SEE THE TAPE", "THAT WAS AN ACCIDENT, ADMIT IT", "TELL YOUR FRIENDS. THEY WON'T CARE.", "THE CPU IS TAKING NOTES", "YOU'VE ANGERED IT NOW", "DID THAT FEEL GOOD? IT SHOULDN'T.", "TOO EASY? CPU SAYS NO.", "HOLD THE APPLAUSE", "YOU CAN STOP SMILING NOW", "THE CPU IS PRETENDING TO BE FINE", "WAIT, YOU CAN DO THAT?", "FINE, I'LL ADD IT TO THE BOARD", "THE CPU NEEDS A HUG", "THAT WAS DISRESPECTFUL. GOOD.", "SUDDENLY YOU'RE A PRO?", "RELAX, IT'S ONE POINT", "IS THIS YOUR FIRST POINT EVER?", "CPU HAS ENTERED DENIAL", "THE BALL FINALLY LIKES YOU", "WELL, WELL, WELL", "NOW DO IT TWICE", "THE CPU IS QUESTIONING EVERYTHING", "YOU MUST BE SO PROUD", "SOMEONE'S BEEN PRACTICING", "THE CPU IS GOING TO NEED A MINUTE", "ALL GAS, SOME BRAKES. NICE.", "EVEN THE CPU CLAPPED. QUIETLY.", "CPU THINKS YOU CHEATED", "TAKE A PICTURE. IT'LL BE RARE.", "THE MACHINES ARE TAKING THIS HARD", "OKAY, HOTSHOT", "THAT'S GOING IN THE TRAILER", "THE CPU WOULD LIKE TO UNSEE THAT", "YOU HIT IT! ON PURPOSE?", "A WILD POINT APPEARS", "THE CPU IS REBOOTING ITS PRIDE", "CONGRATS. NOW DON'T BLOW IT.", "THAT WAS SUSPICIOUSLY GOOD", "THE CPU IS CHECKING FOR HACKS", "THE HUMANS ARE RESTLESS", "GOOD HUSTLE, I GUESS", "YOU'RE ALLOWED ONE OF THOSE", "MAYBE YOU'RE NOT TERRIBLE", "THE CPU FORGOT TO MOVE. SAD.", "SUCH TALENT. SUCH MODESTY. NOT.", "CPU WILL BE TALKING TO ITS CODER", "THE BALL CHOSE VIOLENCE", "DON'T BRAG. YOU'RE GOING TO BRAG.", "OH, YOU THINK YOU'RE COOL NOW", "THAT ONE STUNG A LITTLE", "THE CPU FELT THAT IN ITS RAM", "CPU WILL ALLOW IT. THIS TIME.", "THE CPU NEEDS NEW GLASSES", "HOW DARE YOU", "THE SCOREBOARD IS SHOCKED TOO", "SAVE THAT REPLAY", "PURE LUCK. PROBABLY.", "THE CPU IS BLAMING THE BALL", "CPU REQUESTS A TIMEOUT", "UNREAL. TRULY UNREAL.", "THE CPU IS DRAFTING A RESPONSE", "KEEP THAT ENERGY. YOU'LL NEED IT.", "THE ROBOTS WILL HEAR OF THIS", "NOT BAD. NOT GREAT. BUT NOT BAD.", "THE BALL BETRAYED THE CPU", "ONE SMALL STEP FOR HUMANKIND", "THE CPU IS NOT CRYING", "YOU WANTED THAT ONE BADLY, HUH", "THAT'S GOING STRAIGHT TO YOUR HEAD", "THE CPU WOULD LIKE THAT BACK", "FINE. A POINT. HAPPY NOW?", "CPU IS UPDATING ITS DRIVERS", "WATCH OUT, WE GOT A PLAYER", "THE CPU IS SPEECHLESS. ALMOST.", "ACCEPTABLE", "THE PADDLE FINALLY SHOWED UP", "CPU DIDN'T WANT IT ANYWAY", "THE HUMAN HAS LEARNED", "THAT WAS ACTUALLY KIND OF COOL"];
+    const TW = 4, TH = 2.25, D = 9, Z0 = 2.2, F = 330, CX = W / 2, CY = H / 2;   // tunnel size, depth, camera
+    const PWd = 0.95, PHt = 0.62, BR = 0.13, TO = 7, WIN_BONUS = 500;   // first to 7 wins the match
+    const wins = ["YOU WIN. THE CPU DEMANDS A REMATCH.", "YOU WIN. THE CPU IS FILING AN APPEAL.", "YOU WIN. DON'T LET IT GO TO YOUR HEAD.", "VICTORY. THE MACHINES WILL REMEMBER.", "YOU WIN. THE CPU NEEDS A MOMENT.", "YOU BEAT A COMPUTER. AT PONG. CONGRATS.", "YOU WIN. THE CPU BLAMES THE TUNNEL.", "CHAMPION OF THE TUNNEL. FOR NOW.", "YOU WIN. TELL EVERYONE. LOUDLY.", "YOU WIN. THE CPU IS UPDATING ITS RESUME.", "GAME, SET, MATCH. SHOWOFF.", "YOU WIN. THE CPU SAYS IT WAS LAG.", "YOU WIN. HUMANITY THANKS YOU.", "YOU WIN. FRAME THIS MOMENT.", "YOU WIN. THE CPU WANTS TO SEE THE TAPE.", "FLAWLESS? NO. A WIN? YES.", "YOU WIN. THE CPU SAYS IT LET YOU.", "THE CPU HAS BEEN DEFEATED. BRIEFLY.", "YOU WIN. NOW DO IT AGAIN.", "YOU WIN. THE ROBOTS ARE TAKING NOTES."];
+    const P = (x, y, z) => { const s = F / (z + Z0); return [CX + x * s, CY + y * s, s]; };
     let S;
-    const reset = () => { S = { you: 0, cpu: 0, py: H / 2, cy: H / 2, bx: W / 2, by: H / 2, vx: 0, vy: 0, live: false, msg: "READY WHEN YOU ARE", sub: "CLICK OR TAP TO SERVE", next: 1 }; };
+    function reset() {
+      S = { you: 0, cpu: 0, returns: 0, hitPts: 0, pop: "", popT: 0, popBull: false, over: false, live: false, msg: "READY WHEN YOU ARE", sub: "FIRST TO " + TO + " ENDS IT  ·  CLICK OR TAP TO SERVE",
+            px: 0, py: 0, pvx: 0, pvy: 0, aimX: 0, aimY: 0, cx: 0, cy: 0, errX: 0, errY: 0, b: null, trail: [], next: 1, flash: 0, t: 0, curveTxt: 0 };
+    }
+    const score = () => S.you * 100 + S.hitPts + (S.you >= TO ? WIN_BONUS : 0);
+    // where the ball lands on your paddle: bullseye in the middle, then two bigger rings
+    const ZONES = [[0.22, 50, "BULLSEYE +50"], [0.55, 25, "+25"], [Infinity, 10, "+10"]];
+    const cpuDiff = () => Math.min(1, S.you / (TO - 1));   // CPU levels up one step for every point you score: LV 1 at the start, LV 7 for match point
+    function aimError() { const e = 1 - cpuDiff() * 0.65; S.errX = (Math.random() - 0.5) * 1.1 * e; S.errY = (Math.random() - 0.5) * 0.7 * e; }   // it never reads the ball perfectly
     function serve() {
-      S.bx = W / 2; S.by = H / 2;
-      const a = Math.random() * 0.8 - 0.4;
-      S.vx = Math.cos(a) * 5 * S.next; S.vy = Math.sin(a) * 5;
-      S.live = true; S.msg = ""; S.sub = "";
+      if (S.over) { reset(); }
+      aimError();
+      const toCpu = S.next > 0, sp = 0.11 + cpuDiff() * 0.03;
+      S.b = { x: 0, y: 0, z: toCpu ? 0.3 : D - 0.3, vx: (Math.random() - 0.5) * 0.03, vy: (Math.random() - 0.5) * 0.02, vz: toCpu ? sp : -sp, sx: 0, sy: 0, speed: sp, rot: 0, axis: Math.PI / 2 };
+      S.trail = []; S.live = true; S.msg = ""; S.sub = "";
     }
     function point(youScored) {
       if (youScored) S.you++; else S.cpu++;
-      S.live = false; S.msg = pick(youScored ? cheers : taunts); S.sub = "CLICK OR TAP TO SERVE"; S.next = youScored ? -1 : 1;
+      S.live = false; S.b = null; S.flash = 12;
+      S.msg = pick(youScored ? cheers : taunts); S.sub = "CLICK OR TAP TO SERVE"; S.next = youScored ? -1 : 1;
+      if (S.you >= TO) { S.over = true; S.msg = pick(wins); S.sub = "YOU WIN  ·  SCORE " + score() + " (+" + WIN_BONUS + " WIN BONUS)  ·  CLICK OR TAP FOR A NEW MATCH"; gameOver("paddle", score()); }
+      else if (S.cpu >= TO) { S.over = true; S.msg = "MATCH OVER. " + S.msg; S.sub = "CPU WINS  ·  SCORE " + score() + "  ·  CLICK OR TAP FOR A NEW MATCH"; gameOver("paddle", score()); }
     }
-    function bounce(py, dir, x) {
-      const off = (S.by - py) / (PH / 2), sp = Math.min(12, Math.hypot(S.vx, S.vy) * 1.05), a = off * 0.9;
-      S.vx = Math.cos(a) * sp * dir; S.vy = Math.sin(a) * sp; S.bx = x;
-    }
+    const clampX = x => Math.max(-TW / 2 + PWd / 2, Math.min(TW / 2 - PWd / 2, x));
+    const clampY = y => Math.max(-TH / 2 + PHt / 2, Math.min(TH / 2 - PHt / 2, y));
     return {
-      hint: "Mouse, finger, or W/S and arrow keys move your paddle. Click, tap or Space to serve.",
+      hint: "Move your paddle with the mouse, a finger, or the arrow keys / WASD. Swipe as you hit to put spin on the ball. First to 7 wins. 100 per point you win, plus 50 for a bullseye return, 25 for the middle ring and 10 for the edge, and 500 if you win the match. The CPU levels up every time you score.",
       start: reset,
-      pause() { if (S.live) { S.live = false; S.msg = "PAUSED"; S.sub = "CLICK OR TAP TO SERVE"; S.next = S.vx > 0 ? 1 : -1; } },
+      pause() { if (S.live) { S.live = false; S.b = null; S.msg = "PAUSED"; S.sub = "CLICK OR TAP TO SERVE"; } },
       step() {
-        if (keys.up) S.py -= 7; if (keys.down) S.py += 7;
-        S.py = Math.max(PH / 2, Math.min(H - PH / 2, S.py));
-        const target = S.live && S.vx > 0 ? S.by : H / 2;
-        S.cy += Math.max(-CPU_SPEED, Math.min(CPU_SPEED, (target - S.cy) * 0.12));
-        S.cy = Math.max(PH / 2, Math.min(H - PH / 2, S.cy));
-        if (!S.live) return;
-        S.bx += S.vx; S.by += S.vy;
-        if (S.by < R) { S.by = R; S.vy = -S.vy; }
-        if (S.by > H - R) { S.by = H - R; S.vy = -S.vy; }
-        const hit = (px, py) => Math.abs(S.bx - px) < PW / 2 + R && Math.abs(S.by - py) < PH / 2 + R;
-        if (S.vx < 0 && hit(20, S.py)) bounce(S.py, 1, 20 + PW / 2 + R);
-        if (S.vx > 0 && hit(W - 20, S.cy)) bounce(S.cy, -1, W - 20 - PW / 2 - R);
-        if (S.bx < -R) point(false);
-        if (S.bx > W + R) point(true);
+        S.t++; if (S.flash) S.flash--; if (S.curveTxt) S.curveTxt--; if (S.popT) S.popT--;
+        // your paddle: eases toward the aim point; keys move the aim
+        const k = 0.06;
+        if (keys.left) S.aimX -= k; if (keys.right) S.aimX += k; if (keys.up) S.aimY -= k; if (keys.down) S.aimY += k;
+        S.aimX = clampX(S.aimX); S.aimY = clampY(S.aimY);
+        const ox = S.px, oy = S.py;
+        S.px += (S.aimX - S.px) * 0.45; S.py += (S.aimY - S.py) * 0.45;
+        S.pvx = S.pvx * 0.6 + (S.px - ox) * 0.4; S.pvy = S.pvy * 0.6 + (S.py - oy) * 0.4;   // smoothed paddle speed = spin
+        // CPU paddle: starts slow and sloppy, and sharpens up the longer the match goes (returns and points both count)
+        const diff = cpuDiff(), cspd = 0.016 + diff * 0.03;
+        const b = S.b;
+        const coming = b && b.vz > 0 && b.z > D * (0.55 - 0.45 * diff);   // early on it reacts late
+        const tx = coming ? b.x + b.vx * (2 + diff * 3) + S.errX : 0, ty = coming ? b.y + b.vy * (2 + diff * 3) + S.errY : 0;
+        S.cx += Math.max(-cspd, Math.min(cspd, (tx - S.cx) * 0.18)); S.cy += Math.max(-cspd, Math.min(cspd, (ty - S.cy) * 0.18));
+        S.cx = clampX(S.cx); S.cy = clampY(S.cy);
+        if (!S.live || !b) return;
+        // spin curves the ball, and slowly wears off
+        b.vx += b.sx; b.vy += b.sy; b.sx *= 0.985; b.sy *= 0.985;
+        // seams: the ball turns faster the more spin it has, around an axis set by the spin's direction
+        const m = Math.hypot(b.sx, b.sy);
+        if (m > 0.00005) b.axis = Math.atan2(b.sy, b.sx);
+        b.rot += 0.05 + Math.min(0.6, m * 450);
+        b.x += b.vx; b.y += b.vy; b.z += b.vz;
+        if (b.x < -TW / 2 + BR) { b.x = -TW / 2 + BR; b.vx = Math.abs(b.vx); b.sx *= 0.6; }
+        if (b.x > TW / 2 - BR) { b.x = TW / 2 - BR; b.vx = -Math.abs(b.vx); b.sx *= 0.6; }
+        if (b.y < -TH / 2 + BR) { b.y = -TH / 2 + BR; b.vy = Math.abs(b.vy); b.sy *= 0.6; }
+        if (b.y > TH / 2 - BR) { b.y = TH / 2 - BR; b.vy = -Math.abs(b.vy); b.sy *= 0.6; }
+        S.trail.push([b.x, b.y, b.z]); if (S.trail.length > 14) S.trail.shift();
+        // your end
+        if (b.z <= 0 && b.vz < 0) {
+          if (Math.abs(b.x - S.px) < PWd / 2 + BR && Math.abs(b.y - S.py) < PHt / 2 + BR) {
+            b.z = 0; b.speed = Math.min(0.19 + cpuDiff() * 0.08, b.speed * 1.04 + 0.003); b.vz = b.speed;
+            b.vx = (b.x - S.px) * 0.09 + S.pvx * 0.25; b.vy = (b.y - S.py) * 0.09 + S.pvy * 0.25;   // where you hit it aims it
+            b.sx = -S.pvx * 0.012; b.sy = -S.pvy * 0.012;                                           // how you moved spins it
+            S.returns++; S.flash = 4; aimError();
+            const m = Math.max(Math.abs(b.x - S.px) / (PWd / 2), Math.abs(b.y - S.py) / (PHt / 2));
+            const z = ZONES.find(zn => m <= zn[0]); S.hitPts += z[1]; S.pop = z[2]; S.popT = 45; S.popBull = z[1] === 50;
+            if (Math.hypot(b.sx, b.sy) > 0.0009) S.curveTxt = 50;
+          } else if (b.z < -0.6) point(false);
+        }
+        // CPU end
+        if (b.z >= D && b.vz > 0) {
+          if (Math.abs(b.x - S.cx) < PWd / 2 + BR && Math.abs(b.y - S.cy) < PHt / 2 + BR) {
+            b.z = D; b.vz = -b.speed;
+            b.vx = (b.x - S.cx) * 0.08 + (Math.random() - 0.5) * 0.02; b.vy = (b.y - S.cy) * 0.08 + (Math.random() - 0.5) * 0.015;
+            const tricky = Math.max(0, (cpuDiff() - 0.4) / 0.6) * 0.7;                  // CPU only starts spinning it back once it's warmed up
+            b.sx = (Math.random() - 0.5) * 0.0016 * tricky; b.sy = (Math.random() - 0.5) * 0.001 * tricky;
+          } else if (b.z > D + 0.6) point(true);
+        }
       },
       draw() {
-        ctx.fillStyle = "rgba(136,136,170,.25)";
-        for (let y = 8; y < H; y += 22) ctx.fillRect(W / 2 - 1, y, 2, 12);
-        ctx.font = "48px " + DISPLAY; ctx.textAlign = "center"; ctx.textBaseline = "top";
-        ctx.fillStyle = GREEN; ctx.fillText(S.you, W / 2 - 60, 14);
-        ctx.fillStyle = TEXT; ctx.fillText(S.cpu, W / 2 + 60, 14);
-        ctx.font = "12px " + MONO; ctx.fillStyle = MUTED;
-        ctx.fillText("YOU", W / 2 - 60, 62); ctx.fillText("CPU", W / 2 + 60, 62);
-        ctx.shadowColor = GREEN; ctx.shadowBlur = 14; ctx.fillStyle = GREEN;
-        ctx.fillRect(20 - PW / 2, S.py - PH / 2, PW, PH);
-        ctx.shadowBlur = 0; ctx.fillStyle = TEXT;
-        ctx.fillRect(W - 20 - PW / 2, S.cy - PH / 2, PW, PH);
-        if (S.live) { ctx.shadowBlur = 16; ctx.fillStyle = GREEN; ctx.beginPath(); ctx.arc(S.bx, S.by, R, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
-        if (S.msg) banner(S.msg, S.sub);
+        const b = S.b;
+        // tunnel: edge lines and depth rings, brightest ring follows the ball
+        const ring = (z, col, w) => {
+          const [x1, y1] = P(-TW / 2, -TH / 2, z), [x2, y2] = P(TW / 2, TH / 2, z);
+          ctx.strokeStyle = col; ctx.lineWidth = w; ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        };
+        for (let z = 0; z <= D; z += 1) ring(z, "rgba(0,255,136,.12)", 1);
+        ctx.strokeStyle = "rgba(0,255,136,.22)"; ctx.lineWidth = 1;
+        for (const [x, y] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+          const a = P(x * TW / 2, y * TH / 2, 0), c = P(x * TW / 2, y * TH / 2, D);
+          ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke();
+        }
+        for (const f of [-0.25, 0.25]) {   // a few lines along the floor and ceiling
+          for (const yy of [-1, 1]) { const a = P(f * TW, yy * TH / 2, 0), c = P(f * TW, yy * TH / 2, D); ctx.strokeStyle = "rgba(0,255,136,.08)"; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke(); }
+        }
+        // far wall glow
+        { const [x1, y1] = P(-TW / 2, -TH / 2, D), [x2, y2] = P(TW / 2, TH / 2, D); ctx.fillStyle = "rgba(0,255,136,.03)"; ctx.fillRect(x1, y1, x2 - x1, y2 - y1); }
+        if (b) { ctx.shadowColor = GREEN; ctx.shadowBlur = 10; ring(b.z, "rgba(0,255,136,.75)", 2); ctx.shadowBlur = 0; }
+        // CPU paddle
+        { const [x1, y1] = P(S.cx - PWd / 2, S.cy - PHt / 2, D), [x2, y2] = P(S.cx + PWd / 2, S.cy + PHt / 2, D);
+          ctx.fillStyle = "rgba(245,245,245,.18)"; ctx.fillRect(x1, y1, x2 - x1, y2 - y1); ctx.strokeStyle = TEXT; ctx.lineWidth = 1.5; ctx.strokeRect(x1, y1, x2 - x1, y2 - y1); }
+        // ball: trail, shadow on the floor, then the ball
+        if (b) {
+          S.trail.forEach(([x, y, z], i) => { const [sx, sy, s] = P(x, y, z); ctx.fillStyle = `rgba(0,255,136,${i / S.trail.length * 0.35})`; ctx.beginPath(); ctx.arc(sx, sy, BR * s * 0.6, 0, Math.PI * 2); ctx.fill(); });
+          const [fx, fy, fs] = P(b.x, TH / 2, b.z); ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.ellipse(fx, fy, BR * fs, BR * fs * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+          const [bx, by, bs] = P(b.x, b.y, b.z), r = Math.max(2, BR * bs);
+          ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+          if (r > 4) {
+            ctx.save(); ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.clip();
+            const g = ctx.createRadialGradient(bx - r * 0.35, by - r * 0.35, r * 0.1, bx, by, r);   // shading so it reads as a sphere
+            g.addColorStop(0, "rgba(255,255,255,.35)"); g.addColorStop(1, "rgba(0,60,30,.35)"); ctx.fillStyle = g; ctx.fillRect(bx - r, by - r, r * 2, r * 2);
+            ctx.translate(bx, by); ctx.rotate(b.axis);
+            ctx.strokeStyle = "rgba(4,19,11,.75)"; ctx.lineWidth = Math.max(1, r * 0.13);
+            for (let j = 0; j < 2; j++) {   // two seams on the visible half, sweeping across as it turns
+              const ph = b.rot + j * Math.PI / 2, rx = r * Math.cos(ph);
+              ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.5, Math.abs(rx)), r, 0, -Math.PI / 2, Math.PI / 2, rx < 0); ctx.stroke();
+            }
+            ctx.restore();
+          }
+        }
+        // your paddle: see-through, with a crosshair so you can see past it
+        { const [x1, y1] = P(S.px - PWd / 2, S.py - PHt / 2, 0), [x2, y2] = P(S.px + PWd / 2, S.py + PHt / 2, 0);
+          ctx.fillStyle = S.flash ? "rgba(0,255,136,.28)" : "rgba(0,255,136,.1)"; ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+          ctx.strokeStyle = GREEN; ctx.lineWidth = 2; ctx.shadowColor = GREEN; ctx.shadowBlur = 10; ctx.strokeRect(x1, y1, x2 - x1, y2 - y1); ctx.shadowBlur = 0;
+          const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, hw = (x2 - x1) / 2, hh = (y2 - y1) / 2;
+          ctx.lineWidth = 1; ctx.strokeStyle = "rgba(0,255,136,.45)";
+          ctx.strokeRect(mx - hw * 0.55, my - hh * 0.55, hw * 1.1, hh * 1.1);                       // 25-point ring
+          ctx.fillStyle = "rgba(255,204,0,.18)"; ctx.fillRect(mx - hw * 0.22, my - hh * 0.22, hw * 0.44, hh * 0.44);
+          ctx.strokeStyle = "rgba(255,204,0,.8)"; ctx.strokeRect(mx - hw * 0.22, my - hh * 0.22, hw * 0.44, hh * 0.44);   // bullseye
+        }
+        // HUD
+        ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.font = "40px " + DISPLAY;
+        ctx.fillStyle = GREEN; ctx.fillText(S.you, W / 2 - 50, 8); ctx.fillStyle = TEXT; ctx.fillText(S.cpu, W / 2 + 50, 8);
+        ctx.font = "11px " + MONO; ctx.fillStyle = MUTED; ctx.fillText("YOU", W / 2 - 50, 48); ctx.fillText("CPU", W / 2 + 50, 48);
+        ctx.textAlign = "left"; ctx.font = "bold 14px " + MONO; ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 8; ctx.fillText("SCORE " + score(), 14, 10); ctx.shadowBlur = 0; ctx.font = "11px " + MONO; ctx.fillStyle = MUTED; ctx.textAlign = "right"; ctx.fillText("FIRST TO " + TO + "  ·  CPU LV " + (1 + Math.min(TO - 1, S.you)), W - 14, 12);
+        if (S.popT && S.live) { ctx.globalAlpha = Math.min(1, S.popT / 15); ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.font = (S.popBull ? "30px " : "22px ") + DISPLAY; ctx.fillStyle = S.popBull ? YELLOW : GREEN; ctx.fillText(S.pop, W / 2, H - 46 - (45 - S.popT) * 0.4); ctx.globalAlpha = 1; }
+        if (S.curveTxt && S.live) { ctx.globalAlpha = S.curveTxt / 50; ctx.textAlign = "center"; ctx.font = "22px " + DISPLAY; ctx.fillStyle = YELLOW; ctx.fillText("SPIN!", W / 2, 66); ctx.globalAlpha = 1; }
+        if (S.msg) banner(S.msg, S.sub, H / 2 + 60);
       },
-      pointermove(x, y) { S.py = y; },
-      pointerdown(x, y) { S.py = y; if (!S.live) serve(); },
+      pointermove(x, y) { const s = F / Z0; S.aimX = clampX((x - CX) / s); S.aimY = clampY((y - CY) / s); },
+      pointerdown(x, y) { this.pointermove(x, y); if (!S.live) serve(); },
       action() { if (!S.live) serve(); }
     };
   })();
@@ -189,6 +380,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
       if (sc > S.best) { S.best = sc; best.set("hop", sc); S.msg = pick(bests); }
       else S.msg = pick(deaths);
       S.sub = "SCORE " + sc + "  ·  CLICK, TAP OR SPACE TO TRY AGAIN";
+      gameOver("hop", sc);
     }
     function jumpPress() {
       if (S.state === "ready") { S.state = "play"; S.msg = ""; }
@@ -346,6 +538,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
         S.state = "over";
         if (S.score > S.best) { S.best = S.score; best.set("bug", S.score); }
         S.msg = pick(overs); S.sub = "SCORE " + S.score + "  ·  CLICK OR TAP TO PLAY AGAIN";
+        gameOver("bug", S.score);
       }
     }
     function shoot(x, y) {
@@ -449,16 +642,18 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
 
   /* ================= cabinet: tabs, loop, controls ================= */
   const games = { paddle, hop, bug };
-  let cur = paddle;
+  let cur = paddle, curName = "paddle";
   const hint = document.getElementById("hint");
   function choose(name) {
-    cur.pause(); cur = games[name]; cur.start(); hint.textContent = cur.hint;
+    if (!entry.hidden) { entry.hidden = true; pending = null; }
+    cur.pause(); cur = games[name]; curName = name; cur.start(); hint.textContent = cur.hint; renderBoard();
     document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.game === name));
     for (const k in keys) keys[k] = false;
   }
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => choose(b.dataset.game)));
   Object.values(games).forEach(g => g.start());
   hint.textContent = cur.hint;
+  renderBoard(); Object.keys(games).forEach(loadBoard);
 
   let last = 0, acc = 0;
   function loop(t) {
@@ -469,10 +664,11 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
     requestAnimationFrame(loop);
   }
   cv.addEventListener("pointermove", e => cur.pointermove(...toXY(e)));
-  cv.addEventListener("pointerdown", e => { e.preventDefault(); cur.pointerdown(...toXY(e)); });
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); if (entry.hidden) cur.pointerdown(...toXY(e)); });
   addEventListener("pointerup", () => cur.pointerup && cur.pointerup());
   const map = { w: "up", arrowup: "up", s: "down", arrowdown: "down", a: "left", arrowleft: "left", d: "right", arrowright: "right", " ": "jump" };
   addEventListener("keydown", e => {
+    if (!entry.hidden || e.target.tagName === "INPUT") return;   // typing initials
     const k = e.key.toLowerCase(), m = map[k];
     if (m || k === "enter") e.preventDefault();
     if (m) { if (!keys[m] && (m === "jump" || (m === "up" && cur === hop))) cur.action(); keys[m] = true; }
@@ -486,4 +682,3 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
 </script>
 </body>
 </html>
-<!-- arcade: paddle battle, bit hop, bug zapper -->
