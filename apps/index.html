@@ -24,6 +24,7 @@ a{color:inherit}
 nav{position:sticky;top:0;z-index:5;background:rgba(10,10,15,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
 .logo{font-family:var(--display);font-size:30px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.logo span{color:var(--green)}
 .logo:hover{color:var(--green)}
 .who{display:flex;gap:16px;align-items:center;color:var(--muted);font-size:13px}
 .link{background:none;border:0;padding:0;font:inherit;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:13px;cursor:pointer}
@@ -77,7 +78,7 @@ color:var(--cyan);background:rgba(0,204,255,.067);border:1px solid rgba(0,204,25
 
 <nav>
 <div class="wrap">
-<a class="logo" href="/">GTALHub</a>
+<a class="logo" href="/">GTAL<span>Hub</span></a>
 <div class="who" id="who" hidden><span id="whoEmail"></span><button class="link" id="out" type="button">Sign out</button></div>
 </div>
 </nav>
