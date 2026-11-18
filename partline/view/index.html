@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partline Viewer</title>
+<meta name="robots" content="noindex">
+<style>
+  body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#fff; color:#4a525c; font:14px/1.5 system-ui, sans-serif; }
+  .spin { width:30px; height:30px; border:3px solid #d5dae0; border-top-color:#3d8bfd; border-radius:50%; margin:0 auto 12px; animation:s 1s linear infinite; }
+  @keyframes s { to { transform:rotate(360deg); } }
+  .err { color:#c62828; }
+</style>
+</head>
+<body>
+<div id="m" style="text-align:center"><div class="spin"></div>Opening the viewer…</div>
+<script>
+// The viewer itself is kept in storage (not in this site's code); this page fetches it and shows it in place, so the
+// address (with the ?step=… link) stays as it is.
+(async () => {
+  const URL_ = "https://hjwuluhdiczmssldyeus.supabase.co/storage/v1/object/public/partline-view/view.html";
+  try {
+    const r = await fetch(URL_ + "?v=" + Math.floor(Date.now() / 60000), { cache: "no-store" });
+    if (!r.ok) throw new Error("status " + r.status);
+    const html = await r.text();
+    document.open(); document.write(html); document.close();
+  } catch (e) {
+    document.getElementById("m").innerHTML = '<b>The viewer isn’t available right now.</b><br><span class="err">Try again in a minute.</span>';
+  }
+})();
+</script>
+</body>
+</html>
