@@ -12,18 +12,26 @@
 :root{--bg:#0a0a0f;--line:#1e1e2e;--text:#f5f5f5;--muted:#8888aa;--green:#00ff88;
 --display:"Bebas Neue",-apple-system,BlinkMacSystemFont,sans-serif;--mono:"Roboto Mono",ui-monospace,"SF Mono",Consolas,monospace}
 *{box-sizing:border-box}
-html,body{height:100%}
+html,body{min-height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.65 var(--mono);-webkit-font-smoothing:antialiased;
-display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-body::before{content:"";position:absolute;inset:0;pointer-events:none;
+min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
 background:radial-gradient(70% 60% at 50% 50%,rgba(0,255,136,.07) 0%,transparent 70%),
 linear-gradient(rgba(0,255,136,.035) 1px,transparent 1px) 0 0/48px 48px,
 linear-gradient(90deg,rgba(0,255,136,.035) 1px,transparent 1px) 0 0/48px 48px}
-main{position:relative;max-width:520px;padding:0 24px;text-align:center}
+main{position:relative;width:100%;max-width:640px;padding:40px 24px;text-align:center}
 h1{font-family:var(--display);font-weight:400;letter-spacing:.04em;line-height:1;font-size:clamp(56px,11vw,96px);margin:0 0 22px}
 h1 span{color:var(--green);text-shadow:0 0 24px rgba(0,255,136,.35)}
-p{color:var(--muted);margin:0}
+p{color:var(--muted);margin:0 auto;max-width:520px}
+p+p{margin-top:14px}
 .rule{width:64px;height:2px;margin:0 auto 22px;background:linear-gradient(90deg,transparent,var(--green),transparent)}
+
+/* pong */
+.pong{margin:30px auto 0;position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:rgba(10,10,15,.85);
+box-shadow:0 0 0 1px rgba(0,255,136,.06),0 0 40px rgba(0,255,136,.06)}
+.pong::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);z-index:1}
+canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none}
+.hint{margin-top:10px;font-size:12px;color:var(--muted);opacity:.8}
 </style>
 </head>
 <body>
@@ -31,6 +39,132 @@ p{color:var(--muted);margin:0}
 <h1>GTAL<span>Hub</span></h1>
 <div class="rule"></div>
 <p>Congratulations, you found the home page. There's nothing on it. If someone sent you one of our tools, the full link they gave you works way better than deleting half of it.</p>
+<p>Since you came all this way, here's Pong. It's the only thing on this page that does anything, so try not to lose to it.</p>
+<div class="pong"><canvas id="pong" width="640" height="360" aria-label="Pong game: you are the left paddle"></canvas></div>
+<div class="hint">Mouse, finger, or W/S and arrow keys move your paddle. Click or tap to serve.</div>
 </main>
+
+<script>
+(() => {
+  const cv = document.getElementById("pong"), ctx = cv.getContext("2d");
+  const W = 640, H = 360, PW = 10, PH = 64, R = 6, GREEN = "#00ff88", TEXT = "#f5f5f5", MUTED = "#8888aa";
+  const S = { you: 0, cpu: 0, py: H / 2, cy: H / 2, bx: W / 2, by: H / 2, vx: 0, vy: 0, live: false, msg: "READY WHEN YOU ARE", sub: "CLICK OR TAP TO SERVE", keys: {} };
+
+  // the computer: tracks the ball, but not perfectly, so it can be beaten
+  const CPU_SPEED = 4.2;
+
+  function serve(dir) {
+    S.bx = W / 2; S.by = H / 2;
+    const a = (Math.random() * 0.8 - 0.4);
+    const sp = 5;
+    S.vx = Math.cos(a) * sp * dir; S.vy = Math.sin(a) * sp;
+    S.live = true; S.msg = ""; S.sub = "";
+  }
+  // what the computer says after each point. Each list is shuffled and played through in full before any line repeats.
+  const taunts = ["THE COMPUTER SAYS HI", "THAT WAS A WARM-UP, RIGHT?", "IT'S ONE PADDLE. ONE.", "THE BALL WAS RIGHT THERE", "BOLD STRATEGY", "YOU MISSED. LOUDLY.", "THE CPU IS NOT EVEN TRYING", "DID YOU BLINK?", "SKILL ISSUE", "THAT ONE'S GOING ON THE FRIDGE", "PADDLE WORKS BETTER IN FRONT OF IT", "GRAVITY ISN'T EVEN ON", "THE BALL SAYS YOU'RE WELCOME", "WAS THAT ON PURPOSE?", "CLOSE. NOT REALLY.", "CPU: 1. DIGNITY: 0.", "YOU HAD ONE JOB", "THE BALL WENT THAT WAY", "NEW STRAT: MOVE THE PADDLE", "EVEN THE NET FELT THAT", "I'LL WAIT", "INTERESTING TECHNIQUE", "YOUR PADDLE CALLED IN SICK", "RESPECTFULLY, NO", "THAT'S A BOLD WAY TO LOSE", "THE BALL IS ROUND. KEEP UP.", "ARE YOU USING YOUR ELBOWS?", "NOT EVEN CLOSE, BUDDY", "YOU MISSED THE WHOLE BALL", "SCREENSHOT THAT FOR LATER", "HAVE YOU TRIED NOT MISSING?", "TOUGH LOOK", "THE COMPUTER IS SMIRKING", "HUMANITY IS COUNTING ON YOU", "ALL THAT AND NOTHING", "TRY THE OTHER END OF THE PADDLE", "CPU DIDN'T EVEN LOOK", "WOW. JUST WOW.", "YOU AND THE BALL: NOT FRIENDS", "ANOTHER ONE FOR THE ROBOTS", "THAT WAS NOT THE PLAN", "YOUR PADDLE WAS ON VACATION", "SPEEDRUNNING A LOSS", "THE BALL GHOSTED YOU", "MAYBE TRY THE ARROW KEYS", "NO ONE SAW THAT. EXCEPT ME.", "CPU WINS AGAIN. SHOCKING.", "YOU'RE MAKING THIS EASY", "LET'S CALL THAT PRACTICE", "PROBABLY LAG. SURE.", "THE MOUSE MUST BE BROKEN", "POINT FOR THE MACHINES", "YOU REALLY WANTED THAT ONE", "ANYWAY.", "I'M NOT MAD, JUST DISAPPOINTED", "THE BALL WAS NOT INVISIBLE", "DEEP BREATHS", "THAT'S GOING IN THE HIGHLIGHTS", "YOU SURE YOU'RE NOT A BOT?", "THE CPU WOULD LIKE A CHALLENGE", "OOF", "YIKES", "HAVE YOU PLAYED PONG BEFORE?", "THE BALL SENDS ITS REGARDS", "MOVE FASTER. OR AT ALL.", "THAT'S ONE WAY TO DO IT", "HEY, AT LEAST YOU'RE CONSISTENT", "THE CPU IS GETTING BORED", "RIGHT PLACE, WRONG TIME", "WRONG PLACE, WRONG TIME", "CPU IS THINKING ABOUT LUNCH", "THE SCOREBOARD REMEMBERS", "YOU WAVED AT IT. NICE.", "SO CLOSE. WAIT, NO.", "THAT WAS PAINFUL TO WATCH", "KEEP YOUR EYE ON THE BALL", "THE BALL HAS LEFT THE BUILDING", "CPU WOULD LIKE TO THANK ITS FANS", "PRACTICE MAKES SLIGHTLY BETTER", "TELL NO ONE ABOUT THIS", "THE BALL FILED A RESTRAINING ORDER", "YOU AND THE PADDLE NEED COUNSELING", "THE CPU ISN'T EVEN PLUGGED IN", "THAT'S NOT HOW PHYSICS WORKS", "HAVE YOU CONSIDERED CHECKERS?", "CPU IS ON A COFFEE BREAK. STILL WON.", "MAYBE PLAY WITH YOUR EYES OPEN", "THE BALL DOESN'T BITE", "INCREDIBLE. INCREDIBLY BAD.", "THE PADDLE IS NOT DECORATIVE", "YOU'RE DOING GREAT. JK.", "YOU MISSED IT IN 4K", "THE CPU ALMOST FELT BAD", "THAT WAS A CRY FOR HELP", "THE REPLAY IS EVEN WORSE", "PONG: STILL UNDEFEATED", "DID YOUR CAT DO THAT?", "THE CPU ACCEPTS YOUR SURRENDER", "REMEMBER WHEN YOU HAD HOPE?", "THAT WAS VERY BRAVE OF YOU", "THE BALL ISN'T SHY. YOU ARE.", "WHO TAUGHT YOU TO PLAY PONG?", "YOUR PADDLE MISSED THE MEETING", "PLEASE HOLD. YOUR POINT IS LOST.", "ZERO STARS. WOULD NOT RECOMMEND.", "YOU GOT OUTPLAYED BY A RECTANGLE", "THE CPU IS A WHITE BAR. AND WINNING.", "CPU WOULD LIKE A HARDER OPPONENT", "THE BALL JUST WALKED PAST YOU", "MAYBE IT'S YOUR MONITOR", "CPU UPDATED ITS STATUS: WINNING", "NOTHING BUT AIR", "NOT YOUR FINEST MOMENT", "THAT'S A NO FROM ME, DAWG", "EVEN YOUR SHADOW MISSED IT", "THE BALL IS LAUGHING AT YOU", "DOES THE PADDLE MOVE? JUST CHECKING.", "TRY AGAIN. OR DON'T.", "THE CPU HAS NO NOTES", "SO MUCH EFFORT. SO LITTLE RESULT.", "AND THE CROWD GOES MILD", "YOU'RE THE CPU'S FAVORITE OPPONENT", "THE MACHINES THANK YOU", "CPU IS WRITING A BOOK ON YOU", "THAT ONE WAS FREE. SAD.", "YOU FLINCHED. ADMIT IT.", "WAS THE BALL TOO GREEN?", "THIS IS WHY WE CAN'T HAVE NICE THINGS", "THE CPU IS GETTING COMFORTABLE", "ARE YOU PLAYING OR WATCHING?", "THE PADDLE CAN'T DO IT ALONE", "YOU'RE MAKING THE CPU LOOK GOOD", "THE BALL WANTED TO BE CAUGHT", "EMBARRASSING, BUT IN A FUN WAY", "STATISTICALLY, THAT WAS BAD", "CPU HASN'T BROKEN A SWEAT", "ONE DAY YOU'LL HIT IT. NOT TODAY.", "THE BALL HAD SOMEWHERE TO BE", "YOUR PADDLE IS JUST A SUGGESTION", "WE'LL ADD THIS TO YOUR FILE", "CPU REMAINS UNBOTHERED", "A MASTERCLASS IN MISSING", "THE BALL SAID BYE", "THAT WAS PERSONAL", "THE PIXELS ARE DISAPPOINTED", "CPU WOULD LIKE TO SPEAK TO A HUMAN", "GOOD NEWS: IT'S ONLY PONG", "YOU MISSED WITH CONFIDENCE", "SOMEWHERE A PADDLE IS CRYING", "THE CPU DIDN'T EVEN DRAW A BREATH", "THAT'S ONE FOR THE BLOOPER REEL", "SPECTACULAR. IN THE WRONG WAY.", "YOU WERE SO SURE, TOO", "THE BALL WAS FAST. YOU WERE NOT.", "KEEP THAT AWAY FROM YOUR RESUME", "PLEASE TELL ME THAT WAS A TEST", "THE CPU EXPECTED MORE. NOT MUCH.", "GG. JUST KIDDING. KEEP LOSING.", "YOU'RE PROOF THE CPU WORKS", "THE BALL IS STILL WAITING FOR YOU"];
+  const cheers = ["NICE.", "LUCKY.", "OK, SHOWOFF.", "DON'T GET COCKY.", "FINE. THAT ONE COUNTS.", "THE CPU WANTS A REMATCH", "WAS THAT SKILL OR AN ACCIDENT?", "BEGINNER'S LUCK", "EVEN A BROKEN CLOCK...", "THE CPU WASN'T READY", "WRITE THAT DOWN", "DON'T LET IT GO TO YOUR HEAD", "FLUKE", "THE CPU BLINKED", "ALRIGHT, ALRIGHT", "SOMEONE'S WARMED UP", "THE MACHINES TOOK NOTE", "LOOK AT YOU GO", "HUMANITY SCORES ONE", "CPU IS FILING A COMPLAINT", "SURE, TAKE THE POINT", "THAT WAS ALMOST IMPRESSIVE", "OKAY, THAT WAS CLEAN", "CPU DEMANDS A REVIEW", "ENJOY IT WHILE IT LASTS", "THE CPU IS RECALCULATING", "ONE POINT DOESN'T MAKE A STREAK", "DO IT AGAIN. I DARE YOU.", "WE'LL CALL THAT A FLUKE", "WHO TAUGHT YOU THAT?", "THE BALL FELT SORRY FOR YOU", "CPU IS PRETENDING IT LET YOU", "NOT BAD FOR A HUMAN", "EVERY DOG HAS ITS DAY", "THE CPU IS SULKING NOW", "HAPPY? YOU GOT ONE.", "CALM DOWN, CHAMP", "SAVE SOME POINTS FOR LATER", "THE CPU IS UNIMPRESSED", "GREAT. NOW IT'S PERSONAL.", "THE CPU SAW NOTHING", "WHATEVER. LUCKY ANGLE.", "THAT'S ONE. CONGRATS, I GUESS.", "OK, YOU CAN PLAY A LITTLE", "THE MACHINES ARE NERVOUS", "CPU NEEDS A MINUTE", "A RARE HUMAN VICTORY", "DON'T GET USED TO IT", "THAT WAS RUDE. NICE THOUGH.", "THE CPU WILL REMEMBER THAT", "THE CPU LET YOU HAVE THAT ONE", "NOW YOU'RE JUST SHOWING OFF", "THE BALL PICKED A SIDE", "CPU IS RETHINKING ITS LIFE", "SOMEBODY CALL THE PRESS", "CHECK YOU OUT", "POINT TAKEN. LITERALLY.", "FINE. YOU WIN THIS ROUND.", "CPU WAS DISTRACTED. OBVIOUSLY.", "SMOOTH", "THE HUMAN STRIKES BACK", "CPU WOULD LIKE TO SEE THE TAPE", "THAT WAS AN ACCIDENT, ADMIT IT", "TELL YOUR FRIENDS. THEY WON'T CARE.", "THE CPU IS TAKING NOTES", "YOU'VE ANGERED IT NOW", "DID THAT FEEL GOOD? IT SHOULDN'T.", "TOO EASY? CPU SAYS NO.", "HOLD THE APPLAUSE", "YOU CAN STOP SMILING NOW", "THE CPU IS PRETENDING TO BE FINE", "WAIT, YOU CAN DO THAT?", "FINE, I'LL ADD IT TO THE BOARD", "THE CPU NEEDS A HUG", "THAT WAS DISRESPECTFUL. GOOD.", "SUDDENLY YOU'RE A PRO?", "RELAX, IT'S ONE POINT", "IS THIS YOUR FIRST POINT EVER?", "CPU HAS ENTERED DENIAL", "THE BALL FINALLY LIKES YOU", "WELL, WELL, WELL", "NOW DO IT TWICE", "THE CPU IS QUESTIONING EVERYTHING", "YOU MUST BE SO PROUD", "SOMEONE'S BEEN PRACTICING", "THE CPU IS GOING TO NEED A MINUTE", "ALL GAS, SOME BRAKES. NICE.", "EVEN THE CPU CLAPPED. QUIETLY.", "CPU THINKS YOU CHEATED", "TAKE A PICTURE. IT'LL BE RARE.", "THE MACHINES ARE TAKING THIS HARD", "OKAY, HOTSHOT", "THAT'S GOING IN THE TRAILER", "THE CPU WOULD LIKE TO UNSEE THAT", "YOU HIT IT! ON PURPOSE?", "A WILD POINT APPEARS", "THE CPU IS REBOOTING ITS PRIDE", "CONGRATS. NOW DON'T BLOW IT.", "THAT WAS SUSPICIOUSLY GOOD", "THE CPU IS CHECKING FOR HACKS", "THE HUMANS ARE RESTLESS", "GOOD HUSTLE, I GUESS", "YOU'RE ALLOWED ONE OF THOSE", "MAYBE YOU'RE NOT TERRIBLE", "THE CPU FORGOT TO MOVE. SAD.", "SUCH TALENT. SUCH MODESTY. NOT.", "CPU WILL BE TALKING TO ITS CODER", "THE BALL CHOSE VIOLENCE", "DON'T BRAG. YOU'RE GOING TO BRAG.", "OH, YOU THINK YOU'RE COOL NOW", "THAT ONE STUNG A LITTLE", "THE CPU FELT THAT IN ITS RAM", "CPU WILL ALLOW IT. THIS TIME.", "THE CPU NEEDS NEW GLASSES", "HOW DARE YOU", "THE SCOREBOARD IS SHOCKED TOO", "SAVE THAT REPLAY", "PURE LUCK. PROBABLY.", "THE CPU IS BLAMING THE BALL", "CPU REQUESTS A TIMEOUT", "UNREAL. TRULY UNREAL.", "THE CPU IS DRAFTING A RESPONSE", "KEEP THAT ENERGY. YOU'LL NEED IT.", "THE ROBOTS WILL HEAR OF THIS", "NOT BAD. NOT GREAT. BUT NOT BAD.", "THE BALL BETRAYED THE CPU", "ONE SMALL STEP FOR HUMANKIND", "THE CPU IS NOT CRYING", "YOU WANTED THAT ONE BADLY, HUH", "THAT'S GOING STRAIGHT TO YOUR HEAD", "THE CPU WOULD LIKE THAT BACK", "FINE. A POINT. HAPPY NOW?", "CPU IS UPDATING ITS DRIVERS", "WATCH OUT, WE GOT A PLAYER", "THE CPU IS SPEECHLESS. ALMOST.", "ACCEPTABLE", "THE PADDLE FINALLY SHOWED UP", "CPU DIDN'T WANT IT ANYWAY", "THE HUMAN HAS LEARNED", "THAT WAS ACTUALLY KIND OF COOL"];
+  const bags = new Map();
+  function pick(list) {
+    let bag = bags.get(list);
+    if (!bag || !bag.length) {
+      const prev = bag && bag.last;
+      bag = list.slice();
+      for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+      if (bag[bag.length - 1] === prev) bag.unshift(bag.pop());   // no back-to-back repeat across reshuffles
+      bags.set(list, bag);
+    }
+    const line = bag.pop(); bag.last = line; return line;
+  }
+  function point(youScored) {
+    if (youScored) S.you++; else S.cpu++;
+    S.live = false;
+    const list = youScored ? cheers : taunts;
+    S.msg = pick(list); S.sub = "CLICK OR TAP TO SERVE";
+    S.next = youScored ? -1 : 1;
+  }
+
+  function step() {
+    // your paddle from keys
+    const k = S.keys;
+    if (k.up) S.py -= 7; if (k.down) S.py += 7;
+    S.py = Math.max(PH / 2, Math.min(H - PH / 2, S.py));
+    // computer paddle
+    const target = S.live && S.vx > 0 ? S.by : H / 2;
+    const d = target - S.cy;
+    S.cy += Math.max(-CPU_SPEED, Math.min(CPU_SPEED, d * 0.12));
+    S.cy = Math.max(PH / 2, Math.min(H - PH / 2, S.cy));
+    if (!S.live) return;
+    S.bx += S.vx; S.by += S.vy;
+    if (S.by < R) { S.by = R; S.vy = -S.vy; }
+    if (S.by > H - R) { S.by = H - R; S.vy = -S.vy; }
+    // paddles
+    const hit = (px, py) => Math.abs(S.bx - px) < PW / 2 + R && Math.abs(S.by - py) < PH / 2 + R;
+    if (S.vx < 0 && hit(20, S.py)) bounce(S.py, 1, 20 + PW / 2 + R);
+    if (S.vx > 0 && hit(W - 20, S.cy)) bounce(S.cy, -1, W - 20 - PW / 2 - R);
+    if (S.bx < -R) point(false);
+    if (S.bx > W + R) point(true);
+  }
+  function bounce(py, dir, x) {
+    const off = (S.by - py) / (PH / 2);              // -1 … 1, where on the paddle it hit
+    const sp = Math.min(12, Math.hypot(S.vx, S.vy) * 1.05);
+    const a = off * 0.9;
+    S.vx = Math.cos(a) * sp * dir; S.vy = Math.sin(a) * sp; S.bx = x;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // center line
+    ctx.fillStyle = "rgba(136,136,170,.25)";
+    for (let y = 8; y < H; y += 22) ctx.fillRect(W / 2 - 1, y, 2, 12);
+    // score
+    ctx.font = "48px 'Bebas Neue', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillStyle = GREEN; ctx.fillText(S.you, W / 2 - 60, 14);
+    ctx.fillStyle = TEXT; ctx.fillText(S.cpu, W / 2 + 60, 14);
+    ctx.font = "12px 'Roboto Mono', monospace"; ctx.fillStyle = MUTED;
+    ctx.fillText("YOU", W / 2 - 60, 62); ctx.fillText("CPU", W / 2 + 60, 62);
+    // paddles + ball, with glow
+    ctx.shadowColor = GREEN; ctx.shadowBlur = 14; ctx.fillStyle = GREEN;
+    ctx.fillRect(20 - PW / 2, S.py - PH / 2, PW, PH);
+    ctx.shadowBlur = 0; ctx.fillStyle = TEXT;
+    ctx.fillRect(W - 20 - PW / 2, S.cy - PH / 2, PW, PH);
+    if (S.live) { ctx.shadowBlur = 16; ctx.fillStyle = GREEN; ctx.beginPath(); ctx.arc(S.bx, S.by, R, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+    if (S.msg) {
+      ctx.font = "30px 'Bebas Neue', sans-serif"; ctx.textBaseline = "middle"; ctx.fillStyle = TEXT;
+      ctx.fillText(S.msg, W / 2, H / 2 + 30);
+      ctx.font = "12px 'Roboto Mono', monospace"; ctx.fillStyle = MUTED;
+      ctx.fillText(S.sub, W / 2, H / 2 + 60);
+    }
+  }
+
+  let last = 0, acc = 0;
+  function loop(t) {
+    if (!last) last = t;
+    acc += Math.min(100, t - last); last = t;
+    while (acc >= 1000 / 60) { step(); acc -= 1000 / 60; }   // same speed on any screen
+    draw(); requestAnimationFrame(loop);
+  }
+
+  // controls
+  const toY = e => { const r = cv.getBoundingClientRect(); return (e.clientY - r.top) / r.height * H; };
+  cv.addEventListener("pointermove", e => { S.py = toY(e); });
+  cv.addEventListener("pointerdown", e => { S.py = toY(e); if (!S.live) serve(S.next || 1); });
+  addEventListener("keydown", e => {
+    const kk = e.key.toLowerCase();
+    if (kk === "w" || kk === "arrowup") { S.keys.up = true; e.preventDefault(); }
+    if (kk === "s" || kk === "arrowdown") { S.keys.down = true; e.preventDefault(); }
+    if ((kk === " " || kk === "enter") && !S.live) { serve(S.next || 1); e.preventDefault(); }
+  });
+  addEventListener("keyup", e => {
+    const kk = e.key.toLowerCase();
+    if (kk === "w" || kk === "arrowup") S.keys.up = false;
+    if (kk === "s" || kk === "arrowdown") S.keys.down = false;
+  });
+  // pause when the tab is hidden so the computer doesn't rack up points
+  document.addEventListener("visibilitychange", () => { if (document.hidden && S.live) { S.live = false; S.msg = "PAUSED"; S.sub = "CLICK OR TAP TO SERVE"; S.next = S.vx > 0 ? 1 : -1; } });
+
+  document.fonts && document.fonts.ready.then(draw);
+  requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
