@@ -26,12 +26,17 @@ p{color:var(--muted);margin:0 auto;max-width:520px}
 p+p{margin-top:14px}
 .rule{width:64px;height:2px;margin:0 auto 22px;background:linear-gradient(90deg,transparent,var(--green),transparent)}
 
-/* pong */
-.pong{margin:30px auto 0;position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:rgba(10,10,15,.85);
+/* arcade */
+.tabs{display:flex;justify-content:center;gap:8px;margin:28px 0 12px;flex-wrap:wrap}
+.tabs button{font:20px/1 var(--display);letter-spacing:.06em;color:var(--muted);background:transparent;border:1px solid var(--line);
+border-radius:4px;padding:9px 16px 7px;cursor:pointer;transition:color .15s,border-color .15s,box-shadow .15s}
+.tabs button:hover{color:var(--text);border-color:rgba(0,255,136,.35)}
+.tabs button[aria-selected="true"]{color:#04130b;background:var(--green);border-color:var(--green);box-shadow:0 0 18px rgba(0,255,136,.3)}
+.screen{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:rgba(10,10,15,.85);
 box-shadow:0 0 0 1px rgba(0,255,136,.06),0 0 40px rgba(0,255,136,.06)}
-.pong::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);z-index:1}
-canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none}
-.hint{margin-top:10px;font-size:12px;color:var(--muted);opacity:.8}
+.screen::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);z-index:1}
+canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-select:none;-webkit-user-select:none}
+.hint{margin-top:10px;font-size:12px;color:var(--muted);opacity:.8;min-height:1.6em}
 </style>
 </head>
 <body>
@@ -39,30 +44,23 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none}
 <h1>GTAL<span>Hub</span></h1>
 <div class="rule"></div>
 <p>Congratulations, you found the home page. There's nothing on it. If someone sent you one of our tools, the full link they gave you works way better than deleting half of it.</p>
-<p>Since you came all this way, here's Pong. It's the only thing on this page that does anything, so try not to lose to it.</p>
-<div class="pong"><canvas id="pong" width="640" height="360" aria-label="Pong game: you are the left paddle"></canvas></div>
-<div class="hint">Mouse, finger, or W/S and arrow keys move your paddle. Click or tap to serve.</div>
+<p>Since you came all this way, here are some games. They're the only things on this page that do anything, so try not to lose to them.</p>
+<div class="tabs" role="tablist" aria-label="Games">
+<button role="tab" data-game="paddle" aria-selected="true">Paddle Battle</button>
+<button role="tab" data-game="hop" aria-selected="false">Bit Hop</button>
+<button role="tab" data-game="bug" aria-selected="false">Bug Zapper</button>
+</div>
+<div class="screen"><canvas id="game" width="640" height="360" aria-label="Game screen"></canvas></div>
+<div class="hint" id="hint"></div>
 </main>
 
 <script>
 (() => {
-  const cv = document.getElementById("pong"), ctx = cv.getContext("2d");
-  const W = 640, H = 360, PW = 10, PH = 64, R = 6, GREEN = "#00ff88", TEXT = "#f5f5f5", MUTED = "#8888aa";
-  const S = { you: 0, cpu: 0, py: H / 2, cy: H / 2, bx: W / 2, by: H / 2, vx: 0, vy: 0, live: false, msg: "READY WHEN YOU ARE", sub: "CLICK OR TAP TO SERVE", keys: {} };
+  const cv = document.getElementById("game"), ctx = cv.getContext("2d");
+  const W = 640, H = 360, GREEN = "#00ff88", TEXT = "#f5f5f5", MUTED = "#8888aa", RED = "#ff5c7a", YELLOW = "#ffcc00", CYAN = "#00ccff";
+  const DISPLAY = "'Bebas Neue', sans-serif", MONO = "'Roboto Mono', monospace";
 
-  // the computer: tracks the ball, but not perfectly, so it can be beaten
-  const CPU_SPEED = 4.2;
-
-  function serve(dir) {
-    S.bx = W / 2; S.by = H / 2;
-    const a = (Math.random() * 0.8 - 0.4);
-    const sp = 5;
-    S.vx = Math.cos(a) * sp * dir; S.vy = Math.sin(a) * sp;
-    S.live = true; S.msg = ""; S.sub = "";
-  }
-  // what the computer says after each point. Each list is shuffled and played through in full before any line repeats.
-  const taunts = ["THE COMPUTER SAYS HI", "THAT WAS A WARM-UP, RIGHT?", "IT'S ONE PADDLE. ONE.", "THE BALL WAS RIGHT THERE", "BOLD STRATEGY", "YOU MISSED. LOUDLY.", "THE CPU IS NOT EVEN TRYING", "DID YOU BLINK?", "SKILL ISSUE", "THAT ONE'S GOING ON THE FRIDGE", "PADDLE WORKS BETTER IN FRONT OF IT", "GRAVITY ISN'T EVEN ON", "THE BALL SAYS YOU'RE WELCOME", "WAS THAT ON PURPOSE?", "CLOSE. NOT REALLY.", "CPU: 1. DIGNITY: 0.", "YOU HAD ONE JOB", "THE BALL WENT THAT WAY", "NEW STRAT: MOVE THE PADDLE", "EVEN THE NET FELT THAT", "I'LL WAIT", "INTERESTING TECHNIQUE", "YOUR PADDLE CALLED IN SICK", "RESPECTFULLY, NO", "THAT'S A BOLD WAY TO LOSE", "THE BALL IS ROUND. KEEP UP.", "ARE YOU USING YOUR ELBOWS?", "NOT EVEN CLOSE, BUDDY", "YOU MISSED THE WHOLE BALL", "SCREENSHOT THAT FOR LATER", "HAVE YOU TRIED NOT MISSING?", "TOUGH LOOK", "THE COMPUTER IS SMIRKING", "HUMANITY IS COUNTING ON YOU", "ALL THAT AND NOTHING", "TRY THE OTHER END OF THE PADDLE", "CPU DIDN'T EVEN LOOK", "WOW. JUST WOW.", "YOU AND THE BALL: NOT FRIENDS", "ANOTHER ONE FOR THE ROBOTS", "THAT WAS NOT THE PLAN", "YOUR PADDLE WAS ON VACATION", "SPEEDRUNNING A LOSS", "THE BALL GHOSTED YOU", "MAYBE TRY THE ARROW KEYS", "NO ONE SAW THAT. EXCEPT ME.", "CPU WINS AGAIN. SHOCKING.", "YOU'RE MAKING THIS EASY", "LET'S CALL THAT PRACTICE", "PROBABLY LAG. SURE.", "THE MOUSE MUST BE BROKEN", "POINT FOR THE MACHINES", "YOU REALLY WANTED THAT ONE", "ANYWAY.", "I'M NOT MAD, JUST DISAPPOINTED", "THE BALL WAS NOT INVISIBLE", "DEEP BREATHS", "THAT'S GOING IN THE HIGHLIGHTS", "YOU SURE YOU'RE NOT A BOT?", "THE CPU WOULD LIKE A CHALLENGE", "OOF", "YIKES", "HAVE YOU PLAYED PONG BEFORE?", "THE BALL SENDS ITS REGARDS", "MOVE FASTER. OR AT ALL.", "THAT'S ONE WAY TO DO IT", "HEY, AT LEAST YOU'RE CONSISTENT", "THE CPU IS GETTING BORED", "RIGHT PLACE, WRONG TIME", "WRONG PLACE, WRONG TIME", "CPU IS THINKING ABOUT LUNCH", "THE SCOREBOARD REMEMBERS", "YOU WAVED AT IT. NICE.", "SO CLOSE. WAIT, NO.", "THAT WAS PAINFUL TO WATCH", "KEEP YOUR EYE ON THE BALL", "THE BALL HAS LEFT THE BUILDING", "CPU WOULD LIKE TO THANK ITS FANS", "PRACTICE MAKES SLIGHTLY BETTER", "TELL NO ONE ABOUT THIS", "THE BALL FILED A RESTRAINING ORDER", "YOU AND THE PADDLE NEED COUNSELING", "THE CPU ISN'T EVEN PLUGGED IN", "THAT'S NOT HOW PHYSICS WORKS", "HAVE YOU CONSIDERED CHECKERS?", "CPU IS ON A COFFEE BREAK. STILL WON.", "MAYBE PLAY WITH YOUR EYES OPEN", "THE BALL DOESN'T BITE", "INCREDIBLE. INCREDIBLY BAD.", "THE PADDLE IS NOT DECORATIVE", "YOU'RE DOING GREAT. JK.", "YOU MISSED IT IN 4K", "THE CPU ALMOST FELT BAD", "THAT WAS A CRY FOR HELP", "THE REPLAY IS EVEN WORSE", "PONG: STILL UNDEFEATED", "DID YOUR CAT DO THAT?", "THE CPU ACCEPTS YOUR SURRENDER", "REMEMBER WHEN YOU HAD HOPE?", "THAT WAS VERY BRAVE OF YOU", "THE BALL ISN'T SHY. YOU ARE.", "WHO TAUGHT YOU TO PLAY PONG?", "YOUR PADDLE MISSED THE MEETING", "PLEASE HOLD. YOUR POINT IS LOST.", "ZERO STARS. WOULD NOT RECOMMEND.", "YOU GOT OUTPLAYED BY A RECTANGLE", "THE CPU IS A WHITE BAR. AND WINNING.", "CPU WOULD LIKE A HARDER OPPONENT", "THE BALL JUST WALKED PAST YOU", "MAYBE IT'S YOUR MONITOR", "CPU UPDATED ITS STATUS: WINNING", "NOTHING BUT AIR", "NOT YOUR FINEST MOMENT", "THAT'S A NO FROM ME, DAWG", "EVEN YOUR SHADOW MISSED IT", "THE BALL IS LAUGHING AT YOU", "DOES THE PADDLE MOVE? JUST CHECKING.", "TRY AGAIN. OR DON'T.", "THE CPU HAS NO NOTES", "SO MUCH EFFORT. SO LITTLE RESULT.", "AND THE CROWD GOES MILD", "YOU'RE THE CPU'S FAVORITE OPPONENT", "THE MACHINES THANK YOU", "CPU IS WRITING A BOOK ON YOU", "THAT ONE WAS FREE. SAD.", "YOU FLINCHED. ADMIT IT.", "WAS THE BALL TOO GREEN?", "THIS IS WHY WE CAN'T HAVE NICE THINGS", "THE CPU IS GETTING COMFORTABLE", "ARE YOU PLAYING OR WATCHING?", "THE PADDLE CAN'T DO IT ALONE", "YOU'RE MAKING THE CPU LOOK GOOD", "THE BALL WANTED TO BE CAUGHT", "EMBARRASSING, BUT IN A FUN WAY", "STATISTICALLY, THAT WAS BAD", "CPU HASN'T BROKEN A SWEAT", "ONE DAY YOU'LL HIT IT. NOT TODAY.", "THE BALL HAD SOMEWHERE TO BE", "YOUR PADDLE IS JUST A SUGGESTION", "WE'LL ADD THIS TO YOUR FILE", "CPU REMAINS UNBOTHERED", "A MASTERCLASS IN MISSING", "THE BALL SAID BYE", "THAT WAS PERSONAL", "THE PIXELS ARE DISAPPOINTED", "CPU WOULD LIKE TO SPEAK TO A HUMAN", "GOOD NEWS: IT'S ONLY PONG", "YOU MISSED WITH CONFIDENCE", "SOMEWHERE A PADDLE IS CRYING", "THE CPU DIDN'T EVEN DRAW A BREATH", "THAT'S ONE FOR THE BLOOPER REEL", "SPECTACULAR. IN THE WRONG WAY.", "YOU WERE SO SURE, TOO", "THE BALL WAS FAST. YOU WERE NOT.", "KEEP THAT AWAY FROM YOUR RESUME", "PLEASE TELL ME THAT WAS A TEST", "THE CPU EXPECTED MORE. NOT MUCH.", "GG. JUST KIDDING. KEEP LOSING.", "YOU'RE PROOF THE CPU WORKS", "THE BALL IS STILL WAITING FOR YOU"];
-  const cheers = ["NICE.", "LUCKY.", "OK, SHOWOFF.", "DON'T GET COCKY.", "FINE. THAT ONE COUNTS.", "THE CPU WANTS A REMATCH", "WAS THAT SKILL OR AN ACCIDENT?", "BEGINNER'S LUCK", "EVEN A BROKEN CLOCK...", "THE CPU WASN'T READY", "WRITE THAT DOWN", "DON'T LET IT GO TO YOUR HEAD", "FLUKE", "THE CPU BLINKED", "ALRIGHT, ALRIGHT", "SOMEONE'S WARMED UP", "THE MACHINES TOOK NOTE", "LOOK AT YOU GO", "HUMANITY SCORES ONE", "CPU IS FILING A COMPLAINT", "SURE, TAKE THE POINT", "THAT WAS ALMOST IMPRESSIVE", "OKAY, THAT WAS CLEAN", "CPU DEMANDS A REVIEW", "ENJOY IT WHILE IT LASTS", "THE CPU IS RECALCULATING", "ONE POINT DOESN'T MAKE A STREAK", "DO IT AGAIN. I DARE YOU.", "WE'LL CALL THAT A FLUKE", "WHO TAUGHT YOU THAT?", "THE BALL FELT SORRY FOR YOU", "CPU IS PRETENDING IT LET YOU", "NOT BAD FOR A HUMAN", "EVERY DOG HAS ITS DAY", "THE CPU IS SULKING NOW", "HAPPY? YOU GOT ONE.", "CALM DOWN, CHAMP", "SAVE SOME POINTS FOR LATER", "THE CPU IS UNIMPRESSED", "GREAT. NOW IT'S PERSONAL.", "THE CPU SAW NOTHING", "WHATEVER. LUCKY ANGLE.", "THAT'S ONE. CONGRATS, I GUESS.", "OK, YOU CAN PLAY A LITTLE", "THE MACHINES ARE NERVOUS", "CPU NEEDS A MINUTE", "A RARE HUMAN VICTORY", "DON'T GET USED TO IT", "THAT WAS RUDE. NICE THOUGH.", "THE CPU WILL REMEMBER THAT", "THE CPU LET YOU HAVE THAT ONE", "NOW YOU'RE JUST SHOWING OFF", "THE BALL PICKED A SIDE", "CPU IS RETHINKING ITS LIFE", "SOMEBODY CALL THE PRESS", "CHECK YOU OUT", "POINT TAKEN. LITERALLY.", "FINE. YOU WIN THIS ROUND.", "CPU WAS DISTRACTED. OBVIOUSLY.", "SMOOTH", "THE HUMAN STRIKES BACK", "CPU WOULD LIKE TO SEE THE TAPE", "THAT WAS AN ACCIDENT, ADMIT IT", "TELL YOUR FRIENDS. THEY WON'T CARE.", "THE CPU IS TAKING NOTES", "YOU'VE ANGERED IT NOW", "DID THAT FEEL GOOD? IT SHOULDN'T.", "TOO EASY? CPU SAYS NO.", "HOLD THE APPLAUSE", "YOU CAN STOP SMILING NOW", "THE CPU IS PRETENDING TO BE FINE", "WAIT, YOU CAN DO THAT?", "FINE, I'LL ADD IT TO THE BOARD", "THE CPU NEEDS A HUG", "THAT WAS DISRESPECTFUL. GOOD.", "SUDDENLY YOU'RE A PRO?", "RELAX, IT'S ONE POINT", "IS THIS YOUR FIRST POINT EVER?", "CPU HAS ENTERED DENIAL", "THE BALL FINALLY LIKES YOU", "WELL, WELL, WELL", "NOW DO IT TWICE", "THE CPU IS QUESTIONING EVERYTHING", "YOU MUST BE SO PROUD", "SOMEONE'S BEEN PRACTICING", "THE CPU IS GOING TO NEED A MINUTE", "ALL GAS, SOME BRAKES. NICE.", "EVEN THE CPU CLAPPED. QUIETLY.", "CPU THINKS YOU CHEATED", "TAKE A PICTURE. IT'LL BE RARE.", "THE MACHINES ARE TAKING THIS HARD", "OKAY, HOTSHOT", "THAT'S GOING IN THE TRAILER", "THE CPU WOULD LIKE TO UNSEE THAT", "YOU HIT IT! ON PURPOSE?", "A WILD POINT APPEARS", "THE CPU IS REBOOTING ITS PRIDE", "CONGRATS. NOW DON'T BLOW IT.", "THAT WAS SUSPICIOUSLY GOOD", "THE CPU IS CHECKING FOR HACKS", "THE HUMANS ARE RESTLESS", "GOOD HUSTLE, I GUESS", "YOU'RE ALLOWED ONE OF THOSE", "MAYBE YOU'RE NOT TERRIBLE", "THE CPU FORGOT TO MOVE. SAD.", "SUCH TALENT. SUCH MODESTY. NOT.", "CPU WILL BE TALKING TO ITS CODER", "THE BALL CHOSE VIOLENCE", "DON'T BRAG. YOU'RE GOING TO BRAG.", "OH, YOU THINK YOU'RE COOL NOW", "THAT ONE STUNG A LITTLE", "THE CPU FELT THAT IN ITS RAM", "CPU WILL ALLOW IT. THIS TIME.", "THE CPU NEEDS NEW GLASSES", "HOW DARE YOU", "THE SCOREBOARD IS SHOCKED TOO", "SAVE THAT REPLAY", "PURE LUCK. PROBABLY.", "THE CPU IS BLAMING THE BALL", "CPU REQUESTS A TIMEOUT", "UNREAL. TRULY UNREAL.", "THE CPU IS DRAFTING A RESPONSE", "KEEP THAT ENERGY. YOU'LL NEED IT.", "THE ROBOTS WILL HEAR OF THIS", "NOT BAD. NOT GREAT. BUT NOT BAD.", "THE BALL BETRAYED THE CPU", "ONE SMALL STEP FOR HUMANKIND", "THE CPU IS NOT CRYING", "YOU WANTED THAT ONE BADLY, HUH", "THAT'S GOING STRAIGHT TO YOUR HEAD", "THE CPU WOULD LIKE THAT BACK", "FINE. A POINT. HAPPY NOW?", "CPU IS UPDATING ITS DRIVERS", "WATCH OUT, WE GOT A PLAYER", "THE CPU IS SPEECHLESS. ALMOST.", "ACCEPTABLE", "THE PADDLE FINALLY SHOWED UP", "CPU DIDN'T WANT IT ANYWAY", "THE HUMAN HAS LEARNED", "THAT WAS ACTUALLY KIND OF COOL"];
+  // Each list is shuffled and played through in full before any line repeats.
   const bags = new Map();
   function pick(list) {
     let bag = bags.get(list);
@@ -70,99 +68,419 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none}
       const prev = bag && bag.last;
       bag = list.slice();
       for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
-      if (bag[bag.length - 1] === prev) bag.unshift(bag.pop());   // no back-to-back repeat across reshuffles
+      if (bag[bag.length - 1] === prev) bag.unshift(bag.pop());
       bags.set(list, bag);
     }
     const line = bag.pop(); bag.last = line; return line;
   }
-  function point(youScored) {
-    if (youScored) S.you++; else S.cpu++;
-    S.live = false;
-    const list = youScored ? cheers : taunts;
-    S.msg = pick(list); S.sub = "CLICK OR TAP TO SERVE";
-    S.next = youScored ? -1 : 1;
+  const best = {
+    get(k) { try { return +localStorage.getItem("gtal-best-" + k) || 0; } catch (e) { return 0; } },
+    set(k, v) { try { localStorage.setItem("gtal-best-" + k, v); } catch (e) {} }
+  };
+  function banner(msg, sub, y = H / 2 + 30) {
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "30px " + DISPLAY; ctx.fillStyle = TEXT; ctx.fillText(msg, W / 2, y);
+    if (sub) { ctx.font = "12px " + MONO; ctx.fillStyle = MUTED; ctx.fillText(sub, W / 2, y + 30); }
   }
+  const keys = {};
+  const toXY = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
 
-  function step() {
-    // your paddle from keys
-    const k = S.keys;
-    if (k.up) S.py -= 7; if (k.down) S.py += 7;
-    S.py = Math.max(PH / 2, Math.min(H - PH / 2, S.py));
-    // computer paddle
-    const target = S.live && S.vx > 0 ? S.by : H / 2;
-    const d = target - S.cy;
-    S.cy += Math.max(-CPU_SPEED, Math.min(CPU_SPEED, d * 0.12));
-    S.cy = Math.max(PH / 2, Math.min(H - PH / 2, S.cy));
-    if (!S.live) return;
-    S.bx += S.vx; S.by += S.vy;
-    if (S.by < R) { S.by = R; S.vy = -S.vy; }
-    if (S.by > H - R) { S.by = H - R; S.vy = -S.vy; }
-    // paddles
-    const hit = (px, py) => Math.abs(S.bx - px) < PW / 2 + R && Math.abs(S.by - py) < PH / 2 + R;
-    if (S.vx < 0 && hit(20, S.py)) bounce(S.py, 1, 20 + PW / 2 + R);
-    if (S.vx > 0 && hit(W - 20, S.cy)) bounce(S.cy, -1, W - 20 - PW / 2 - R);
-    if (S.bx < -R) point(false);
-    if (S.bx > W + R) point(true);
-  }
-  function bounce(py, dir, x) {
-    const off = (S.by - py) / (PH / 2);              // -1 … 1, where on the paddle it hit
-    const sp = Math.min(12, Math.hypot(S.vx, S.vy) * 1.05);
-    const a = off * 0.9;
-    S.vx = Math.cos(a) * sp * dir; S.vy = Math.sin(a) * sp; S.bx = x;
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    // center line
-    ctx.fillStyle = "rgba(136,136,170,.25)";
-    for (let y = 8; y < H; y += 22) ctx.fillRect(W / 2 - 1, y, 2, 12);
-    // score
-    ctx.font = "48px 'Bebas Neue', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
-    ctx.fillStyle = GREEN; ctx.fillText(S.you, W / 2 - 60, 14);
-    ctx.fillStyle = TEXT; ctx.fillText(S.cpu, W / 2 + 60, 14);
-    ctx.font = "12px 'Roboto Mono', monospace"; ctx.fillStyle = MUTED;
-    ctx.fillText("YOU", W / 2 - 60, 62); ctx.fillText("CPU", W / 2 + 60, 62);
-    // paddles + ball, with glow
-    ctx.shadowColor = GREEN; ctx.shadowBlur = 14; ctx.fillStyle = GREEN;
-    ctx.fillRect(20 - PW / 2, S.py - PH / 2, PW, PH);
-    ctx.shadowBlur = 0; ctx.fillStyle = TEXT;
-    ctx.fillRect(W - 20 - PW / 2, S.cy - PH / 2, PW, PH);
-    if (S.live) { ctx.shadowBlur = 16; ctx.fillStyle = GREEN; ctx.beginPath(); ctx.arc(S.bx, S.by, R, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
-    if (S.msg) {
-      ctx.font = "30px 'Bebas Neue', sans-serif"; ctx.textBaseline = "middle"; ctx.fillStyle = TEXT;
-      ctx.fillText(S.msg, W / 2, H / 2 + 30);
-      ctx.font = "12px 'Roboto Mono', monospace"; ctx.fillStyle = MUTED;
-      ctx.fillText(S.sub, W / 2, H / 2 + 60);
+  /* ================= PADDLE BATTLE ================= */
+  const paddle = (() => {
+    const PW = 10, PH = 64, R = 6, CPU_SPEED = 4.2;
+    const taunts = ["THE COMPUTER SAYS HI", "THAT WAS A WARM-UP, RIGHT?", "IT'S ONE PADDLE. ONE.", "THE BALL WAS RIGHT THERE", "BOLD STRATEGY", "YOU MISSED. LOUDLY.", "THE CPU IS NOT EVEN TRYING", "DID YOU BLINK?", "SKILL ISSUE", "THAT ONE'S GOING ON THE FRIDGE", "PADDLE WORKS BETTER IN FRONT OF IT", "GRAVITY ISN'T EVEN ON", "THE BALL SAYS YOU'RE WELCOME", "WAS THAT ON PURPOSE?", "CLOSE. NOT REALLY.", "CPU: 1. DIGNITY: 0.", "YOU HAD ONE JOB", "THE BALL WENT THAT WAY", "NEW STRAT: MOVE THE PADDLE", "EVEN THE NET FELT THAT", "I'LL WAIT", "INTERESTING TECHNIQUE", "YOUR PADDLE CALLED IN SICK", "RESPECTFULLY, NO", "THAT'S A BOLD WAY TO LOSE", "THE BALL IS ROUND. KEEP UP.", "ARE YOU USING YOUR ELBOWS?", "NOT EVEN CLOSE, BUDDY", "YOU MISSED THE WHOLE BALL", "SCREENSHOT THAT FOR LATER", "HAVE YOU TRIED NOT MISSING?", "TOUGH LOOK", "THE COMPUTER IS SMIRKING", "HUMANITY IS COUNTING ON YOU", "ALL THAT AND NOTHING", "TRY THE OTHER END OF THE PADDLE", "CPU DIDN'T EVEN LOOK", "WOW. JUST WOW.", "YOU AND THE BALL: NOT FRIENDS", "ANOTHER ONE FOR THE ROBOTS", "THAT WAS NOT THE PLAN", "YOUR PADDLE WAS ON VACATION", "SPEEDRUNNING A LOSS", "THE BALL GHOSTED YOU", "MAYBE TRY THE ARROW KEYS", "NO ONE SAW THAT. EXCEPT ME.", "CPU WINS AGAIN. SHOCKING.", "YOU'RE MAKING THIS EASY", "LET'S CALL THAT PRACTICE", "PROBABLY LAG. SURE.", "THE MOUSE MUST BE BROKEN", "POINT FOR THE MACHINES", "YOU REALLY WANTED THAT ONE", "ANYWAY.", "I'M NOT MAD, JUST DISAPPOINTED", "THE BALL WAS NOT INVISIBLE", "DEEP BREATHS", "THAT'S GOING IN THE HIGHLIGHTS", "YOU SURE YOU'RE NOT A BOT?", "THE CPU WOULD LIKE A CHALLENGE", "OOF", "YIKES", "HAVE YOU PLAYED PONG BEFORE?", "THE BALL SENDS ITS REGARDS", "MOVE FASTER. OR AT ALL.", "THAT'S ONE WAY TO DO IT", "HEY, AT LEAST YOU'RE CONSISTENT", "THE CPU IS GETTING BORED", "RIGHT PLACE, WRONG TIME", "WRONG PLACE, WRONG TIME", "CPU IS THINKING ABOUT LUNCH", "THE SCOREBOARD REMEMBERS", "YOU WAVED AT IT. NICE.", "SO CLOSE. WAIT, NO.", "THAT WAS PAINFUL TO WATCH", "KEEP YOUR EYE ON THE BALL", "THE BALL HAS LEFT THE BUILDING", "CPU WOULD LIKE TO THANK ITS FANS", "PRACTICE MAKES SLIGHTLY BETTER", "TELL NO ONE ABOUT THIS", "THE BALL FILED A RESTRAINING ORDER", "YOU AND THE PADDLE NEED COUNSELING", "THE CPU ISN'T EVEN PLUGGED IN", "THAT'S NOT HOW PHYSICS WORKS", "HAVE YOU CONSIDERED CHECKERS?", "CPU IS ON A COFFEE BREAK. STILL WON.", "MAYBE PLAY WITH YOUR EYES OPEN", "THE BALL DOESN'T BITE", "INCREDIBLE. INCREDIBLY BAD.", "THE PADDLE IS NOT DECORATIVE", "YOU'RE DOING GREAT. JK.", "YOU MISSED IT IN 4K", "THE CPU ALMOST FELT BAD", "THAT WAS A CRY FOR HELP", "THE REPLAY IS EVEN WORSE", "PONG: STILL UNDEFEATED", "DID YOUR CAT DO THAT?", "THE CPU ACCEPTS YOUR SURRENDER", "REMEMBER WHEN YOU HAD HOPE?", "THAT WAS VERY BRAVE OF YOU", "THE BALL ISN'T SHY. YOU ARE.", "WHO TAUGHT YOU TO PLAY PONG?", "YOUR PADDLE MISSED THE MEETING", "PLEASE HOLD. YOUR POINT IS LOST.", "ZERO STARS. WOULD NOT RECOMMEND.", "YOU GOT OUTPLAYED BY A RECTANGLE", "THE CPU IS A WHITE BAR. AND WINNING.", "CPU WOULD LIKE A HARDER OPPONENT", "THE BALL JUST WALKED PAST YOU", "MAYBE IT'S YOUR MONITOR", "CPU UPDATED ITS STATUS: WINNING", "NOTHING BUT AIR", "NOT YOUR FINEST MOMENT", "THAT'S A NO FROM ME, DAWG", "EVEN YOUR SHADOW MISSED IT", "THE BALL IS LAUGHING AT YOU", "DOES THE PADDLE MOVE? JUST CHECKING.", "TRY AGAIN. OR DON'T.", "THE CPU HAS NO NOTES", "SO MUCH EFFORT. SO LITTLE RESULT.", "AND THE CROWD GOES MILD", "YOU'RE THE CPU'S FAVORITE OPPONENT", "THE MACHINES THANK YOU", "CPU IS WRITING A BOOK ON YOU", "THAT ONE WAS FREE. SAD.", "YOU FLINCHED. ADMIT IT.", "WAS THE BALL TOO GREEN?", "THIS IS WHY WE CAN'T HAVE NICE THINGS", "THE CPU IS GETTING COMFORTABLE", "ARE YOU PLAYING OR WATCHING?", "THE PADDLE CAN'T DO IT ALONE", "YOU'RE MAKING THE CPU LOOK GOOD", "THE BALL WANTED TO BE CAUGHT", "EMBARRASSING, BUT IN A FUN WAY", "STATISTICALLY, THAT WAS BAD", "CPU HASN'T BROKEN A SWEAT", "ONE DAY YOU'LL HIT IT. NOT TODAY.", "THE BALL HAD SOMEWHERE TO BE", "YOUR PADDLE IS JUST A SUGGESTION", "WE'LL ADD THIS TO YOUR FILE", "CPU REMAINS UNBOTHERED", "A MASTERCLASS IN MISSING", "THE BALL SAID BYE", "THAT WAS PERSONAL", "THE PIXELS ARE DISAPPOINTED", "CPU WOULD LIKE TO SPEAK TO A HUMAN", "GOOD NEWS: IT'S ONLY PONG", "YOU MISSED WITH CONFIDENCE", "SOMEWHERE A PADDLE IS CRYING", "THE CPU DIDN'T EVEN DRAW A BREATH", "THAT'S ONE FOR THE BLOOPER REEL", "SPECTACULAR. IN THE WRONG WAY.", "YOU WERE SO SURE, TOO", "THE BALL WAS FAST. YOU WERE NOT.", "KEEP THAT AWAY FROM YOUR RESUME", "PLEASE TELL ME THAT WAS A TEST", "THE CPU EXPECTED MORE. NOT MUCH.", "GG. JUST KIDDING. KEEP LOSING.", "YOU'RE PROOF THE CPU WORKS", "THE BALL IS STILL WAITING FOR YOU"];
+    const cheers = ["NICE.", "LUCKY.", "OK, SHOWOFF.", "DON'T GET COCKY.", "FINE. THAT ONE COUNTS.", "THE CPU WANTS A REMATCH", "WAS THAT SKILL OR AN ACCIDENT?", "BEGINNER'S LUCK", "EVEN A BROKEN CLOCK...", "THE CPU WASN'T READY", "WRITE THAT DOWN", "DON'T LET IT GO TO YOUR HEAD", "FLUKE", "THE CPU BLINKED", "ALRIGHT, ALRIGHT", "SOMEONE'S WARMED UP", "THE MACHINES TOOK NOTE", "LOOK AT YOU GO", "HUMANITY SCORES ONE", "CPU IS FILING A COMPLAINT", "SURE, TAKE THE POINT", "THAT WAS ALMOST IMPRESSIVE", "OKAY, THAT WAS CLEAN", "CPU DEMANDS A REVIEW", "ENJOY IT WHILE IT LASTS", "THE CPU IS RECALCULATING", "ONE POINT DOESN'T MAKE A STREAK", "DO IT AGAIN. I DARE YOU.", "WE'LL CALL THAT A FLUKE", "WHO TAUGHT YOU THAT?", "THE BALL FELT SORRY FOR YOU", "CPU IS PRETENDING IT LET YOU", "NOT BAD FOR A HUMAN", "EVERY DOG HAS ITS DAY", "THE CPU IS SULKING NOW", "HAPPY? YOU GOT ONE.", "CALM DOWN, CHAMP", "SAVE SOME POINTS FOR LATER", "THE CPU IS UNIMPRESSED", "GREAT. NOW IT'S PERSONAL.", "THE CPU SAW NOTHING", "WHATEVER. LUCKY ANGLE.", "THAT'S ONE. CONGRATS, I GUESS.", "OK, YOU CAN PLAY A LITTLE", "THE MACHINES ARE NERVOUS", "CPU NEEDS A MINUTE", "A RARE HUMAN VICTORY", "DON'T GET USED TO IT", "THAT WAS RUDE. NICE THOUGH.", "THE CPU WILL REMEMBER THAT", "THE CPU LET YOU HAVE THAT ONE", "NOW YOU'RE JUST SHOWING OFF", "THE BALL PICKED A SIDE", "CPU IS RETHINKING ITS LIFE", "SOMEBODY CALL THE PRESS", "CHECK YOU OUT", "POINT TAKEN. LITERALLY.", "FINE. YOU WIN THIS ROUND.", "CPU WAS DISTRACTED. OBVIOUSLY.", "SMOOTH", "THE HUMAN STRIKES BACK", "CPU WOULD LIKE TO SEE THE TAPE", "THAT WAS AN ACCIDENT, ADMIT IT", "TELL YOUR FRIENDS. THEY WON'T CARE.", "THE CPU IS TAKING NOTES", "YOU'VE ANGERED IT NOW", "DID THAT FEEL GOOD? IT SHOULDN'T.", "TOO EASY? CPU SAYS NO.", "HOLD THE APPLAUSE", "YOU CAN STOP SMILING NOW", "THE CPU IS PRETENDING TO BE FINE", "WAIT, YOU CAN DO THAT?", "FINE, I'LL ADD IT TO THE BOARD", "THE CPU NEEDS A HUG", "THAT WAS DISRESPECTFUL. GOOD.", "SUDDENLY YOU'RE A PRO?", "RELAX, IT'S ONE POINT", "IS THIS YOUR FIRST POINT EVER?", "CPU HAS ENTERED DENIAL", "THE BALL FINALLY LIKES YOU", "WELL, WELL, WELL", "NOW DO IT TWICE", "THE CPU IS QUESTIONING EVERYTHING", "YOU MUST BE SO PROUD", "SOMEONE'S BEEN PRACTICING", "THE CPU IS GOING TO NEED A MINUTE", "ALL GAS, SOME BRAKES. NICE.", "EVEN THE CPU CLAPPED. QUIETLY.", "CPU THINKS YOU CHEATED", "TAKE A PICTURE. IT'LL BE RARE.", "THE MACHINES ARE TAKING THIS HARD", "OKAY, HOTSHOT", "THAT'S GOING IN THE TRAILER", "THE CPU WOULD LIKE TO UNSEE THAT", "YOU HIT IT! ON PURPOSE?", "A WILD POINT APPEARS", "THE CPU IS REBOOTING ITS PRIDE", "CONGRATS. NOW DON'T BLOW IT.", "THAT WAS SUSPICIOUSLY GOOD", "THE CPU IS CHECKING FOR HACKS", "THE HUMANS ARE RESTLESS", "GOOD HUSTLE, I GUESS", "YOU'RE ALLOWED ONE OF THOSE", "MAYBE YOU'RE NOT TERRIBLE", "THE CPU FORGOT TO MOVE. SAD.", "SUCH TALENT. SUCH MODESTY. NOT.", "CPU WILL BE TALKING TO ITS CODER", "THE BALL CHOSE VIOLENCE", "DON'T BRAG. YOU'RE GOING TO BRAG.", "OH, YOU THINK YOU'RE COOL NOW", "THAT ONE STUNG A LITTLE", "THE CPU FELT THAT IN ITS RAM", "CPU WILL ALLOW IT. THIS TIME.", "THE CPU NEEDS NEW GLASSES", "HOW DARE YOU", "THE SCOREBOARD IS SHOCKED TOO", "SAVE THAT REPLAY", "PURE LUCK. PROBABLY.", "THE CPU IS BLAMING THE BALL", "CPU REQUESTS A TIMEOUT", "UNREAL. TRULY UNREAL.", "THE CPU IS DRAFTING A RESPONSE", "KEEP THAT ENERGY. YOU'LL NEED IT.", "THE ROBOTS WILL HEAR OF THIS", "NOT BAD. NOT GREAT. BUT NOT BAD.", "THE BALL BETRAYED THE CPU", "ONE SMALL STEP FOR HUMANKIND", "THE CPU IS NOT CRYING", "YOU WANTED THAT ONE BADLY, HUH", "THAT'S GOING STRAIGHT TO YOUR HEAD", "THE CPU WOULD LIKE THAT BACK", "FINE. A POINT. HAPPY NOW?", "CPU IS UPDATING ITS DRIVERS", "WATCH OUT, WE GOT A PLAYER", "THE CPU IS SPEECHLESS. ALMOST.", "ACCEPTABLE", "THE PADDLE FINALLY SHOWED UP", "CPU DIDN'T WANT IT ANYWAY", "THE HUMAN HAS LEARNED", "THAT WAS ACTUALLY KIND OF COOL"];
+    let S;
+    const reset = () => { S = { you: 0, cpu: 0, py: H / 2, cy: H / 2, bx: W / 2, by: H / 2, vx: 0, vy: 0, live: false, msg: "READY WHEN YOU ARE", sub: "CLICK OR TAP TO SERVE", next: 1 }; };
+    function serve() {
+      S.bx = W / 2; S.by = H / 2;
+      const a = Math.random() * 0.8 - 0.4;
+      S.vx = Math.cos(a) * 5 * S.next; S.vy = Math.sin(a) * 5;
+      S.live = true; S.msg = ""; S.sub = "";
     }
+    function point(youScored) {
+      if (youScored) S.you++; else S.cpu++;
+      S.live = false; S.msg = pick(youScored ? cheers : taunts); S.sub = "CLICK OR TAP TO SERVE"; S.next = youScored ? -1 : 1;
+    }
+    function bounce(py, dir, x) {
+      const off = (S.by - py) / (PH / 2), sp = Math.min(12, Math.hypot(S.vx, S.vy) * 1.05), a = off * 0.9;
+      S.vx = Math.cos(a) * sp * dir; S.vy = Math.sin(a) * sp; S.bx = x;
+    }
+    return {
+      hint: "Mouse, finger, or W/S and arrow keys move your paddle. Click, tap or Space to serve.",
+      start: reset,
+      pause() { if (S.live) { S.live = false; S.msg = "PAUSED"; S.sub = "CLICK OR TAP TO SERVE"; S.next = S.vx > 0 ? 1 : -1; } },
+      step() {
+        if (keys.up) S.py -= 7; if (keys.down) S.py += 7;
+        S.py = Math.max(PH / 2, Math.min(H - PH / 2, S.py));
+        const target = S.live && S.vx > 0 ? S.by : H / 2;
+        S.cy += Math.max(-CPU_SPEED, Math.min(CPU_SPEED, (target - S.cy) * 0.12));
+        S.cy = Math.max(PH / 2, Math.min(H - PH / 2, S.cy));
+        if (!S.live) return;
+        S.bx += S.vx; S.by += S.vy;
+        if (S.by < R) { S.by = R; S.vy = -S.vy; }
+        if (S.by > H - R) { S.by = H - R; S.vy = -S.vy; }
+        const hit = (px, py) => Math.abs(S.bx - px) < PW / 2 + R && Math.abs(S.by - py) < PH / 2 + R;
+        if (S.vx < 0 && hit(20, S.py)) bounce(S.py, 1, 20 + PW / 2 + R);
+        if (S.vx > 0 && hit(W - 20, S.cy)) bounce(S.cy, -1, W - 20 - PW / 2 - R);
+        if (S.bx < -R) point(false);
+        if (S.bx > W + R) point(true);
+      },
+      draw() {
+        ctx.fillStyle = "rgba(136,136,170,.25)";
+        for (let y = 8; y < H; y += 22) ctx.fillRect(W / 2 - 1, y, 2, 12);
+        ctx.font = "48px " + DISPLAY; ctx.textAlign = "center"; ctx.textBaseline = "top";
+        ctx.fillStyle = GREEN; ctx.fillText(S.you, W / 2 - 60, 14);
+        ctx.fillStyle = TEXT; ctx.fillText(S.cpu, W / 2 + 60, 14);
+        ctx.font = "12px " + MONO; ctx.fillStyle = MUTED;
+        ctx.fillText("YOU", W / 2 - 60, 62); ctx.fillText("CPU", W / 2 + 60, 62);
+        ctx.shadowColor = GREEN; ctx.shadowBlur = 14; ctx.fillStyle = GREEN;
+        ctx.fillRect(20 - PW / 2, S.py - PH / 2, PW, PH);
+        ctx.shadowBlur = 0; ctx.fillStyle = TEXT;
+        ctx.fillRect(W - 20 - PW / 2, S.cy - PH / 2, PW, PH);
+        if (S.live) { ctx.shadowBlur = 16; ctx.fillStyle = GREEN; ctx.beginPath(); ctx.arc(S.bx, S.by, R, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+        if (S.msg) banner(S.msg, S.sub);
+      },
+      pointermove(x, y) { S.py = y; },
+      pointerdown(x, y) { S.py = y; if (!S.live) serve(); },
+      action() { if (!S.live) serve(); }
+    };
+  })();
+
+  /* ================= BIT HOP ================= */
+  // A little robot runs right across a level that's made up as it goes: gaps, ledges, coins and glitch blobs to stomp.
+  const hop = (() => {
+    const deaths = ["THE FLOOR WAS RIGHT THERE. OH WAIT.", "GRAVITY: UNDEFEATED", "YOU JUMPED. EVENTUALLY.", "THAT GAP WAS VISIBLE FROM SPACE", "THE BLOB SAYS YOU'RE WELCOME", "LOOK BEFORE YOU LEAP. OR AT ALL.", "FALLING IS NOT A STRATEGY", "THE PIT THANKS YOU FOR VISITING", "THE BLOB WINS THIS ONE", "YOU RAN INTO THE ONE THING TO AVOID", "JUMP BUTTON NOT FOUND", "THE ROBOT DESERVED BETTER", "SO MUCH FOR THE HERO ARC", "NEW RECORD: FASTEST FAIL", "THAT WAS THE EASY PART", "THE BLOB DIDN'T EVEN MOVE. MUCH.", "YOU HOPPED STRAIGHT INTO THAT", "THE VOID ACCEPTS YOUR OFFERING", "WHO PUT THAT GAP THERE? US. SORRY.", "BOOTING NEW ROBOT...", "THE COINS WILL MISS YOU", "JUMP HIGHER. OR EARLIER. OR BOTH.", "THE GROUND ENDS. PLAN AHEAD.", "STOMP THE BLOB, NOT THE OTHER WAY", "ROBOT.EXE HAS STOPPED WORKING", "THAT'S GOING IN THE BLOOPER REEL", "PHYSICS WINS AGAIN", "MAYBE HOLD THE JUMP NEXT TIME", "THE BLOB IS TELLING ALL ITS FRIENDS", "YOU HAD SO MUCH POTENTIAL", "SHORT TRIP", "THE GAP WAS NOT A SHORTCUT", "NICE SWAN DIVE. WRONG SPORT.", "TIMING IS EVERYTHING. YOURS ISN'T.", "THAT JUMP HAD NO PLAN", "WELL, THAT ESCALATED DOWNWARD", "RESPAWNING YOUR DIGNITY...", "HOP IS IN THE NAME", "THE BLOB WAS ROUTING FOR YOU. NOT.", "THIS ROBOT HAD A WARRANTY. VOID NOW.", "DOWN YOU GO", "BOLD OF YOU TO RUN AT THAT"];
+    const bests = ["NEW BEST. DON'T LET IT GO TO YOUR HEAD.", "NEW BEST. THE ROBOT IS PROUD. KIND OF.", "NEW HIGH SCORE. SCREENSHOT IT, I GUESS.", "BEST RUN YET. STILL FELL IN A HOLE.", "NEW RECORD. NOBODY'S CLAPPING.", "NEW BEST. TELL NO ONE. THEY WON'T CARE.", "PERSONAL BEST. THE BAR WAS LOW.", "NEW BEST. NOW DO IT AGAIN.", "NEW HIGH SCORE. THE BLOBS ARE NERVOUS.", "BEST YET. STILL ENDED IN DISASTER."];
+    const T = 20, GROUND = 300, GRAV = 0.55, JUMP = -10.2, RUN = 3.3;
+    let S;
+    function gen(upTo) {   // extend the level to the right
+      while (S.genX < upTo) {
+        const x0 = S.genX, len = (x0 === 0 ? 30 : 5 + Math.floor(Math.random() * 10)) * T;   // a long safe start
+        S.ground.push({ x: x0, w: len, y: GROUND });
+        // coins along the ground or a floating ledge
+        if (Math.random() < 0.55 && len >= 6 * T) {
+          const lw = (3 + Math.floor(Math.random() * 3)) * T, lx = x0 + T * 2 + Math.random() * (len - lw - T * 3), ly = GROUND - (70 + Math.floor(Math.random() * 3) * 15);
+          S.ledges.push({ x: lx, w: lw, y: ly });
+          for (let cx = lx + 10; cx < lx + lw; cx += 20) S.coins.push({ x: cx, y: ly - 18 });
+        } else if (Math.random() < 0.6) {
+          const n = 3 + Math.floor(Math.random() * 3), cx0 = x0 + T * 2;
+          for (let i = 0; i < n && cx0 + i * 22 < x0 + len - T; i++) S.coins.push({ x: cx0 + i * 22, y: GROUND - 40 - Math.sin(i / (n - 1 || 1) * Math.PI) * 30 });
+        }
+        // a blob patrolling this stretch (not right at the start)
+        if (x0 > 500 && len >= 7 * T && Math.random() < 0.6 + Math.min(0.3, S.genX / 20000)) {
+          const lo = x0 + T, hi = x0 + len - T * 2;
+          S.blobs.push({ x: lo + Math.random() * (hi - lo), lo, hi, v: (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.min(1, S.genX / 8000)), dead: 0 });
+        }
+        const gap = (2 + Math.floor(Math.random() * Math.min(3, 1 + S.genX / 3000))) * T;
+        S.genX = x0 + len + gap;
+      }
+    }
+    function reset() {
+      S = { ground: [], ledges: [], coins: [], blobs: [], genX: 0, cam: 0, x: 60, y: GROUND - 22, vx: 0, vy: 0, on: true, coyote: 0, jumpBuf: 0,
+            holding: false, coinsGot: 0, far: 0, state: "ready", msg: "BIT HOP", sub: "CLICK, TAP OR SPACE TO START", touch: false, best: best.get("hop"), t: 0 };
+      S.ground.push({ x: -200, w: 200, y: GROUND }); S.genX = 0; gen(W * 2);
+    }
+    const score = () => Math.floor(S.far / 10) + S.coinsGot * 10;
+    function die() {
+      if (S.state !== "play") return;
+      S.state = "dead";
+      const sc = score();
+      if (sc > S.best) { S.best = sc; best.set("hop", sc); S.msg = pick(bests); }
+      else S.msg = pick(deaths);
+      S.sub = "SCORE " + sc + "  ·  CLICK, TAP OR SPACE TO TRY AGAIN";
+    }
+    function jumpPress() {
+      if (S.state === "ready") { S.state = "play"; S.msg = ""; }
+      else if (S.state === "dead") { const touch = S.touch; reset(); S.touch = touch; S.state = "play"; S.msg = ""; return; }
+      S.jumpBuf = 8; S.holding = true;
+    }
+    function solidAt(px, w, prevBottom, bottom) {   // landing check against ground and ledges
+      for (const g of S.ground) if (px + w > g.x && px < g.x + g.w && prevBottom <= g.y && bottom >= g.y) return g.y;
+      for (const g of S.ledges) if (px + w > g.x && px < g.x + g.w && prevBottom <= g.y && bottom >= g.y) return g.y;
+      return null;
+    }
+    const PWD = 16, PHT = 22;
+    return {
+      hint: "Arrow keys or A/D run, Space, W or Up jumps (hold for higher). On a phone, just tap to jump: the robot runs for you.",
+      start: reset,
+      pause() {},
+      step() {
+        S.t++;
+        if (S.state !== "play") return;
+        // running: keyboard steers, touch/mouse players auto-run
+        let want = 0;
+        if (keys.right || keys.left) S.touch = false;   // keyboard players steer themselves
+        if (keys.right) want = 1; else if (keys.left) want = -1; else if (S.touch) want = 1;
+        S.vx += (want * RUN - S.vx) * (S.on ? 0.25 : 0.08);
+        if (keys.up || keys.jump) { if (!S.holding) { S.jumpBuf = 8; S.holding = true; } } else if (!S.touchHold) S.holding = false;
+        // jump with a little forgiveness on both ends
+        if (S.on) S.coyote = 6; else if (S.coyote > 0) S.coyote--;
+        if (S.jumpBuf > 0) { S.jumpBuf--; if (S.coyote > 0) { S.vy = JUMP; S.on = false; S.coyote = 0; S.jumpBuf = 0; } }
+        if (!S.holding && S.vy < -3.5) S.vy = -3.5;   // let go early for a short hop
+        S.vy = Math.min(12, S.vy + GRAV);
+        S.x += S.vx;
+        if (S.x < S.cam + 4) { S.x = S.cam + 4; S.vx = 0; }
+        const prevBottom = S.y + PHT; S.y += S.vy; const bottom = S.y + PHT;
+        S.on = false;
+        if (S.vy >= 0) { const land = solidAt(S.x, PWD, prevBottom, bottom); if (land !== null) { S.y = land - PHT; S.vy = 0; S.on = true; } }
+        // walls: running into the side of the next ground block
+        for (const g of S.ground) if (S.y + PHT > g.y + 4 && S.x + PWD > g.x && S.x < g.x + g.w) { if (S.vx > 0) S.x = g.x - PWD; else S.x = g.x + g.w; S.vx = 0; }
+        if (S.y > H + 40) die();
+        // camera only moves forward
+        S.cam = Math.max(S.cam, S.x - W * 0.35);
+        S.far = Math.max(S.far, S.x - 60);
+        gen(S.cam + W * 2);
+        // coins
+        for (const c of S.coins) if (!c.got && Math.abs(c.x - (S.x + PWD / 2)) < 14 && Math.abs(c.y - (S.y + PHT / 2)) < 18) { c.got = true; S.coinsGot++; }
+        // blobs
+        for (const b of S.blobs) {
+          if (b.dead) { b.dead++; continue; }
+          b.x += b.v; if (b.x < b.lo || b.x > b.hi) { b.v = -b.v; b.x = Math.max(b.lo, Math.min(b.hi, b.x)); }
+          const bx = b.x, by = GROUND - 14, bw = 20, bh = 14;
+          if (S.x + PWD > bx && S.x < bx + bw && S.y + PHT > by && S.y < by + bh) {
+            if (S.vy > 0 && prevBottom <= by + 6) { b.dead = 1; S.vy = JUMP * 0.7; S.holding = true; S.coinsGot += 2; }
+            else die();
+          }
+        }
+        // forget things far behind
+        const cut = S.cam - 200;
+        S.ground = S.ground.filter(g => g.x + g.w > cut); S.ledges = S.ledges.filter(g => g.x + g.w > cut);
+        S.coins = S.coins.filter(c => c.x > cut && !c.got); S.blobs = S.blobs.filter(b => b.x > cut && b.dead < 30);
+      },
+      draw() {
+        const cam = S.cam;
+        // far skyline for depth
+        ctx.fillStyle = "rgba(0,255,136,.05)";
+        for (let i = -1; i < 9; i++) {
+          const x = ((i * 110 - cam * 0.25) % 990 + 990) % 990 - 110, h = 40 + ((i * 53) % 70);
+          ctx.fillRect(x, GROUND - h - 30, 70, h + 30);
+        }
+        // ground and ledges
+        for (const g of S.ground) {
+          const x = g.x - cam; if (x > W || x + g.w < 0) continue;
+          ctx.fillStyle = "#111118"; ctx.fillRect(x, g.y, g.w, H - g.y);
+          ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 8; ctx.fillRect(x, g.y, g.w, 2); ctx.shadowBlur = 0;
+          ctx.fillStyle = "rgba(0,255,136,.12)";
+          for (let gx = Math.ceil(g.x / T) * T; gx < g.x + g.w; gx += T) ctx.fillRect(gx - cam, g.y + 2, 1, H - g.y);
+        }
+        for (const g of S.ledges) {
+          const x = g.x - cam; if (x > W || x + g.w < 0) continue;
+          ctx.fillStyle = "#16161f"; ctx.fillRect(x, g.y, g.w, 8);
+          ctx.fillStyle = CYAN; ctx.fillRect(x, g.y, g.w, 2);
+        }
+        // coins: little spinning chips
+        for (const c of S.coins) {
+          const x = c.x - cam; if (x < -10 || x > W + 10) continue;
+          const sq = Math.abs(Math.cos((S.t + c.x) * 0.08));
+          ctx.fillStyle = YELLOW; ctx.shadowColor = YELLOW; ctx.shadowBlur = 8;
+          ctx.fillRect(x - 5 * sq, c.y - 5, 10 * sq + 1, 10); ctx.shadowBlur = 0;
+        }
+        // glitch blobs
+        for (const b of S.blobs) {
+          const x = b.x - cam; if (x < -30 || x > W + 30) continue;
+          const squash = b.dead ? 0.3 : 1 + Math.sin(S.t * 0.2 + b.x) * 0.08;
+          ctx.globalAlpha = b.dead ? Math.max(0, 1 - b.dead / 30) : 1;
+          ctx.fillStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 10;
+          const h = 14 * squash; ctx.fillRect(x, GROUND - h, 20, h);
+          ctx.shadowBlur = 0;
+          if (!b.dead) {   // glitch slices and eyes
+            ctx.fillStyle = "rgba(10,10,15,.8)"; ctx.fillRect(x + (S.t % 7 < 2 ? 3 : 0), GROUND - h + 4, 20, 1);
+            ctx.fillStyle = "#0a0a0f"; const dir = b.v > 0 ? 3 : 0; ctx.fillRect(x + 5 + dir, GROUND - h + 3, 3, 3); ctx.fillRect(x + 11 + dir, GROUND - h + 3, 3, 3);
+          }
+          ctx.globalAlpha = 1;
+        }
+        // the robot
+        const px = S.x - cam, py = S.y;
+        ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 12;
+        ctx.fillRect(px, py, PWD, PHT - 4); ctx.shadowBlur = 0;
+        ctx.fillStyle = "#0a0a0f"; ctx.fillRect(px + 3, py + 4, PWD - 6, 5);            // visor
+        ctx.fillStyle = TEXT; ctx.fillRect(px + (S.vx >= 0 ? 9 : 4), py + 5, 3, 3);       // eye
+        ctx.fillStyle = GREEN; ctx.fillRect(px + 7, py - 5, 2, 5);                          // antenna
+        ctx.fillRect(px + 6, py - 7, 4, 2);
+        const leg = S.on && Math.abs(S.vx) > 0.5 ? (Math.floor(S.t / 5) % 2) * 3 : 0;      // legs
+        ctx.fillRect(px + 2 + leg, py + PHT - 4, 4, 4); ctx.fillRect(px + PWD - 6 - leg, py + PHT - 4, 4, 4);
+        // HUD
+        ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = "26px " + DISPLAY; ctx.fillStyle = GREEN;
+        ctx.fillText(String(score()).padStart(5, "0"), 16, 12);
+        ctx.font = "12px " + MONO; ctx.fillStyle = MUTED; ctx.fillText("BEST " + S.best, 16, 40);
+        ctx.textAlign = "right"; ctx.fillStyle = YELLOW; ctx.font = "20px " + DISPLAY; ctx.fillText("× " + S.coinsGot, W - 16, 14);
+        if (S.state !== "play") { ctx.fillStyle = "rgba(10,10,15,.55)"; ctx.fillRect(0, 0, W, H); banner(S.msg, S.sub, H / 2 - 10); }
+      },
+      pointermove() {},
+      pointerdown() { S.touch = true; S.touchHold = true; jumpPress(); },
+      pointerup() { S.touchHold = false; S.holding = false; },
+      action() { jumpPress(); }
+    };
+  })();
+
+  /* ================= BUG ZAPPER ================= */
+  // Glitchy bugs zig-zag up out of the grid. Three shots per bug. Zap enough of each round's ten to move on.
+  const bug = (() => {
+    const escapes = ["THE BUG GOT AWAY. SHIP IT ANYWAY?", "THAT BUG IS GOING TO PRODUCTION", "YOU MISSED. THE BUG DIDN'T.", "THE BUG SAYS THANKS FOR NOTHING", "WORKS ON MY MACHINE", "THAT BUG IS NOW A FEATURE", "FILE A TICKET. IT'LL GET IGNORED.", "THE BUG ESCAPED. QA IS CRYING.", "THREE SHOTS. ZERO BUGS.", "THE BUG WAS RIGHT IN FRONT OF YOU", "CLOSED AS WON'T FIX", "THAT BUG WILL HAUNT YOU AT 2 AM", "THE BUG HAS SEEN YOUR AIM. IT LAUGHED.", "AIM IS A SKILL. ALLEGEDLY.", "ESCAPED TO ANOTHER CODEBASE", "THE BUG FILED A COMPLAINT", "ANOTHER ONE FOR THE BACKLOG", "IT'S NOT A BUG IF YOU NEVER CATCH IT", "THE BUG IS SHOWING ITS FRIENDS NOW", "WHO TAUGHT YOU TO SHOOT?", "THAT ZAPPER IS NOT DECORATIVE", "THE BUG IS TELLING EVERYONE", "GREAT SHOTS. AT THE SKY.", "THE BUG ESCAPED WITH YOUR PRIDE", "BUG: 1. YOU: STILL LOADING.", "THE CURSOR MOVES, YOU KNOW", "YOU SHOT WHERE IT WAS. CUTE.", "LEAD YOUR TARGET. OR ANYTHING.", "THE BUG IS NOW A SENIOR BUG", "THAT BUG WILL BE IN THE NEXT RELEASE", "NOT EVEN A SCRATCH", "THE BUG WAVED ON ITS WAY OUT", "HOTFIX FAILED", "ROLLBACK! ROLLBACK!", "THAT'S A REGRESSION", "THE BUG IS NOW UNDOCUMENTED", "PATCH NOTES: YOU MISSED", "THE BUG ESCAPED. DOCUMENTATION DID NOT.", "YOU'RE GOOD AT MAKING BUGS FEEL SAFE", "THAT BUG HAS PLOT ARMOR APPARENTLY"];
+    const hits = ["ZAPPED", "SQUASHED", "BUG FIXED. FOR NOW.", "TICKET CLOSED", "PATCHED", "ONE LESS BUG", "DEBUGGED THE HARD WAY", "THAT ONE'S NOT GOING TO PRODUCTION", "CLEAN SHOT. SUSPICIOUS.", "THE BACKLOG SHRINKS", "NICE. NOW THE OTHER NINETY-NINE.", "THE BUG NEVER SAW IT COMING", "LUCKY ZAP", "OK, SHARPSHOOTER", "QA WOULD BE PROUD", "ZAPPED WITH PREJUDICE", "MARKED AS RESOLVED", "THE BUG HAS BEEN DEPRECATED", "NO MORE CRASHES. FROM THAT ONE.", "BUG REMOVED. PROBABLY CREATED TWO MORE."];
+    const rounds = ["ROUND CLEAR. THE BUGS ARE ANGRY NOW.", "ROUND CLEAR. DON'T GET COMFORTABLE.", "ROUND CLEAR. THEY'RE FASTER NOW. ENJOY.", "ROUND CLEAR. SHIP IT.", "ROUND CLEAR. THE NEXT SPRINT IS WORSE.", "ROUND CLEAR. THE BUGS CALLED FOR BACKUP.", "ROUND CLEAR. SOMEONE'S BEEN PRACTICING.", "ROUND CLEAR. IT ONLY GETS HARDER.", "ROUND CLEAR. TAKE A BREATH. QUICK ONE.", "ROUND CLEAR. NOW THE BUGS ARE MOTIVATED."];
+    const overs = ["GAME OVER. THE BUGS WON. AS USUAL.", "GAME OVER. THE CODEBASE IS LOST.", "GAME OVER. TOO MANY BUGS ESCAPED.", "GAME OVER. SHIPPING IT BROKEN.", "GAME OVER. THE BUGS ARE PARTYING.", "GAME OVER. TRY TURNING IT OFF AND ON.", "GAME OVER. THE BACKLOG HAS WON.", "GAME OVER. PRODUCTION IS ON FIRE.", "GAME OVER. BLAME IT ON THE INTERN.", "GAME OVER. THE BUGS WILL REMEMBER YOU."];
+    const PER_ROUND = 10, NEED = 6, HORIZON = 250;
+    let S;
+    function reset() {
+      S = { round: 1, score: 0, best: best.get("bug"), state: "ready", msg: "BUG ZAPPER", sub: "CLICK OR TAP TO START", aimX: W / 2, aimY: H / 2,
+            bugs: [], left: PER_ROUND, zapped: 0, results: [], shots: 3, flash: 0, toast: "", toastT: 0, wait: 0, t: 0, sparks: [] };
+    }
+    function launch() {
+      const speed = 2 + S.round * 0.45;
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+      S.bugs = [{ x: 80 + Math.random() * (W - 160), y: HORIZON + 10, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: 0, turn: 30 + Math.random() * 40, state: "fly", hue: Math.random() < 0.5 ? YELLOW : CYAN }];
+      S.shots = 3; S.left--;
+    }
+    function endBug(zapped) {
+      S.results.push(zapped);
+      if (zapped) { S.zapped++; S.toast = pick(hits); } else { S.toast = pick(escapes); }
+      S.toastT = 120; S.wait = 70;
+    }
+    function endRound() {
+      if (S.zapped >= NEED) {
+        S.round++; S.left = PER_ROUND; S.zapped = 0; S.results = [];
+        S.state = "between"; S.msg = pick(rounds); S.sub = "ROUND " + S.round + "  ·  CLICK OR TAP TO CONTINUE";
+      } else {
+        S.state = "over";
+        if (S.score > S.best) { S.best = S.score; best.set("bug", S.score); }
+        S.msg = pick(overs); S.sub = "SCORE " + S.score + "  ·  CLICK OR TAP TO PLAY AGAIN";
+      }
+    }
+    function shoot(x, y) {
+      if (S.state === "ready" || S.state === "between") { S.state = "play"; S.msg = ""; launch(); return; }
+      if (S.state === "over") { reset(); S.state = "play"; S.msg = ""; launch(); return; }
+      const b = S.bugs[0];
+      if (!b || b.state !== "fly" || S.shots <= 0) return;
+      S.shots--; S.flash = 6;
+      if (Math.hypot(b.x - x, b.y - y) < 22) {
+        b.state = "hit"; b.hitT = 0; S.score += 100 * S.round + S.shots * 50;
+        for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 3; S.sparks.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 30 }); }
+      } else if (S.shots === 0) { b.state = "flee"; }
+    }
+    return {
+      hint: "Aim with the mouse and click to zap, or just tap the bug. Three shots per bug. Zap 6 of every 10 to move on.",
+      start: reset,
+      pause() {},
+      step() {
+        S.t++;
+        if (S.toastT > 0) S.toastT--;
+        if (S.flash > 0) S.flash--;
+        S.sparks.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life--; }); S.sparks = S.sparks.filter(p => p.life > 0);
+        if (S.state !== "play") return;
+        const b = S.bugs[0];
+        if (!b) {
+          if (S.wait > 0) { S.wait--; return; }
+          if (S.left > 0) launch(); else endRound();
+          return;
+        }
+        b.life++;
+        if (b.state === "fly") {
+          // zig-zag: change direction now and then, bounce off the sides and the grid
+          if (--b.turn <= 0) {
+            const sp = Math.hypot(b.vx, b.vy), a = Math.atan2(b.vy, b.vx) + (Math.random() - 0.5) * 2.2;
+            b.vx = Math.cos(a) * sp; b.vy = Math.sin(a) * sp; b.turn = 25 + Math.random() * 45;
+          }
+          b.x += b.vx; b.y += b.vy;
+          if (b.x < 16 || b.x > W - 16) { b.vx = -b.vx; b.x = Math.max(16, Math.min(W - 16, b.x)); }
+          if (b.y < 30) { b.vy = Math.abs(b.vy); }
+          if (b.y > HORIZON) { b.vy = -Math.abs(b.vy); }
+          if (b.life > 60 * (6 - Math.min(3, S.round * 0.4))) b.state = "flee";   // runs out of patience
+        } else if (b.state === "flee") {
+          b.vy = Math.min(b.vy, 0) - 0.4; b.x += b.vx * 0.5; b.y += b.vy;
+          if (b.y < -30) { S.bugs = []; endBug(false); }
+        } else if (b.state === "hit") {
+          b.hitT++; if (b.hitT > 18) { b.vy = (b.vy > 0 ? b.vy : 0) + 0.5; b.y += b.vy; }
+          if (b.y > HORIZON + 30) { S.bugs = []; endBug(true); }
+        }
+      },
+      draw() {
+        // neon horizon and receding grid
+        ctx.strokeStyle = "rgba(0,255,136,.18)"; ctx.lineWidth = 1;
+        for (let i = 0; i < 9; i++) { const y = HORIZON + Math.pow(i / 8, 1.8) * (H - HORIZON); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+        for (let i = -10; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * 20, HORIZON); ctx.lineTo(W / 2 + i * 90, H); ctx.stroke(); }
+        ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 10; ctx.fillRect(0, HORIZON, W, 2); ctx.shadowBlur = 0;
+        // the bug
+        const b = S.bugs[0];
+        if (b && S.state === "play") {
+          ctx.save(); ctx.translate(b.x, b.y);
+          if (b.state === "hit") ctx.rotate(b.hitT * 0.4);
+          else ctx.scale(b.vx < 0 ? -1 : 1, 1);
+          const flap = Math.sin(S.t * 0.9) * 0.6;
+          ctx.fillStyle = "rgba(245,245,245,.35)";                                 // wings
+          ctx.beginPath(); ctx.ellipse(-4, -9, 9, 5, -0.5 + flap, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(4, -9, 9, 5, 0.5 - flap, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = b.state === "hit" ? MUTED : b.hue; ctx.shadowColor = b.hue; ctx.shadowBlur = b.state === "hit" ? 0 : 12;
+          ctx.beginPath(); ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2); ctx.fill();   // body
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#0a0a0f"; ctx.fillRect(-6, -1, 12, 2); ctx.fillRect(-2, -6, 2, 12);   // circuit marks
+          ctx.fillStyle = b.state === "hit" ? MUTED : b.hue; ctx.fillRect(10, -3, 5, 6);           // head
+          ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.moveTo(14, -3); ctx.lineTo(19, -9); ctx.moveTo(14, 3); ctx.lineTo(19, 9); ctx.stroke();  // antennae
+          ctx.fillStyle = b.state === "hit" ? TEXT : "#0a0a0f";
+          if (b.state === "hit") { ctx.font = "10px " + MONO; ctx.textAlign = "center"; ctx.fillText("x x", 0, -14); }
+          ctx.restore();
+        }
+        S.sparks.forEach(p => { ctx.fillStyle = `rgba(0,255,136,${p.life / 30})`; ctx.fillRect(p.x, p.y, 2, 2); });
+        if (S.flash) { ctx.fillStyle = `rgba(245,245,245,${S.flash / 30})`; ctx.fillRect(0, 0, W, H); }
+        // HUD: shots, the round's bug tally, score
+        ctx.textBaseline = "top"; ctx.textAlign = "left"; ctx.font = "12px " + MONO; ctx.fillStyle = MUTED; ctx.fillText("SHOTS", 16, H - 34);
+        for (let i = 0; i < 3; i++) { ctx.fillStyle = i < S.shots ? GREEN : "#1e1e2e"; ctx.fillRect(16 + i * 14, H - 18, 8, 8); }
+        ctx.textAlign = "center"; ctx.fillStyle = MUTED; ctx.fillText("ROUND " + S.round + "  ·  NEED " + NEED, W / 2, H - 34);
+        for (let i = 0; i < PER_ROUND; i++) {
+          const r = S.results[i]; ctx.fillStyle = r === true ? GREEN : r === false ? RED : "#1e1e2e";
+          ctx.fillRect(W / 2 - PER_ROUND * 8 + i * 16 + 3, H - 18, 10, 8);
+        }
+        ctx.textAlign = "right"; ctx.font = "26px " + DISPLAY; ctx.fillStyle = GREEN; ctx.fillText(String(S.score).padStart(6, "0"), W - 16, 12);
+        ctx.font = "12px " + MONO; ctx.fillStyle = MUTED; ctx.fillText("BEST " + S.best, W - 16, 40);
+        if (S.toastT > 0 && S.state === "play") { ctx.globalAlpha = Math.min(1, S.toastT / 20); banner(S.toast, "", 70); ctx.globalAlpha = 1; }
+        if (S.state !== "play") { ctx.fillStyle = "rgba(10,10,15,.55)"; ctx.fillRect(0, 0, W, H); banner(S.msg, S.sub, H / 2 - 20); }
+        // crosshair
+        const x = S.aimX, y = S.aimY;
+        ctx.strokeStyle = GREEN; ctx.lineWidth = 2; ctx.shadowColor = GREEN; ctx.shadowBlur = 6;
+        ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.moveTo(x - 18, y); ctx.lineTo(x - 6, y); ctx.moveTo(x + 6, y); ctx.lineTo(x + 18, y);
+        ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 6); ctx.moveTo(x, y + 6); ctx.lineTo(x, y + 18); ctx.stroke(); ctx.shadowBlur = 0; ctx.lineWidth = 1;
+      },
+      pointermove(x, y) { S.aimX = x; S.aimY = y; },
+      pointerdown(x, y) { S.aimX = x; S.aimY = y; shoot(x, y); },
+      action() { shoot(S.aimX, S.aimY); }
+    };
+  })();
+
+  /* ================= cabinet: tabs, loop, controls ================= */
+  const games = { paddle, hop, bug };
+  let cur = paddle;
+  const hint = document.getElementById("hint");
+  function choose(name) {
+    cur.pause(); cur = games[name]; cur.start(); hint.textContent = cur.hint;
+    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.game === name));
+    for (const k in keys) keys[k] = false;
   }
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => choose(b.dataset.game)));
+  Object.values(games).forEach(g => g.start());
+  hint.textContent = cur.hint;
 
   let last = 0, acc = 0;
   function loop(t) {
     if (!last) last = t;
     acc += Math.min(100, t - last); last = t;
-    while (acc >= 1000 / 60) { step(); acc -= 1000 / 60; }   // same speed on any screen
-    draw(); requestAnimationFrame(loop);
+    while (acc >= 1000 / 60) { cur.step(); acc -= 1000 / 60; }   // same speed on any screen
+    ctx.clearRect(0, 0, W, H); cur.draw();
+    requestAnimationFrame(loop);
   }
-
-  // controls
-  const toY = e => { const r = cv.getBoundingClientRect(); return (e.clientY - r.top) / r.height * H; };
-  cv.addEventListener("pointermove", e => { S.py = toY(e); });
-  cv.addEventListener("pointerdown", e => { S.py = toY(e); if (!S.live) serve(S.next || 1); });
+  cv.addEventListener("pointermove", e => cur.pointermove(...toXY(e)));
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); cur.pointerdown(...toXY(e)); });
+  addEventListener("pointerup", () => cur.pointerup && cur.pointerup());
+  const map = { w: "up", arrowup: "up", s: "down", arrowdown: "down", a: "left", arrowleft: "left", d: "right", arrowright: "right", " ": "jump" };
   addEventListener("keydown", e => {
-    const kk = e.key.toLowerCase();
-    if (kk === "w" || kk === "arrowup") { S.keys.up = true; e.preventDefault(); }
-    if (kk === "s" || kk === "arrowdown") { S.keys.down = true; e.preventDefault(); }
-    if ((kk === " " || kk === "enter") && !S.live) { serve(S.next || 1); e.preventDefault(); }
+    const k = e.key.toLowerCase(), m = map[k];
+    if (m || k === "enter") e.preventDefault();
+    if (m) { if (!keys[m] && (m === "jump" || (m === "up" && cur === hop))) cur.action(); keys[m] = true; }
+    if (k === "enter" && !e.repeat) cur.action();
   });
-  addEventListener("keyup", e => {
-    const kk = e.key.toLowerCase();
-    if (kk === "w" || kk === "arrowup") S.keys.up = false;
-    if (kk === "s" || kk === "arrowdown") S.keys.down = false;
-  });
-  // pause when the tab is hidden so the computer doesn't rack up points
-  document.addEventListener("visibilitychange", () => { if (document.hidden && S.live) { S.live = false; S.msg = "PAUSED"; S.sub = "CLICK OR TAP TO SERVE"; S.next = S.vx > 0 ? 1 : -1; } });
-
-  document.fonts && document.fonts.ready.then(draw);
+  addEventListener("keyup", e => { const m = map[e.key.toLowerCase()]; if (m) keys[m] = false; });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) cur.pause(); });
+  document.fonts && document.fonts.ready.then(() => cur.draw());
   requestAnimationFrame(loop);
 })();
 </script>
