@@ -339,170 +339,406 @@ background:#0a0a0f;color:var(--green);border:1px solid rgba(0,255,136,.45);borde
   })();
 
   /* ================= BIT HOP ================= */
-  // A little robot runs right across a level that's made up as it goes: gaps, ledges, coins and glitch blobs to stomp.
+  // A level-by-level platformer. Run and jump to the exit gate at the end of each stage before time runs out.
+  // Three lives; stomp blobs, bump bonus blocks for chips, 100 chips = extra life. Stages are built from a fixed
+  // recipe, so stage 1-1 is the same every time, and each stage adds a bit more danger.
   const hop = (() => {
     const deaths = ["THE FLOOR WAS RIGHT THERE. OH WAIT.", "GRAVITY: UNDEFEATED", "YOU JUMPED. EVENTUALLY.", "THAT GAP WAS VISIBLE FROM SPACE", "THE BLOB SAYS YOU'RE WELCOME", "LOOK BEFORE YOU LEAP. OR AT ALL.", "FALLING IS NOT A STRATEGY", "THE PIT THANKS YOU FOR VISITING", "THE BLOB WINS THIS ONE", "YOU RAN INTO THE ONE THING TO AVOID", "JUMP BUTTON NOT FOUND", "THE ROBOT DESERVED BETTER", "SO MUCH FOR THE HERO ARC", "NEW RECORD: FASTEST FAIL", "THAT WAS THE EASY PART", "THE BLOB DIDN'T EVEN MOVE. MUCH.", "YOU HOPPED STRAIGHT INTO THAT", "THE VOID ACCEPTS YOUR OFFERING", "WHO PUT THAT GAP THERE? US. SORRY.", "BOOTING NEW ROBOT...", "THE COINS WILL MISS YOU", "JUMP HIGHER. OR EARLIER. OR BOTH.", "THE GROUND ENDS. PLAN AHEAD.", "STOMP THE BLOB, NOT THE OTHER WAY", "ROBOT.EXE HAS STOPPED WORKING", "THAT'S GOING IN THE BLOOPER REEL", "PHYSICS WINS AGAIN", "MAYBE HOLD THE JUMP NEXT TIME", "THE BLOB IS TELLING ALL ITS FRIENDS", "YOU HAD SO MUCH POTENTIAL", "SHORT TRIP", "THE GAP WAS NOT A SHORTCUT", "NICE SWAN DIVE. WRONG SPORT.", "TIMING IS EVERYTHING. YOURS ISN'T.", "THAT JUMP HAD NO PLAN", "WELL, THAT ESCALATED DOWNWARD", "RESPAWNING YOUR DIGNITY...", "HOP IS IN THE NAME", "THE BLOB WAS ROUTING FOR YOU. NOT.", "THIS ROBOT HAD A WARRANTY. VOID NOW.", "DOWN YOU GO", "BOLD OF YOU TO RUN AT THAT"];
     const bests = ["NEW BEST. DON'T LET IT GO TO YOUR HEAD.", "NEW BEST. THE ROBOT IS PROUD. KIND OF.", "NEW HIGH SCORE. SCREENSHOT IT, I GUESS.", "BEST RUN YET. STILL FELL IN A HOLE.", "NEW RECORD. NOBODY'S CLAPPING.", "NEW BEST. TELL NO ONE. THEY WON'T CARE.", "PERSONAL BEST. THE BAR WAS LOW.", "NEW BEST. NOW DO IT AGAIN.", "NEW HIGH SCORE. THE BLOBS ARE NERVOUS.", "BEST YET. STILL ENDED IN DISASTER."];
-    const T = 20, GROUND = 300, GRAV = 0.55, JUMP = -10.2, RUN = 3.3;
-    let S;
-    function gen(upTo) {   // extend the level to the right
-      while (S.genX < upTo) {
-        const x0 = S.genX, len = (x0 === 0 ? 30 : 5 + Math.floor(Math.random() * 10)) * T;   // a long safe start
-        S.ground.push({ x: x0, w: len, y: GROUND });
-        // coins along the ground or a floating ledge
-        if (Math.random() < 0.55 && len >= 6 * T) {
-          const lw = (3 + Math.floor(Math.random() * 3)) * T, lx = x0 + T * 2 + Math.random() * (len - lw - T * 3), ly = GROUND - (70 + Math.floor(Math.random() * 3) * 15);
-          S.ledges.push({ x: lx, w: lw, y: ly });
-          for (let cx = lx + 10; cx < lx + lw; cx += 20) S.coins.push({ x: cx, y: ly - 18 });
-        } else if (Math.random() < 0.6) {
-          const n = 3 + Math.floor(Math.random() * 3), cx0 = x0 + T * 2;
-          for (let i = 0; i < n && cx0 + i * 22 < x0 + len - T; i++) S.coins.push({ x: cx0 + i * 22, y: GROUND - 40 - Math.sin(i / (n - 1 || 1) * Math.PI) * 30 });
+    const clears = ["STAGE CLEAR. THE EXIT WAS NOT A TRAP.", "STAGE CLEAR. THE BLOBS ARE FURIOUS.", "STAGE CLEAR. KEEP HOPPING.", "STAGE CLEAR. DON'T GET COMFORTABLE.", "STAGE CLEAR. THE NEXT ONE IS MEANER.", "STAGE CLEAR. THE ROBOT IS PROUD.", "STAGE CLEAR. GRAVITY IS TAKING NOTES.", "STAGE CLEAR. SOMEONE'S BEEN PRACTICING.", "STAGE CLEAR. NOW THE HARD PART.", "STAGE CLEAR. TOO EASY? WE'LL FIX THAT.", "STAGE CLEAR. THE CLOCK IS SULKING.", "STAGE CLEAR. ONWARD, TIN CAN.", "STAGE CLEAR. THE PITS WILL MISS YOU.", "STAGE CLEAR. NICE HOPS.", "STAGE CLEAR. THE BLOBS FILED A REPORT."];
+    const overs = ["GAME OVER. THE ROBOT IS SCRAP NOW.", "GAME OVER. THE BLOBS ARE CELEBRATING.", "GAME OVER. GRAVITY SENDS ITS REGARDS.", "GAME OVER. OUT OF ROBOTS.", "GAME OVER. THE PITS WIN AGAIN.", "GAME OVER. SO MANY HOLES.", "GAME OVER. INSERT COIN. JUST KIDDING.", "GAME OVER. THE EXIT WAS RIGHT THERE.", "GAME OVER. HOP HARDER NEXT TIME.", "GAME OVER. TELL NO ONE.", "GAME OVER. THE BLOBS WILL WRITE SONGS.", "GAME OVER. SPARE PARTS ONLY."];
+    const T = 20, ROWS = 18, GRAV = 0.55, JUMP = -10.2, RUN = 3.2, PWD = 14, PHT = 20, START_LIVES = 3, TIME = 300;
+    const EMPTY = 0, GROUND = 1, BRICK = 2, BONUS = 3, USED = 4, SPIKE = 5, PYLON = 6;
+    const isSolid = c => c === GROUND || c === BRICK || c === BONUS || c === USED || c === PYLON;
+    let S, L;   // S: the run (score, lives, stage), L: the current stage
+
+    // ---- stage builder (same stage number always builds the same stage)
+    function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+    function build(n) {
+      const R = rng(n * 977 + 13), ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+      const boss = n % 4 === 3, cols = 130 + Math.min(90, n * 12) + (boss ? 40 : 0);   // boss stages get room for the arena
+      const g = new Uint8Array(cols * ROWS), coins = [], blobs = [], plats = [];
+      const set = (c, r, v) => { if (c >= 0 && c < cols && r >= 0 && r < ROWS) g[r * cols + c] = v; };
+      const ground = (c, h) => { for (let r = ROWS - h; r < ROWS; r++) set(c, r, GROUND); };
+      const top = h => ROWS - h;                    // row index of the ground's top surface
+      const blob = (c, h) => c >= 25 && blobs.push({ x: c * T + 3, y: top(h) * T - 14, vx: -(0.6 + Math.min(0.8, n * 0.08)), vy: 0, dead: 0 });
+      const arc = (c0, len, h, lift) => { for (let i = 0; i < len; i++) coins.push({ x: (c0 + i) * T + T / 2, y: (top(h) - lift) * T - Math.sin(i / Math.max(1, len - 1) * Math.PI) * 26 }); };
+      let c = 0, h = 3;
+      for (; c < 12; c++) ground(c, h);
+      const feats = ["flat", "flat", "gap", "step", "blocks", "pylon"];
+      if (n >= 1) feats.push("gap", "stairs", "blocks");
+      if (n >= 2) feats.push("spikes", "spikes");
+      if (n >= 3) feats.push("platform", "platform");
+      const enemyChance = 0.35 + Math.min(0.45, n * 0.07), maxGap = Math.min(4, 2 + Math.floor(n / 2));
+      while (c < cols - 30 - (boss ? 40 : 0)) {
+        const f = feats[Math.floor(R() * feats.length)];
+        if (f === "flat") {
+          const len = ri(5, 9); for (let i = 0; i < len; i++) ground(c + i, h);
+          if (R() < 0.6) arc(c + 1, Math.min(len - 2, 5), h, 2);
+          if (R() < enemyChance) blob(c + ri(2, len - 2), h);
+          c += len;
+        } else if (f === "gap") {
+          for (let i = 0; i < 2; i++) ground(c++, h);
+          const w = ri(2, maxGap); if (R() < 0.5) arc(c, w, h, 3); c += w;
+          for (let i = 0; i < 3; i++) ground(c++, h);
+        } else if (f === "step") {
+          h = Math.max(2, Math.min(5, h + (R() < 0.5 ? -1 : 1) * ri(1, 2)));
+          const len = ri(4, 7); for (let i = 0; i < len; i++) ground(c + i, h);
+          if (R() < enemyChance * 0.6) blob(c + ri(1, len - 2), h);
+          c += len;
+        } else if (f === "blocks") {
+          const len = 10; for (let i = 0; i < len; i++) ground(c + i, h);
+          const r = top(h) - 4, bc = c + 2, bw = ri(3, 5);
+          for (let i = 0; i < bw; i++) set(bc + i, r, R() < 0.35 ? BONUS : BRICK);
+          set(bc + ri(0, bw - 1), r, BONUS);
+          for (let i = 0; i < bw; i++) coins.push({ x: (bc + i) * T + T / 2, y: (r - 1) * T + T / 2 });
+          if (R() < enemyChance) blob(c + 7, h);
+          c += len;
+        } else if (f === "pylon") {
+          const len = 8; for (let i = 0; i < len; i++) ground(c + i, h);
+          const ph = ri(2, 3); for (let i = 0; i < ph; i++) { set(c + 3, top(h) - 1 - i, PYLON); set(c + 4, top(h) - 1 - i, PYLON); }
+          coins.push({ x: (c + 4) * T, y: (top(h) - ph - 2) * T });
+          if (R() < enemyChance) blob(c + 6, h);
+          c += len;
+        } else if (f === "stairs") {
+          const sh = ri(3, 4);
+          for (let i = 0; i < sh * 2 + 3; i++) ground(c + i, h);
+          for (let s = 0; s < sh; s++) for (let k = 0; k <= s; k++) set(c + s, top(h) - 1 - k, BRICK);
+          for (let s = 0; s < sh; s++) for (let k = 0; k < sh - s; k++) set(c + sh + 3 + s, top(h) - 1 - k, BRICK);
+          c += sh * 2 + 3;
+        } else if (f === "spikes") {
+          const len = 9; for (let i = 0; i < len; i++) ground(c + i, h);
+          const sw = ri(1, Math.min(3, 1 + Math.floor(n / 3))); for (let i = 0; i < sw; i++) set(c + 4 + i, top(h) - 1, SPIKE);
+          arc(c + 3, sw + 2, h, 3);
+          c += len;
+        } else if (f === "platform") {
+          for (let i = 0; i < 2; i++) ground(c++, h);
+          const w = ri(7, 9), py = (top(h) - 1) * T;
+          plats.push({ x0: c * T + 4, x1: (c + w - 3) * T - 4, x: c * T + 4, y: py, w: 3 * T, dir: 1, sp: 0.9 + Math.min(0.6, n * 0.06), dx: 0 });
+          arc(c + 2, 4, h, 4);
+          c += w;
+          for (let i = 0; i < 3; i++) ground(c++, h);
         }
-        // a blob patrolling this stretch (not right at the start)
-        if (x0 > 500 && len >= 7 * T && Math.random() < 0.6 + Math.min(0.3, S.genX / 20000)) {
-          const lo = x0 + T, hi = x0 + len - T * 2;
-          S.blobs.push({ x: lo + Math.random() * (hi - lo), lo, hi, v: (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.min(1, S.genX / 8000)), dead: 0 });
-        }
-        const gap = (2 + Math.floor(Math.random() * Math.min(3, 1 + S.genX / 3000))) * T;
-        S.genX = x0 + len + gap;
+      }
+      h = 3;
+      if (boss) {
+        // boss stage: a sealed arena at the end, and the exit only opens once the Mega Blob is down
+        for (let i = 0; i < 6; i++) ground(c + i, h);
+        const ax = c + 6;
+        for (let i = 0; i < 30; i++) ground(ax + i, h);
+        for (let k = 1; k <= 9; k++) set(ax + 29, top(h) - k, BRICK);   // back wall
+        const world = Math.floor(n / 4);
+        const mega = { x: (ax + 20) * T, y: top(h) * T - 32, vx: 0, vy: 0, w: 40, h: 32, hp: 3 + world, maxHp: 3 + world, inv: 0, timer: 70, hops: 0, dead: 0, face: -1 };
+        for (let i = 30; i < 34; i++) for (let k = 0; k <= 9; k++) set(ax + i, top(h) - k, BRICK);   // fill past the wall
+        for (let i = 30; i < 34; i++) ground(ax + i, h);
+        return { g, stride: cols, cols: ax + 32, coins, blobs, plats, exitX: (ax + 26) * T, exitY: top(h) * T, midX: Math.floor((ax - 10) / 2) * T, arenaX: ax * T, boss: mega, exitOpen: false };
+      }
+      for (let i = 0; i < 26 && c < cols; i++) ground(c + i, h);
+      for (let s = 0; s < 4; s++) for (let k = 0; k <= s; k++) set(c + 4 + s, top(h) - 1 - k, BRICK);
+      const exitX = (c + 14) * T;
+      return { g, stride: cols, cols, coins, blobs, plats, exitX, exitY: top(h) * T, midX: Math.floor(cols / 2) * T, exitOpen: true };
+    }
+    const tile = (tx, ty) => (tx < 0 || tx >= L.cols) ? GROUND : (ty < 0 || ty >= ROWS) ? EMPTY : L.g[ty * L.stride + tx];
+
+    // ---- run / stage state
+    function newRun() {
+      S = { stage: 0, score: 0, chips: 0, lives: START_LIVES, best: best.get("hop"), state: "title", msg: "BIT HOP", sub: "CLICK, TAP OR SPACE TO START", t: 0, wait: 0,
+            touchUI: false, vk: { left: false, right: false, jump: false }, ptrs: new Map(), pops: [] };
+      loadStage(false);
+    }
+    function loadStage(fromCheckpoint) {
+      L = build(S.stage);
+      // stand on the first plain stretch of ground at (or after) the start point
+      let tx = Math.floor((fromCheckpoint ? L.midX : 40) / T), gy = ROWS - 1;
+      for (; tx < L.cols - 1; tx++) {
+        if (tile(tx, ROWS - 1) !== GROUND || tile(tx + 1, ROWS - 1) !== GROUND) continue;
+        gy = ROWS - 1; while (gy > 0 && tile(tx, gy - 1) === GROUND) gy--;
+        if (tile(tx, gy - 1) === EMPTY && tile(tx, gy - 2) === EMPTY) break;
+      }
+      const sx = tx * T + 3;
+      S.p = { x: sx, y: gy * T - PHT, vx: 0, vy: 0, on: false, coyote: 0, buf: 0, held: false, face: 1, inv: 0 };
+      S.cam = Math.max(0, Math.min(L.cols * T - W, S.p.x - W * 0.4)); S.time = TIME; S.tick = 0; S.checkpoint = fromCheckpoint; S.inArena = false;
+      if (fromCheckpoint) L.blobs = L.blobs.filter(b => b.x > L.midX + 60);
+    }
+    const stageName = n => (1 + Math.floor(n / 4)) + "-" + (1 + n % 4);
+    function intro() { S.state = "intro"; S.wait = 100; S.msg = "STAGE " + stageName(S.stage); S.sub = (S.stage % 4 === 3 ? "BOSS STAGE  ·  " : "") + "LIVES × " + S.lives; }
+    function loseLife(why) {
+      if (S.state !== "play") return;
+      S.lives--;
+      if (S.lives <= 0) {
+        S.state = "over";
+        if (S.score > S.best) { S.best = S.score; best.set("hop", S.score); }
+        S.msg = pick(overs); S.sub = "SCORE " + S.score + "  ·  STAGE " + stageName(S.stage) + "  ·  CLICK, TAP OR SPACE TO PLAY AGAIN";
+        gameOver("hop", S.score);
+      } else {
+        S.state = "dead"; S.wait = 110; S.msg = why || pick(deaths); S.sub = "LIVES × " + S.lives;
       }
     }
-    function reset() {
-      S = { ground: [], ledges: [], coins: [], blobs: [], genX: 0, cam: 0, x: 60, y: GROUND - 22, vx: 0, vy: 0, on: true, coyote: 0, jumpBuf: 0,
-            holding: false, coinsGot: 0, far: 0, state: "ready", msg: "BIT HOP", sub: "CLICK, TAP OR SPACE TO START", touch: false, best: best.get("hop"), t: 0 };
-      S.ground.push({ x: -200, w: 200, y: GROUND }); S.genX = 0; gen(W * 2);
+    function clearStage() {
+      const bonus = S.time * 10; S.score += bonus;
+      S.state = "clear"; S.wait = 150; S.msg = pick(clears); S.sub = "STAGE " + stageName(S.stage) + " CLEAR  ·  TIME BONUS " + bonus;
+      if (S.score > S.best) { S.best = S.score; best.set("hop", S.score); }
     }
-    const score = () => Math.floor(S.far / 10) + S.coinsGot * 10;
-    function die() {
-      if (S.state !== "play") return;
-      S.state = "dead";
-      const sc = score();
-      if (sc > S.best) { S.best = sc; best.set("hop", sc); S.msg = pick(bests); }
-      else S.msg = pick(deaths);
-      S.sub = "SCORE " + sc + "  ·  CLICK, TAP OR SPACE TO TRY AGAIN";
-      gameOver("hop", sc);
+    function addChips(k, x, y) {
+      for (let i = 0; i < k; i++) { S.chips++; S.score += 50; if (S.chips % 100 === 0) { S.lives++; S.pops.push({ x, y: y - 14, txt: "1 UP", t: 60 }); } }
     }
-    function jumpPress() {
-      if (S.state === "ready") { S.state = "play"; S.msg = ""; }
-      else if (S.state === "dead") { const touch = S.touch; reset(); S.touch = touch; S.state = "play"; S.msg = ""; return; }
-      S.jumpBuf = 8; S.holding = true;
+    function advance() {   // click / tap / space on a screen between plays
+      if (S.state === "title") { intro(); }
+      else if (S.state === "over") { newRun(); intro(); }
+      else if (S.state === "clear" && S.wait < 120) { S.stage++; loadStage(false); intro(); }
     }
-    function solidAt(px, w, prevBottom, bottom) {   // landing check against ground and ledges
-      for (const g of S.ground) if (px + w > g.x && px < g.x + g.w && prevBottom <= g.y && bottom >= g.y) return g.y;
-      for (const g of S.ledges) if (px + w > g.x && px < g.x + g.w && prevBottom <= g.y && bottom >= g.y) return g.y;
-      return null;
+
+    // ---- input from the on-screen buttons (phones)
+    const BTN = { left: [14, H - 64, 58, 50], right: [80, H - 64, 58, 50], jump: [W - 82, H - 64, 68, 50] };
+    function btnAt(x, y) { for (const k in BTN) { const [bx, by, bw, bh] = BTN[k]; if (x >= bx - 6 && x <= bx + bw + 6 && y >= by - 10 && y <= by + bh + 10) return k; } return null; }
+    function syncVk() { S.vk.left = S.vk.right = S.vk.jump = false; for (const b of S.ptrs.values()) if (b) S.vk[b] = true; }
+
+    // ---- tile collision for anything with a box
+    function moveBox(o, w, h, onHead) {
+      o.x += o.vx;
+      let x0 = Math.floor(o.x / T), x1 = Math.floor((o.x + w - 0.01) / T), y0 = Math.floor(o.y / T), y1 = Math.floor((o.y + h - 0.01) / T);
+      for (let ty = y0; ty <= y1; ty++) {
+        if (o.vx > 0 && isSolid(tile(x1, ty))) { o.x = x1 * T - w; o.vx = 0; o.hitWall = true; break; }
+        if (o.vx < 0 && isSolid(tile(x0, ty))) { o.x = (x0 + 1) * T; o.vx = 0; o.hitWall = true; break; }
+      }
+      const prevBottom = o.y + h;
+      o.y += o.vy; o.on = false;
+      x0 = Math.floor(o.x / T); x1 = Math.floor((o.x + w - 0.01) / T); y0 = Math.floor(o.y / T); y1 = Math.floor((o.y + h - 0.01) / T);
+      for (let tx = x0; tx <= x1; tx++) {
+        if (o.vy > 0 && isSolid(tile(tx, y1))) { o.y = y1 * T - h; o.vy = 0; o.on = true; break; }
+        if (o.vy < 0 && isSolid(tile(tx, y0))) {
+          o.y = (y0 + 1) * T; o.vy = 0.5;
+          if (onHead) { const cx = Math.floor((o.x + w / 2) / T); onHead(isSolid(tile(cx, y0)) ? cx : tx, y0); }
+          break;
+        }
+      }
+      // moving platforms carry whatever stands on them
+      if (o.vy >= 0) for (const pl of L.plats) {
+        if (o.x + w > pl.x && o.x < pl.x + pl.w && prevBottom <= pl.y + 1 && o.y + h >= pl.y) { o.y = pl.y - h; o.vy = 0; o.on = true; o.x += pl.dx; }
+      }
     }
-    const PWD = 16, PHT = 22;
+
     return {
-      hint: "Arrow keys or A/D run, Space, W or Up jumps (hold for higher). On a phone, just tap to jump: the robot runs for you.",
-      start: reset,
+      hint: "Arrow keys or A/D to run, Space, W or Up to jump (hold for higher). On a phone, use the buttons on screen. Three lives. Reach the exit gate before time runs out.",
+      start: newRun,
       pause() {},
       step() {
         S.t++;
+        S.pops.forEach(p => p.t--); S.pops = S.pops.filter(p => p.t > 0);
+        if (S.state === "intro") { if (--S.wait <= 0) { S.state = "play"; S.msg = ""; } return; }
+        if (S.state === "dead") { if (--S.wait <= 0) { loadStage(S.checkpoint); intro(); } return; }
+        if (S.state === "clear") { if (--S.wait <= 0) { S.stage++; loadStage(false); intro(); } return; }
         if (S.state !== "play") return;
-        // running: keyboard steers, touch/mouse players auto-run
-        let want = 0;
-        if (keys.right || keys.left) S.touch = false;   // keyboard players steer themselves
-        if (keys.right) want = 1; else if (keys.left) want = -1; else if (S.touch) want = 1;
-        S.vx += (want * RUN - S.vx) * (S.on ? 0.25 : 0.08);
-        if (keys.up || keys.jump) { if (!S.holding) { S.jumpBuf = 8; S.holding = true; } } else if (!S.touchHold) S.holding = false;
-        // jump with a little forgiveness on both ends
-        if (S.on) S.coyote = 6; else if (S.coyote > 0) S.coyote--;
-        if (S.jumpBuf > 0) { S.jumpBuf--; if (S.coyote > 0) { S.vy = JUMP; S.on = false; S.coyote = 0; S.jumpBuf = 0; } }
-        if (!S.holding && S.vy < -3.5) S.vy = -3.5;   // let go early for a short hop
-        S.vy = Math.min(12, S.vy + GRAV);
-        S.x += S.vx;
-        if (S.x < S.cam + 4) { S.x = S.cam + 4; S.vx = 0; }
-        const prevBottom = S.y + PHT; S.y += S.vy; const bottom = S.y + PHT;
-        S.on = false;
-        if (S.vy >= 0) { const land = solidAt(S.x, PWD, prevBottom, bottom); if (land !== null) { S.y = land - PHT; S.vy = 0; S.on = true; } }
-        // walls: running into the side of the next ground block
-        for (const g of S.ground) if (S.y + PHT > g.y + 4 && S.x + PWD > g.x && S.x < g.x + g.w) { if (S.vx > 0) S.x = g.x - PWD; else S.x = g.x + g.w; S.vx = 0; }
-        if (S.y > H + 40) die();
-        // camera only moves forward
-        S.cam = Math.max(S.cam, S.x - W * 0.35);
-        S.far = Math.max(S.far, S.x - 60);
-        gen(S.cam + W * 2);
-        // coins
-        for (const c of S.coins) if (!c.got && Math.abs(c.x - (S.x + PWD / 2)) < 14 && Math.abs(c.y - (S.y + PHT / 2)) < 18) { c.got = true; S.coinsGot++; }
-        // blobs
-        for (const b of S.blobs) {
+        const p = S.p;
+        // timer
+        if (++S.tick % 24 === 0) { S.time--; if (S.time <= 0) { loseLife("OUT OF TIME. THE CLOCK WINS."); return; } }
+        // moving platforms
+        for (const pl of L.plats) { const nx = Math.max(pl.x0, Math.min(pl.x1, pl.x + pl.sp * pl.dir)); pl.dx = nx - pl.x; pl.x = nx; if (pl.x <= pl.x0 || pl.x >= pl.x1) pl.dir *= -1; }
+        // controls
+        const left = keys.left || S.vk.left, right = keys.right || S.vk.right, jumpHeld = keys.jump || keys.up || S.vk.jump;
+        const want = right ? 1 : left ? -1 : 0;
+        if (want) p.face = want;
+        p.vx += (want * RUN - p.vx) * (p.on ? 0.22 : 0.1);
+        if (Math.abs(p.vx) < 0.05) p.vx = 0;
+        if (jumpHeld && !p.held) p.buf = 8;
+        p.held = jumpHeld;
+        if (p.on) p.coyote = 6; else if (p.coyote > 0) p.coyote--;
+        if (p.buf > 0) { p.buf--; if (p.coyote > 0) { p.vy = JUMP; p.coyote = 0; p.buf = 0; p.on = false; } }
+        if (!jumpHeld && p.vy < -3.5) p.vy = -3.5;      // let go early for a short hop
+        p.vy = Math.min(12, p.vy + GRAV);
+        moveBox(p, PWD, PHT, (tx, ty) => {              // bumped a block from below
+          if (tile(tx, ty) === BONUS) { L.g[ty * L.stride + tx] = USED; addChips(1, tx * T + T / 2, ty * T); S.pops.push({ x: tx * T + T / 2, y: ty * T - 6, txt: "+50", t: 40, chip: true }); }
+          for (const b of L.blobs) if (!b.dead && Math.abs(b.x + 7 - (tx * T + T / 2)) < 16 && Math.abs(b.y + 14 - ty * T) < 4) { b.dead = 1; S.score += 100; }   // bump kills blobs standing on it
+        });
+        if (p.x < 0) { p.x = 0; p.vx = 0; }
+        if (p.x > L.cols * T - PWD) p.x = L.cols * T - PWD;
+        if (p.inv) p.inv--;
+        // spikes
+        const feet = p.y + PHT - 1, sx0 = Math.floor((p.x + 2) / T), sx1 = Math.floor((p.x + PWD - 2) / T), sy = Math.floor(feet / T);
+        for (let tx = sx0; tx <= sx1; tx++) if (tile(tx, sy) === SPIKE && feet - sy * T > T * 0.35) { loseLife(); return; }
+        if (p.y > H + 40) { loseLife(); return; }
+        // checkpoint and exit
+        if (!S.checkpoint && p.x > L.midX) { S.checkpoint = true; S.pops.push({ x: p.x, y: p.y - 20, txt: "CHECKPOINT", t: 70 }); }
+        if (L.exitOpen && p.x + PWD > L.exitX && p.x < L.exitX + 24) { clearStage(); return; }
+        // boss arena: once you're in, the way back is sealed and the Mega Blob wakes up
+        if (L.boss) {
+          const bs = L.boss;
+          if (!S.inArena && p.x > L.arenaX + T * 2) { S.inArena = true; S.pops.push({ x: L.arenaX + W / 2, y: 120, txt: "MEGA BLOB", t: 90, big: true }); }
+          if (S.inArena && p.x < L.arenaX + 2) { p.x = L.arenaX + 2; p.vx = 0; }
+          if (S.inArena && !bs.dead) {
+            if (bs.inv) bs.inv--;
+            bs.vy = Math.min(10, bs.vy + GRAV); bs.hitWall = false;
+            const wasOn = bs.on; moveBox(bs, bs.w, bs.h);
+            if (bs.on) { bs.vx *= 0.8; if (!wasOn) bs.land = 10; }
+            if (bs.land) bs.land--;
+            if (bs.on && --bs.timer <= 0) {                // hop toward you; every third hop, spit a blob
+              const dir = p.x + PWD / 2 < bs.x + bs.w / 2 ? -1 : 1; bs.face = dir;
+              const rage = 1 - bs.hp / bs.maxHp;
+              bs.vy = -8.5 - rage * 2; bs.vx = dir * (2 + rage * 1.5); bs.hops++;
+              if (bs.hops % 3 === 0) L.blobs.push({ x: bs.x + bs.w / 2 - 7, y: bs.y + bs.h - 14, vx: dir * 1.4, vy: -4, dead: 0 });
+              bs.timer = 55 + Math.floor(Math.random() * 40) - rage * 20;
+            }
+            if (p.x + PWD > bs.x + 3 && p.x < bs.x + bs.w - 3 && p.y + PHT > bs.y + 4 && p.y < bs.y + bs.h) {
+              if (p.vy > 0 && p.y + PHT - p.vy <= bs.y + 10 && !bs.inv) {
+                bs.hp--; bs.inv = 50; p.vy = JUMP * 0.8; p.held = true; S.score += 500;
+                S.pops.push({ x: bs.x + bs.w / 2, y: bs.y - 10, txt: "+500", t: 40 });
+                if (bs.hp <= 0) { bs.dead = 1; L.exitOpen = true; S.score += 2000; S.pops.push({ x: bs.x + bs.w / 2, y: bs.y - 30, txt: "BOSS DOWN +2000", t: 100, big: true }); }
+              } else if (!bs.inv) { loseLife("THE MEGA BLOB SAYS HI"); return; }
+            }
+          }
+          if (bs.dead) bs.dead++;
+        }
+        // camera follows you both ways, within the stage
+        const target = S.inArena ? Math.min(L.cols * T - W, L.arenaX) : Math.max(0, Math.min(L.cols * T - W, p.x - W * 0.4));
+        S.cam += (target - S.cam) * 0.2;
+        // chips
+        for (const ch of L.coins) if (!ch.got && Math.abs(ch.x - (p.x + PWD / 2)) < 13 && Math.abs(ch.y - (p.y + PHT / 2)) < 17) { ch.got = true; addChips(1, ch.x, ch.y); }
+        // blobs: wake up when near the screen, walk, turn at walls and ledges
+        for (const b of L.blobs) {
           if (b.dead) { b.dead++; continue; }
-          b.x += b.v; if (b.x < b.lo || b.x > b.hi) { b.v = -b.v; b.x = Math.max(b.lo, Math.min(b.hi, b.x)); }
-          const bx = b.x, by = GROUND - 14, bw = 20, bh = 14;
-          if (S.x + PWD > bx && S.x < bx + bw && S.y + PHT > by && S.y < by + bh) {
-            if (S.vy > 0 && prevBottom <= by + 6) { b.dead = 1; S.vy = JUMP * 0.7; S.holding = true; S.coinsGot += 2; }
-            else die();
+          if (b.x > S.cam + W + 60 || b.x < S.cam - 120) continue;
+          b.vy = Math.min(10, b.vy + GRAV); b.hitWall = false;
+          const vx = b.vx; moveBox(b, 14, 14);
+          if (b.hitWall) b.vx = -vx; else b.vx = vx;
+          if (b.on) { const ahead = Math.floor((b.x + (b.vx > 0 ? 15 : -1)) / T), below = Math.floor((b.y + 15) / T); if (!isSolid(tile(ahead, below))) b.vx = -b.vx; }
+          if (b.y > H + 40) b.dead = 99;
+          if (p.x + PWD > b.x && p.x < b.x + 14 && p.y + PHT > b.y && p.y < b.y + 14) {
+            if (p.vy > 0 && p.y + PHT - p.vy <= b.y + 6) { b.dead = 1; p.vy = JUMP * 0.65; p.held = true; S.score += 100; S.pops.push({ x: b.x + 7, y: b.y - 6, txt: "+100", t: 40 }); }
+            else { loseLife(); return; }
           }
         }
-        // forget things far behind
-        const cut = S.cam - 200;
-        S.ground = S.ground.filter(g => g.x + g.w > cut); S.ledges = S.ledges.filter(g => g.x + g.w > cut);
-        S.coins = S.coins.filter(c => c.x > cut && !c.got); S.blobs = S.blobs.filter(b => b.x > cut && b.dead < 30);
+        L.blobs = L.blobs.filter(b => b.dead < 30);
       },
       draw() {
-        const cam = S.cam;
-        // far skyline for depth
+        const cam = Math.round(S.cam);
+        // far skyline
         ctx.fillStyle = "rgba(0,255,136,.05)";
-        for (let i = -1; i < 9; i++) {
-          const x = ((i * 110 - cam * 0.25) % 990 + 990) % 990 - 110, h = 40 + ((i * 53) % 70);
-          ctx.fillRect(x, GROUND - h - 30, 70, h + 30);
-        }
-        // ground and ledges
-        for (const g of S.ground) {
-          const x = g.x - cam; if (x > W || x + g.w < 0) continue;
-          ctx.fillStyle = "#111118"; ctx.fillRect(x, g.y, g.w, H - g.y);
-          ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 8; ctx.fillRect(x, g.y, g.w, 2); ctx.shadowBlur = 0;
-          ctx.fillStyle = "rgba(0,255,136,.12)";
-          for (let gx = Math.ceil(g.x / T) * T; gx < g.x + g.w; gx += T) ctx.fillRect(gx - cam, g.y + 2, 1, H - g.y);
-        }
-        for (const g of S.ledges) {
-          const x = g.x - cam; if (x > W || x + g.w < 0) continue;
-          ctx.fillStyle = "#16161f"; ctx.fillRect(x, g.y, g.w, 8);
-          ctx.fillStyle = CYAN; ctx.fillRect(x, g.y, g.w, 2);
-        }
-        // coins: little spinning chips
-        for (const c of S.coins) {
-          const x = c.x - cam; if (x < -10 || x > W + 10) continue;
-          const sq = Math.abs(Math.cos((S.t + c.x) * 0.08));
-          ctx.fillStyle = YELLOW; ctx.shadowColor = YELLOW; ctx.shadowBlur = 8;
-          ctx.fillRect(x - 5 * sq, c.y - 5, 10 * sq + 1, 10); ctx.shadowBlur = 0;
-        }
-        // glitch blobs
-        for (const b of S.blobs) {
-          const x = b.x - cam; if (x < -30 || x > W + 30) continue;
-          const squash = b.dead ? 0.3 : 1 + Math.sin(S.t * 0.2 + b.x) * 0.08;
-          ctx.globalAlpha = b.dead ? Math.max(0, 1 - b.dead / 30) : 1;
-          ctx.fillStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 10;
-          const h = 14 * squash; ctx.fillRect(x, GROUND - h, 20, h);
-          ctx.shadowBlur = 0;
-          if (!b.dead) {   // glitch slices and eyes
-            ctx.fillStyle = "rgba(10,10,15,.8)"; ctx.fillRect(x + (S.t % 7 < 2 ? 3 : 0), GROUND - h + 4, 20, 1);
-            ctx.fillStyle = "#0a0a0f"; const dir = b.v > 0 ? 3 : 0; ctx.fillRect(x + 5 + dir, GROUND - h + 3, 3, 3); ctx.fillRect(x + 11 + dir, GROUND - h + 3, 3, 3);
+        for (let i = -1; i < 9; i++) { const x = ((i * 110 - cam * 0.25) % 990 + 990) % 990 - 110, h = 40 + ((i * 53) % 70); ctx.fillRect(x, 230 - h, 70, h + 130); }
+        // tiles on screen
+        const c0 = Math.max(0, Math.floor(cam / T)), c1 = Math.min(L.cols - 1, Math.floor((cam + W) / T));
+        for (let ty = 0; ty < ROWS; ty++) for (let tx = c0; tx <= c1; tx++) {
+          const v = L.g[ty * L.stride + tx]; if (!v) continue;
+          const x = tx * T - cam, y = ty * T;
+          if (v === GROUND) {
+            ctx.fillStyle = "#111118"; ctx.fillRect(x, y, T, T);
+            if (!isSolid(tile(tx, ty - 1))) { ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 6; ctx.fillRect(x, y, T, 2); ctx.shadowBlur = 0; }
+            ctx.fillStyle = "rgba(0,255,136,.1)"; ctx.fillRect(x, y + 2, 1, T - 2);
+          } else if (v === BRICK) {
+            ctx.fillStyle = "#16161f"; ctx.fillRect(x + 1, y + 1, T - 2, T - 2); ctx.strokeStyle = CYAN; ctx.lineWidth = 1.5; ctx.strokeRect(x + 1.5, y + 1.5, T - 3, T - 3);
+            ctx.fillStyle = "rgba(0,204,255,.35)"; ctx.fillRect(x + 4, y + 9, T - 8, 1);
+          } else if (v === BONUS) {
+            const glow = 0.6 + Math.sin(S.t * 0.1) * 0.4;
+            ctx.fillStyle = "#1a160a"; ctx.fillRect(x + 1, y + 1, T - 2, T - 2);
+            ctx.strokeStyle = YELLOW; ctx.shadowColor = YELLOW; ctx.shadowBlur = 8 * glow; ctx.lineWidth = 2; ctx.strokeRect(x + 2, y + 2, T - 4, T - 4); ctx.shadowBlur = 0;
+            ctx.fillStyle = YELLOW; ctx.fillRect(x + 8, y + 6, 4, 4); ctx.fillRect(x + 8, y + 12, 4, 2);
+          } else if (v === USED) {
+            ctx.fillStyle = "#16161f"; ctx.fillRect(x + 1, y + 1, T - 2, T - 2); ctx.strokeStyle = "#2c2c3e"; ctx.lineWidth = 2; ctx.strokeRect(x + 2, y + 2, T - 4, T - 4);
+          } else if (v === SPIKE) {
+            ctx.fillStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 8;
+            for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(x + k * 6.6 + 0.5, y + T); ctx.lineTo(x + k * 6.6 + 3.8, y + 8); ctx.lineTo(x + k * 6.6 + 7, y + T); ctx.fill(); }
+            ctx.shadowBlur = 0;
+          } else if (v === PYLON) {
+            const capTop = tile(tx, ty - 1) !== PYLON;
+            ctx.fillStyle = "#0f1a1f"; ctx.fillRect(x, y, T, T);
+            ctx.fillStyle = CYAN; ctx.fillRect(tile(tx - 1, ty) === PYLON ? x + T - 2 : x, y, 2, T);
+            if (capTop) { ctx.shadowColor = CYAN; ctx.shadowBlur = 8; ctx.fillRect(x - (tile(tx - 1, ty) === PYLON ? 0 : 2), y, T + 2, 4); ctx.shadowBlur = 0; }
           }
+        }
+        // moving platforms
+        for (const pl of L.plats) { const x = pl.x - cam; if (x > W || x + pl.w < 0) continue; ctx.fillStyle = "#16161f"; ctx.fillRect(x, pl.y, pl.w, 8); ctx.fillStyle = CYAN; ctx.shadowColor = CYAN; ctx.shadowBlur = 8; ctx.fillRect(x, pl.y, pl.w, 2); ctx.shadowBlur = 0; }
+        // exit gate
+        { const x = L.exitX - cam, y = L.exitY;
+          if (x > -40 && x < W + 40) {
+            const col = L.exitOpen ? GREEN : MUTED;
+            ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.shadowColor = col; ctx.shadowBlur = L.exitOpen ? 14 : 0;
+            ctx.strokeRect(x, y - 64, 24, 64); ctx.shadowBlur = 0;
+            if (L.exitOpen) { ctx.fillStyle = `rgba(0,255,136,${0.15 + Math.sin(S.t * 0.12) * 0.1})`; ctx.fillRect(x + 2, y - 62, 20, 62); }
+            else { ctx.strokeStyle = "rgba(136,136,170,.6)"; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(x + 5 + k * 5, y - 62); ctx.lineTo(x + 5 + k * 5, y - 2); ctx.stroke(); } }
+            ctx.font = "14px " + DISPLAY; ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillStyle = col; ctx.fillText(L.exitOpen ? "EXIT" : "LOCKED", x + 12, y - 68);
+          } }
+        // chips
+        for (const ch of L.coins) {
+          if (ch.got) continue; const x = ch.x - cam; if (x < -10 || x > W + 10) continue;
+          const sq = Math.abs(Math.cos((S.t + ch.x) * 0.08));
+          ctx.fillStyle = YELLOW; ctx.shadowColor = YELLOW; ctx.shadowBlur = 8; ctx.fillRect(x - 5 * sq, ch.y - 5, 10 * sq + 1, 10); ctx.shadowBlur = 0;
+        }
+        // blobs
+        for (const b of L.blobs) {
+          const x = b.x - cam; if (x < -30 || x > W + 30) continue;
+          const squash = b.dead ? 0.3 : 1 + Math.sin(S.t * 0.2 + b.x) * 0.08, h = 14 * squash, bottom = b.y + 14;
+          ctx.globalAlpha = b.dead ? Math.max(0, 1 - b.dead / 30) : 1;
+          ctx.fillStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 10; ctx.fillRect(x, bottom - h, 14, h); ctx.shadowBlur = 0;
+          if (!b.dead) { ctx.fillStyle = "rgba(10,10,15,.8)"; ctx.fillRect(x + (S.t % 7 < 2 ? 2 : 0), bottom - h + 4, 14, 1); ctx.fillStyle = "#0a0a0f"; const d = b.vx > 0 ? 2 : 0; ctx.fillRect(x + 3 + d, bottom - h + 3, 3, 3); ctx.fillRect(x + 8 + d, bottom - h + 3, 3, 3); }
           ctx.globalAlpha = 1;
         }
+        // the Mega Blob
+        if (L.boss && L.boss.dead < 40) {
+          const bs = L.boss, x = Math.round(bs.x - cam);
+          if (x > -60 && x < W + 60) {
+            const squash = bs.land ? 0.8 : bs.on ? 1 + Math.sin(S.t * 0.15) * 0.05 : 1.08, hh = bs.h * squash, ww = bs.w * (2 - squash), bottom = bs.y + bs.h;
+            ctx.globalAlpha = bs.dead ? Math.max(0, 1 - bs.dead / 40) : (bs.inv && S.t % 6 < 3 ? 0.4 : 1);
+            const bx = x + (bs.w - ww) / 2;
+            ctx.fillStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 18; ctx.fillRect(bx, bottom - hh, ww, hh); ctx.shadowBlur = 0;
+            ctx.fillStyle = "rgba(10,10,15,.75)"; for (let k = 0; k < 3; k++) ctx.fillRect(bx + ((S.t * 3 + k * 17) % 9), bottom - hh + 8 + k * 7, ww, 1);   // glitch lines
+            ctx.fillStyle = "#0a0a0f"; const d = bs.face > 0 ? 5 : -5;                                                                      // angry eyes
+            ctx.fillRect(bx + ww / 2 - 12 + d, bottom - hh + 8, 7, 6); ctx.fillRect(bx + ww / 2 + 5 + d, bottom - hh + 8, 7, 6);
+            ctx.fillRect(bx + ww / 2 - 14 + d, bottom - hh + 5, 9, 2); ctx.fillRect(bx + ww / 2 + 5 + d, bottom - hh + 5, 9, 2);
+            ctx.globalAlpha = 1;
+          }
+        }
         // the robot
-        const px = S.x - cam, py = S.y;
-        ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 12;
-        ctx.fillRect(px, py, PWD, PHT - 4); ctx.shadowBlur = 0;
-        ctx.fillStyle = "#0a0a0f"; ctx.fillRect(px + 3, py + 4, PWD - 6, 5);            // visor
-        ctx.fillStyle = TEXT; ctx.fillRect(px + (S.vx >= 0 ? 9 : 4), py + 5, 3, 3);       // eye
-        ctx.fillStyle = GREEN; ctx.fillRect(px + 7, py - 5, 2, 5);                          // antenna
-        ctx.fillRect(px + 6, py - 7, 4, 2);
-        const leg = S.on && Math.abs(S.vx) > 0.5 ? (Math.floor(S.t / 5) % 2) * 3 : 0;      // legs
-        ctx.fillRect(px + 2 + leg, py + PHT - 4, 4, 4); ctx.fillRect(px + PWD - 6 - leg, py + PHT - 4, 4, 4);
+        if (S.state === "play" || S.state === "clear" || S.state === "intro") {
+          const p = S.p, px = Math.round(p.x - cam), py = Math.round(p.y);
+          ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 12; ctx.fillRect(px, py, PWD, PHT - 4); ctx.shadowBlur = 0;
+          ctx.fillStyle = "#0a0a0f"; ctx.fillRect(px + 2, py + 4, PWD - 4, 5);
+          ctx.fillStyle = TEXT; ctx.fillRect(px + (p.face > 0 ? 8 : 3), py + 5, 3, 3);
+          ctx.fillStyle = GREEN; ctx.fillRect(px + 6, py - 5, 2, 5); ctx.fillRect(px + 5, py - 7, 4, 2);
+          const leg = p.on && Math.abs(p.vx) > 0.5 ? (Math.floor(S.t / 5) % 2) * 3 : 0;
+          ctx.fillRect(px + 1 + leg, py + PHT - 4, 4, 4); ctx.fillRect(px + PWD - 5 - leg, py + PHT - 4, 4, 4);
+        }
+        // pop-up points
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        for (const pp of S.pops) { ctx.globalAlpha = Math.min(1, pp.t / 20); ctx.font = (pp.big ? "30px " : "16px ") + DISPLAY; ctx.fillStyle = pp.chip ? YELLOW : GREEN; ctx.fillText(pp.txt, pp.x - cam, pp.y - (60 - pp.t) * 0.4); ctx.globalAlpha = 1; }
         // HUD
-        ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = "26px " + DISPLAY; ctx.fillStyle = GREEN;
-        ctx.fillText(String(score()).padStart(5, "0"), 16, 12);
-        ctx.font = "12px " + MONO; ctx.fillStyle = MUTED; ctx.fillText("BEST " + S.best, 16, 40);
-        ctx.textAlign = "right"; ctx.fillStyle = YELLOW; ctx.font = "20px " + DISPLAY; ctx.fillText("× " + S.coinsGot, W - 16, 14);
-        if (S.state !== "play") { ctx.fillStyle = "rgba(10,10,15,.55)"; ctx.fillRect(0, 0, W, H); banner(S.msg, S.sub, H / 2 - 10); }
+        ctx.textBaseline = "top"; ctx.textAlign = "left";
+        ctx.font = "bold 14px " + MONO; ctx.fillStyle = GREEN; ctx.shadowColor = GREEN; ctx.shadowBlur = 8; ctx.fillText("SCORE " + S.score, 14, 10); ctx.shadowBlur = 0;
+        ctx.font = "11px " + MONO; ctx.fillStyle = MUTED; ctx.fillText("BEST " + S.best, 14, 28);
+        ctx.textAlign = "center"; ctx.font = "18px " + DISPLAY; ctx.fillStyle = TEXT; ctx.fillText("STAGE " + stageName(S.stage), W / 2 - 60, 10);
+        ctx.fillStyle = S.time <= 60 && S.state === "play" && S.t % 30 < 15 ? RED : TEXT; ctx.fillText("TIME " + S.time, W / 2 + 50, 10);
+        ctx.textAlign = "right"; ctx.fillStyle = YELLOW; ctx.fillText("× " + S.chips, W - 14, 10);
+        ctx.fillStyle = GREEN; for (let i = 0; i < Math.min(S.lives, 6); i++) { const lx = W - 18 - i * 14; ctx.fillRect(lx, 34, 9, 9); ctx.fillStyle = "#0a0a0f"; ctx.fillRect(lx + 1, 36, 7, 2); ctx.fillStyle = GREEN; }
+        if (S.lives > 6) { ctx.font = "11px " + MONO; ctx.fillStyle = MUTED; ctx.fillText("+" + (S.lives - 6), W - 14 - 6 * 14, 33); }
+        // boss health
+        if (L.boss && S.inArena && !L.boss.dead) {
+          const bw = 160, bx = W / 2 - bw / 2, by = 52;
+          ctx.font = "12px " + DISPLAY; ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillStyle = RED; ctx.fillText("MEGA BLOB", W / 2, by - 1);
+          ctx.fillStyle = "#1e1e2e"; ctx.fillRect(bx, by, bw, 6); ctx.fillStyle = RED; ctx.fillRect(bx, by, bw * L.boss.hp / L.boss.maxHp, 6);
+        }
+        // phone buttons
+        if (S.touchUI && S.state === "play") {
+          for (const k in BTN) {
+            const [bx, by, bw, bh] = BTN[k], on = S.vk[k];
+            ctx.fillStyle = on ? "rgba(0,255,136,.3)" : "rgba(245,245,245,.08)"; ctx.strokeStyle = on ? GREEN : "rgba(245,245,245,.3)"; ctx.lineWidth = 1.5;
+            ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx, by, bw, bh);
+            ctx.fillStyle = on ? GREEN : "rgba(245,245,245,.7)"; ctx.font = "22px " + DISPLAY; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(k === "left" ? "◀" : k === "right" ? "▶" : "JUMP", bx + bw / 2, by + bh / 2 + 1);
+          }
+        }
+        // screens between plays
+        if (S.state !== "play") {
+          ctx.fillStyle = S.state === "intro" || S.state === "title" || S.state === "over" ? "rgba(10,10,15,.82)" : "rgba(10,10,15,.55)"; ctx.fillRect(0, 0, W, H);
+          if (S.state === "title") { banner("BIT HOP", "CLICK, TAP OR SPACE TO START", H / 2 - 30); ctx.font = "12px " + MONO; ctx.fillStyle = MUTED; ctx.textAlign = "center"; ctx.fillText("3 LIVES  ·  REACH THE EXIT  ·  STOMP BLOBS  ·  BOSS EVERY 4TH STAGE", W / 2, H / 2 + 40); }
+          else banner(S.msg, S.sub, H / 2 - 10);
+        }
       },
-      pointermove() {},
-      pointerdown() { S.touch = true; S.touchHold = true; jumpPress(); },
-      pointerup() { S.touchHold = false; S.holding = false; },
-      action() { jumpPress(); }
+      pointermove(x, y, e) { if (e && e.pointerType === "touch" && S.ptrs.has(e.pointerId)) { S.ptrs.set(e.pointerId, btnAt(x, y)); syncVk(); } },
+      pointerdown(x, y, e) {
+        if (e && e.pointerType === "touch") S.touchUI = true;
+        if (S.state !== "play") { advance(); return; }
+        if (e && e.pointerType === "touch") { S.ptrs.set(e.pointerId, btnAt(x, y)); syncVk(); }
+      },
+      pointerup(e) { if (e && S.ptrs.has(e.pointerId)) { S.ptrs.delete(e.pointerId); syncVk(); } },
+      action() { if (S.state !== "play") advance(); }
     };
   })();
 
@@ -663,9 +899,11 @@ background:#0a0a0f;color:var(--green);border:1px solid rgba(0,255,136,.45);borde
     ctx.clearRect(0, 0, W, H); cur.draw();
     requestAnimationFrame(loop);
   }
-  cv.addEventListener("pointermove", e => cur.pointermove(...toXY(e)));
-  cv.addEventListener("pointerdown", e => { e.preventDefault(); if (entry.hidden) cur.pointerdown(...toXY(e)); });
-  addEventListener("pointerup", () => cur.pointerup && cur.pointerup());
+  cv.addEventListener("pointermove", e => cur.pointermove(...toXY(e), e));
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); if (entry.hidden) cur.pointerdown(...toXY(e), e); });
+  addEventListener("pointerup", e => cur.pointerup && cur.pointerup(e));
+  addEventListener("pointercancel", e => cur.pointerup && cur.pointerup(e));
+  cv.addEventListener("contextmenu", e => e.preventDefault());
   const map = { w: "up", arrowup: "up", s: "down", arrowdown: "down", a: "left", arrowleft: "left", d: "right", arrowright: "right", " ": "jump" };
   addEventListener("keydown", e => {
     if (!entry.hidden || e.target.tagName === "INPUT") return;   // typing initials
@@ -682,4 +920,4 @@ background:#0a0a0f;color:var(--green);border:1px solid rgba(0,255,136,.45);borde
 </script>
 </body>
 </html>
-<!-- arcade v2: 3d paddle battle, high scores -->
+<!-- arcade v3: bit hop stages and bosses -->
