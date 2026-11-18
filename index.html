@@ -298,14 +298,44 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
       lead: bar("A4 . C5 E5 . D5 C5 .  G4 . B4 D5 . C5 B4 .  F4 . A4 C5 . B4 A4 G4  E4 . G#4 B4 . A4 . .  A4 . C5 E5 . A5 G5 E5  G4 . B4 D5 . G5 F5 D5  F4 A4 C5 F5 E5 C5 A4 C5  B4 . G#4 . E4 . . ."),
       bass: bar("A2 A2 A3 A2 A2 A3 A2 A3  G2 G2 G3 G2 G2 G3 G2 G3  F2 F2 F3 F2 F2 F3 F2 F3  E2 E2 E3 E2 E2 E3 G#2 B2  A2 A2 A3 A2 A2 A3 A2 A3  G2 G2 G3 G2 G2 G3 G2 G3  F2 F2 F3 F2 F2 F3 F2 F3  E2 E2 E3 E2 E3 E2 E3 E2"),
       drums: bar("k h s h k h s h") },
-    hop: { bpm: 150,
+    hop0: { bpm: 150,   // world 1: bouncy
       lead: bar("C5 . E5 G5 . E5 C5 .  D5 . F5 A5 . G5 F5 .  E5 G5 C6 . B5 G5 E5 .  D5 E5 F5 D5 G5 . . .  C5 . E5 G5 . E5 C5 .  A4 . C5 F5 . E5 D5 .  G4 B4 D5 G5 F5 D5 B4 .  C5 . G4 . C5 . . ."),
       bass: bar("C3 . G2 . C3 . G2 .  F2 . C3 . F2 . C3 .  C3 . G2 . E3 . G2 .  G2 . D3 . G2 . B2 .  C3 . G2 . C3 . G2 .  F2 . C3 . F2 . C3 .  G2 . D3 . G2 . B2 .  C3 . G2 . C3 . . ."),
       drums: bar("k . h . s . h .  k . h k s . h h") },
-    boss: { bpm: 172,
+    boss0: { bpm: 172,  // Mega Blob
       lead: bar("D5 D5 . F5 E5 . D5 C#5  D5 . A4 . D5 . F5 .  G5 G5 . F5 E5 . D5 E5  F5 . E5 . C#5 . A4 ."),
       bass: bar("D2 D3 D2 D3 D2 D3 D2 D3  D2 D3 D2 D3 C2 C3 C2 C3  A#1 A#2 A#1 A#2 A#1 A#2 A#1 A#2  A1 A2 A1 A2 A1 A2 C#2 E2"),
       drums: bar("k h k h s h k h  k h k h s h s s") },
+    // world 2: zippy arpeggios
+    hop1: { bpm: 142,
+      lead: bar("G4 B4 D5 G5 D5 B4 F5 .  G4 B4 D5 G5 A5 G5 F5 D5  C5 E5 G5 C6 G5 E5 A#4 .  D5 F#5 A5 D6 C6 A5 F#5 .  G5 . F5 D5 . C5 A#4 .  G4 . A#4 C5 . D5 F5 .  C5 E5 G5 A5 G5 E5 C5 .  D5 . . A4 G4 . . ."),
+      bass: bar("G2 . G3 . G2 . F2 .  G2 . G3 . G2 . G2 F2  C3 . C2 . C3 . A#2 .  D3 . D2 . F#2 . A2 .  G2 . G3 . G2 . F2 .  G2 . G3 . G2 . G2 F2  C3 . C2 . C3 . A#2 .  D3 . A2 . G2 . . ."),
+      drums: bar("k h h k s h h h") },
+    // world 3: dusty shuffle
+    hop2: { bpm: 132,
+      lead: bar("A4 . . E5 . . D5 C5  B4 . . G4 . . A4 B4  C5 . . D5 . . E5 .  A4 . . . . . . .  A4 . C5 . E5 . A5 .  G5 . E5 . D5 . B4 .  C5 . D5 . E5 . G5 F5  E5 . . . . . . ."),
+      bass: bar("A2 . E2 . A2 . E2 .  G2 . D2 . G2 . D2 .  F2 . C3 . F2 . C3 .  E2 . B1 . E2 . B1 ."),
+      drums: bar("k . h s . h k h") },
+    // world 4: spooky royal
+    hop3: { bpm: 120,
+      lead: bar("E5 . F5 . G#5 . B5 .  A5 . G#5 . F5 . E5 .  D5 . E5 . F5 . A5 .  G#5 . . . E5 . . .  E5 G#5 B5 E6 D6 B5 G#5 .  C6 B5 A5 G#5 F5 . E5 .  D5 F5 A5 D6 C6 A5 F5 .  B4 . D5 . E5 . . ."),
+      bass: bar("E2 . B2 . E2 . B2 .  A2 . E3 . A2 . E3 .  D2 . A2 . D2 . A2 .  E2 . B2 . G#2 . B2 ."),
+      drums: bar("k . . h s . h .") },
+    // Volt Drone: buzzing arpeggios
+    boss1: { bpm: 176,
+      lead: bar("F#5 A5 C#6 A5 F#5 A5 C#6 A5  E5 G#5 B5 G#5 E5 G#5 B5 G#5  D5 F#5 A5 F#5 D5 F#5 A5 F#5  C#5 F5 G#5 C#6 G#5 F5 C#5 ."),
+      bass: bar("F#2 F#2 F#3 F#2 F#2 F#3 F#2 F#3  E2 E2 E3 E2 E2 E3 E2 E3  D2 D2 D3 D2 D2 D3 D2 D3  C#2 C#2 C#3 C#2 C#2 C#3 C#2 C#3"),
+      drums: bar("k h s h k k s h") },
+    // Byte Bull: heavy and stompy
+    boss2: { bpm: 160,
+      lead: bar("E4 E4 G4 E4 A#4 . A4 .  E4 E4 G4 E4 B4 . A#4 A4  E4 E4 G4 E4 A#4 . A4 G4  E4 . . . E5 . . ."),
+      bass: bar("E2 E2 E2 E2 E2 E2 G2 A#2  E2 E2 E2 E2 E2 E2 A#2 B2  E2 E2 E2 E2 E2 E2 G2 A#2  E2 E2 E2 E2 E1 E1 E1 E1"),
+      drums: bar("k k s . k k s k") },
+    // Glitch King: ominous
+    boss3: { bpm: 150,
+      lead: bar("C5 . D#5 . G5 . F#5 .  G5 . D#5 . C5 . B4 .  G#4 . C5 . D#5 . G#5 .  G5 . . . G4 . . ."),
+      bass: bar("C2 C3 C2 C3 C2 C3 C2 C3  G#1 G#2 G#1 G#2 G#1 G#2 G#1 G#2  F1 F2 F1 F2 F1 F2 F1 F2  G1 G2 G1 G2 B1 B2 D2 G2"),
+      drums: bar("k h s h k h s s") },
     bug: { bpm: 124,
       lead: bar("E5 . . B4 E5 . G5 .  F#5 . E5 . D5 . B4 .  C5 . . A4 C5 . E5 .  D#5 . F#5 . B5 . . .  E5 . . B4 E5 . G5 .  A5 . G5 . F#5 . E5 .  C5 . E5 . A5 . G5 F#5  E5 . B4 . E5 . . ."),
       bass: bar("E2 . E3 . E2 . E3 .  B1 . B2 . B1 . B2 .  A1 . A2 . A1 . A2 .  B1 . B2 . D#2 . F#2 .  E2 . E3 . E2 . E3 .  C2 . C3 . C2 . C3 .  A1 . A2 . B1 . B2 .  E2 . B1 . E2 . . ."),
@@ -821,7 +851,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
       hint: "Arrow keys or A/D to run, Space, W or Up to jump (hold for higher). On a phone, use the buttons on screen. Three lives. Reach the exit gate before time runs out.",
       start: newRun,
       pause() {},
-      song() { return S.inArena && L.boss && !L.boss.dead && S.state === "play" ? "boss" : "hop"; },
+      song() { return S.inArena && L.boss && !L.boss.dead && S.state === "play" ? "boss" + L.boss.type : "hop" + (Math.floor(S.stage / 4) % 4); },   // a theme per world, a track per boss
       step() {
         S.t++;
         S.pops.forEach(p => p.t--); S.pops = S.pops.filter(p => p.t > 0);
@@ -1189,5 +1219,4 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
 </script>
 </body>
 </html>
-<!-- arcade v5: arcade initials -->
-<!-- republish -->
+<!-- arcade v6: world and boss music -->
