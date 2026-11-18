@@ -78,6 +78,11 @@ input:focus{outline:none;border-color:var(--green)}
           <label class="btn" style="margin:0;color:var(--text);font-size:13px">Upload a new version…<input type="file" id="upFile" accept=".html,text/html" hidden></label>
         </div>
         <p class="msg" id="upMsg"></p>
+        <div style="margin-top:14px;border-top:1px dashed rgba(255,204,0,.3);padding-top:10px"><b>Viewer</b> (public, for BMS) · <span id="verInfoV">checking…</span></div>
+        <div class="row" style="margin-top:10px">
+          <label class="btn" style="margin:0;color:var(--text);font-size:13px">Upload a new viewer version…<input type="file" id="upFileV" accept=".html,text/html" hidden></label>
+        </div>
+        <p class="msg" id="upMsgV"></p>
       </div>
     </div>
 
@@ -91,6 +96,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SB_URL = "https://hjwuluhdiczmssldyeus.supabase.co";
 const SB_KEY = "sb_publishable_zAZpo7UDyx1eHD_HpayR-g_RRjdgtO9";
 const BUCKET = "partline", FILE = "partline.html";
+const VBUCKET = "partline-view", VFILE = "view.html";       // the public STEP viewer (gtalhub.com/partline/view/)
 const sb = createClient(SB_URL, SB_KEY);
 const $ = id => document.getElementById(id);
 const views = ["vLoading", "vSignIn", "vNoAccess", "vReady"];
@@ -131,6 +137,9 @@ async function versionInfo() {
   const { data } = await sb.storage.from(BUCKET).list("", { search: FILE });
   const f = (data || []).find(x => x.name === FILE);
   $("verInfo").textContent = f ? `current version uploaded ${new Date(f.updated_at || f.created_at).toLocaleString()} (${Math.round((f.metadata?.size || 0) / 1024)} KB)` : "no version uploaded yet";
+  const { data: dv } = await sb.storage.from(VBUCKET).list("", { search: VFILE });
+  const v = (dv || []).find(x => x.name === VFILE);
+  $("verInfoV").textContent = v ? `current version uploaded ${new Date(v.updated_at || v.created_at).toLocaleString()} (${Math.round((v.metadata?.size || 0) / 1024)} KB)` : "no version uploaded yet";
 }
 
 $("openBtn").onclick = openApp;
@@ -142,6 +151,17 @@ $("upFile").onchange = async e => {
   const { error } = await sb.storage.from(BUCKET).upload(FILE, new Blob([text], { type: "text/html" }), { upsert: true, contentType: "text/html", cacheControl: "60" });
   if (error) { $("upMsg").className = "msg err"; $("upMsg").textContent = "Upload failed: " + error.message; return; }
   $("upMsg").className = "msg ok"; $("upMsg").textContent = "Uploaded. Everyone gets this version the next time they open Partline.";
+  versionInfo();
+};
+
+$("upFileV").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const text = await f.text();
+  if (!/<title>\s*Partline Viewer/i.test(text)) { $("upMsgV").className = "msg err"; $("upMsgV").textContent = "That doesn’t look like the viewer (partline-view.html)."; return; }
+  $("upMsgV").className = "msg"; $("upMsgV").innerHTML = '<span class="spin"></span>Uploading…';
+  const { error } = await sb.storage.from(VBUCKET).upload(VFILE, new Blob([text], { type: "text/html" }), { upsert: true, contentType: "text/html", cacheControl: "60" });
+  if (error) { $("upMsgV").className = "msg err"; $("upMsgV").textContent = "Upload failed: " + error.message; return; }
+  $("upMsgV").className = "msg ok"; $("upMsgV").textContent = "Uploaded. Anyone opening a viewer link gets this version within a minute.";
   versionInfo();
 };
 
