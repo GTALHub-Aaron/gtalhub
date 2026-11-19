@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paver Shelf Weight Calculator | GTALHub</title>
+<style>
+  :root {
+    --bg: #f5f5f2; --card: #fff; --ink: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc;
+    --accent: #2f6f4f; --warn: #b4441f; --warnbg: #fbeae4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+  input[type=number] { width: 100%; padding: 8px; font-size: 1rem; border: 1px solid var(--line); border-radius: 6px; }
+  .fill { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin-top: 14px; }
+  .fill input { width: 90px; }
+  button { padding: 9px 14px; font-size: .95rem; border: 0; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
+  button.secondary { background: #e7e7e1; color: var(--ink); }
+  .totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .stat .k { font-size: .8rem; color: var(--muted); }
+  .stat .v { font-size: 1.6rem; font-weight: 650; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .bays { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .bay h2 { font-size: 1rem; margin: 0 0 8px; display: flex; justify-content: space-between; }
+  .bay h2 span { color: var(--accent); font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: .75rem; padding: 4px; border-bottom: 1px solid var(--line); }
+  td { padding: 3px 4px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  td input { width: 64px; padding: 4px 6px; font-size: .9rem; }
+  td.num { text-align: right; }
+  tr.over td { background: var(--warnbg); color: var(--warn); }
+  .sumtbl th, .sumtbl td { padding: 8px 6px; font-size: .95rem; }
+  .sumtbl td { font-variant-numeric: tabular-nums; }
+  .sumtbl .diff { color: var(--muted); font-size: .8rem; }
+  .scen { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+  .scen .views { flex-wrap: nowrap; gap: 0; align-items: flex-start; }
+  .scen .views figure { min-width: 0; flex-basis: 0; }
+  .scen .views svg { width: 100%; height: auto; }
+  .scen h3 { font-size: .95rem; margin: 0 0 4px; }
+  .scen .meta { font-size: .85rem; color: var(--muted); margin-bottom: 8px; }
+  .note { font-size: .8rem; color: var(--muted); }
+  .layercolors { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .lc-title { font-size: .9rem; width: 100%; }
+  #lcList { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lc { display: flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; background: #fff; font-size: .8rem; color: var(--muted); }
+  .lc .sw { width: 34px; height: 24px; border-radius: 4px; border: 1px solid rgba(0,0,0,.2); padding: 0; cursor: pointer; }
+  .lc .del { background: none; color: var(--muted); padding: 0 4px; font-size: 1rem; line-height: 1; }
+  .layercolors > button { padding: 6px 10px; font-size: .85rem; }
+  .pop { position: fixed; z-index: 10; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 10px; width: 196px; }
+  .pop .grid { display: grid; grid-template-columns: repeat(6, 26px); gap: 6px; }
+  .pre { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); padding: 0; cursor: pointer; }
+  .pre.on { box-shadow: 0 0 0 2px var(--ink); }
+  .pop .custom { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); font-size: .85rem; cursor: pointer; }
+  .pop .custom input { width: 34px; height: 24px; border: 0; padding: 0; background: none; cursor: pointer; }
+  .subbox { margin-top: 14px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fafaf7; }
+  .subhead { display: flex; gap: 16px; align-items: center; margin-bottom: 10px; font-size: .95rem; }
+  label.inline { display: flex; gap: 6px; align-items: center; margin: 0; font-size: .9rem; color: var(--ink); }
+  #botFields { grid-template-columns: repeat(2, 170px); }
+  #botFields.off { opacity: .45; }
+  .viewhead { display: flex; flex-direction: column; gap: 10px; }
+  .viewopts { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  .viewopts input[type=number] { width: 110px; }
+  .viewopts select { padding: 8px; font-size: 1rem; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .chk label { display: flex; gap: 6px; align-items: center; font-size: .9rem; color: var(--ink); margin: 0 0 8px; }
+  .views { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 14px; align-items: flex-end; }
+  figure { margin: 0; }
+  figcaption { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+  .views svg { display: block; max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Paver Shelf Weight Calculator</h1>
+  <p class="sub">Set your shelving and paver details, then enter how many pavers are on each shelf.</p>
+
+  <section class="card">
+    <div class="settings">
+      <div><label for="w">Weight per paver (lb)</label><input id="w" type="number" min="0" step="0.1" value="18"></div>
+      <div><label for="ppl">Pavers per layer</label><input id="ppl" type="number" min="1" step="1" value="4"></div>
+      <div><label for="bays">Number of bays</label><input id="bays" type="number" min="1" max="50" step="1" value="3"></div>
+      <div><label for="spb">Shelves per bay</label><input id="spb" type="number" min="1" max="50" step="1" value="12"></div>
+      <div><label for="cap">Shelf rating (lb, optional)</label><input id="cap" type="number" min="0" step="1" placeholder="e.g. 400"></div>
+    </div>
+    <div class="subbox">
+      <div class="subhead">
+        <strong>Bottom shelf</strong>
+        <label class="inline"><input id="botMatch" type="checkbox" checked> Match other shelves</label>
+      </div>
+      <div class="settings" id="botFields">
+        <div><label for="botA">Pavers across</label><input id="botA" type="number" min="1" step="1" value="4"></div>
+        <div><label for="botR">Rows deep</label><input id="botR" type="number" min="1" step="1" value="1"></div>
+      </div>
+    </div>
+    <div class="fill">
+      <div><label for="fillLayers">Layers on every shelf</label><input id="fillLayers" type="number" min="0" step="1" value="1"></div>
+      <button id="fillBtn">Fill all shelves</button>
+      <button id="clearBtn" class="secondary">Clear all</button>
+    </div>
+  </section>
+
+  <section class="totals" style="margin-bottom:16px">
+    <div class="stat"><div class="k">Total weight</div><div class="v" id="tWeight">0 lb</div></div>
+    <div class="stat"><div class="k">Total pavers</div><div class="v" id="tPavers">0</div></div>
+    <div class="stat"><div class="k">Total shelves</div><div class="v" id="tShelves">0</div></div>
+    <div class="stat"><div class="k">Heaviest shelf</div><div class="v" id="tMax">0 lb</div></div>
+    <div class="stat"><div class="k">Heaviest upright</div><div class="v" id="tUp">0 lb</div></div>
+  </section>
+
+  <section class="card">
+    <div class="viewhead">
+      <h2 style="font-size:1.05rem;margin:0">Bay view</h2>
+      <div class="viewopts">
+        <select id="viewBay" hidden aria-hidden="true"></select>
+        <div><label for="spacing">Shelf spacing (in)</label><input id="spacing" type="number" min="2" step="0.5" value="12"></div>
+        <div><label for="depth">Shelf depth (in)</label><input id="depth" type="number" min="12" step="1" value="16"></div>
+        <div><label for="thick">Paver thickness (in)</label><input id="thick" type="number" min="0.25" step="0.25" value="1"></div>
+        <div class="chk"><label><input id="dbl" type="checkbox" checked> Double-sided (half the shelves on each side)</label></div>
+      </div>
+      <div class="layercolors">
+        <span class="lc-title">Layer colors <span class="note">(bottom layer first; colors repeat if there are more layers). Click a swatch to change it.</span></span>
+        <div id="lcList"></div>
+        <button id="lcAdd" class="secondary" type="button">+ Add color</button>
+        <button id="lcReset" class="secondary" type="button">Reset</button>
+      </div>
+      <div id="lcPop" class="pop" hidden>
+        <div class="grid" id="lcPresets"></div>
+        <label class="custom"><input id="lcCustom" type="color"> Custom color&hellip;</label>
+      </div>
+    </div>
+    <div class="views" id="views">
+      <figure><figcaption>Front view <span id="frontSide"></span> · <span id="runLen"></span> · click a bay to see its side view</figcaption><div id="frontSvg"></div></figure>
+      <figure><figcaption>Side view <span id="sideBay"></span></figcaption><div id="sideSvg"></div></figure>
+    </div>
+    <p class="note">Drawn to scale. Shelves are numbered from the bottom up; on a double-sided bay, side A is shelves 1–<span id="halfN"></span> and side B is the rest. Red shelf = over the rating; red outline on pavers = stack taller than the shelf opening. Upright loads (U1, U2, ...) include both sides of the gondola. Each paver's weight is split between its bay's two uprights by where it sits on the shelf, so inner uprights carry load from two bays. Shelf and fixture weight is not included.</p>
+  </section>
+
+  <section class="card" id="summary">
+    <div class="viewhead">
+      <h2 style="font-size:1.05rem;margin:0">Load summary by target bay weight</h2>
+      <div class="viewopts">
+        <div><label for="targets">Target weights per bay (lb)</label><input id="targets" type="text" value="1000, 2000, 3000, 4000" style="width:240px;padding:8px;font-size:1rem;border:1px solid var(--line);border-radius:6px"></div>
+        <div class="chk"><label><input id="noOver" type="checkbox"> Don't go over the target</label></div>
+        <button id="pdfSum">Save PDF (one page per target)</button>
+        <button id="copySum" class="secondary">Copy table</button>
+        <span id="copyMsg" class="note"></span>
+      </div>
+    </div>
+    <table class="sumtbl" style="margin-top:12px">
+      <thead><tr><th>Target per bay</th><th>Layers per shelf</th><th>Pavers per shelf</th><th>Weight per bay</th><th>End upright</th><th>Inner upright</th></tr></thead>
+      <tbody id="sumBody"></tbody>
+    </table>
+    <p class="note" id="sumNote"></p>
+    <div id="sumViews"></div>
+  </section>
+
+  <section class="bays" id="bayGrid"></section>
+  <p class="note">Shelves over the rating you enter are highlighted. Your entries are kept in this browser when possible.</p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = (el, d = 0) => { const v = parseFloat(el.value); return isNaN(v) ? d : v; };
+const fmt = n => n.toLocaleString("en-US", { maximumFractionDigits: 1 });
+
+// counts[bay][shelf] = number of pavers on that shelf
+let counts = [];
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem("paverCalc") || "null");
+    if (s) {
+      ["w","ppl","botA","botR","bays","spb","cap","spacing","depth","thick"].forEach(k => { if (s[k] !== undefined) $(k).value = s[k]; });
+      if (s.dbl !== undefined) $("dbl").checked = s.dbl;
+      if (s.botMatch !== undefined) $("botMatch").checked = s.botMatch;
+      if (Array.isArray(s.layerColors) && s.layerColors.length) layerColors = s.layerColors;
+      if (s.targets) $("targets").value = s.targets;
+      if (s.noOver !== undefined) $("noOver").checked = s.noOver;
+      counts = s.counts || [];
+    }
+  } catch (e) {}
+}
+function save() {
+  try {
+    localStorage.setItem("paverCalc", JSON.stringify({
+      w: $("w").value, ppl: $("ppl").value, botA: $("botA").value, botR: $("botR").value, bays: $("bays").value, spb: $("spb").value, cap: $("cap").value,
+      spacing: $("spacing").value, depth: $("depth").value, thick: $("thick").value, dbl: $("dbl").checked, botMatch: $("botMatch").checked, layerColors, targets: $("targets").value, noOver: $("noOver").checked, counts
+    }));
+  } catch (e) {}
+}
+
+// Shelf geometry. The bottom shelf (shelf 1, and the first shelf of side B on a double-sided bay)
+// can hold a different number of pavers across and rows deep.
+function cfg() {
+  const cols = Math.max(1, Math.round(num($("ppl"), 4)));
+  const match = $("botMatch").checked;
+  const botA = match ? cols : Math.min(cols, Math.max(1, Math.round(num($("botA"), cols))));
+  const botR = match ? 1 : Math.max(1, Math.round(num($("botR"), 1)));
+  return { cols, botA, botR };
+}
+function isBottom(s, n) {
+  const dbl = $("dbl").checked && n > 1, lv = dbl ? Math.ceil(n / 2) : n;
+  return s === 0 || (dbl && s === lv);
+}
+function shelfShape(s, n) {          // {A: pavers across, R: rows deep, per: pavers per layer}
+  const { cols, botA, botR } = cfg();
+  const A = isBottom(s, n) ? botA : cols, R = isBottom(s, n) ? botR : 1;
+  return { A, R, per: A * R };
+}
+function colCounts(c, A, R) {        // pavers in each column across (all rows), filled layer by layer, front row first
+  const per = A * R, full = Math.floor(c / per), rem = c % per;
+  return Array.from({ length: A }, (_, j) => full * R + Math.floor(rem / A) + (j < rem % A ? 1 : 0));
+}
+function rowCounts(c, A, R) {        // pavers in each row deep (index 0 = back row against the wall)
+  const per = A * R, full = Math.floor(c / per), rem = c % per;
+  return Array.from({ length: R }, (_, r) => full * A + Math.min(A, Math.max(0, rem - (R - 1 - r) * A)));
+}
+
+function resize() {
+  const bays = Math.max(1, Math.round(num($("bays"), 1)));
+  const spb = Math.max(1, Math.round(num($("spb"), 1)));
+  for (let b = 0; b < bays; b++) {
+    if (!counts[b]) counts[b] = [];
+    for (let s = 0; s < spb; s++) if (counts[b][s] === undefined) counts[b][s] = shelfShape(s, spb).per; // new shelves start with one layer
+    counts[b].length = spb;
+  }
+  counts.length = bays;
+}
+
+function build() {
+  resize();
+  const grid = $("bayGrid");
+  grid.innerHTML = "";
+  counts.forEach((shelves, b) => {
+    const card = document.createElement("div");
+    card.className = "card bay";
+    let rows = shelves.map((c, s) =>
+      `<tr data-b="${b}" data-s="${s}"><td>Shelf ${s + 1}${isBottom(s, shelves.length) ? " <span class=\"note\">(bottom)</span>" : ""}</td>
+       <td><input type="number" min="0" step="1" value="${c}" data-b="${b}" data-s="${s}"></td>
+       <td class="num layers"></td><td class="num wt"></td></tr>`).join("");
+    card.innerHTML = `<h2>Bay ${b + 1} <span id="bayTot${b}"></span></h2>
+      <table><thead><tr><th>Shelf</th><th>Pavers</th><th style="text-align:right">Layers</th><th style="text-align:right">Weight</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+    grid.appendChild(card);
+  });
+  syncBaySelect();
+  calc();
+}
+
+function calc() {
+  const w = num($("w")), cap = num($("cap"), 0);
+  let total = 0, pavers = 0, shelves = 0, max = 0;
+  counts.forEach((sh, b) => {
+    let bayTot = 0;
+    sh.forEach((c, s) => {
+      const wt = c * w;
+      bayTot += wt; pavers += c; shelves++; max = Math.max(max, wt);
+      const row = document.querySelector(`tr[data-b="${b}"][data-s="${s}"]`);
+      if (row) {
+        row.querySelector(".layers").textContent = fmt(c / shelfShape(s, sh.length).per);
+        row.querySelector(".wt").textContent = fmt(wt) + " lb";
+        row.classList.toggle("over", cap > 0 && wt > cap);
+      }
+    });
+    total += bayTot;
+    const el = $("bayTot" + b); if (el) el.textContent = fmt(bayTot) + " lb";
+  });
+  $("tWeight").textContent = fmt(total) + " lb";
+  $("tPavers").textContent = fmt(pavers);
+  $("tShelves").textContent = shelves;
+  $("tMax").textContent = fmt(max) + " lb";
+  drawViews();
+  drawSummary();
+  save();
+}
+
+// ---------- Layer colors ----------
+const DEFAULT_COLORS = ["#ff9f1c", "#ffc61a"];
+let layerColors = DEFAULT_COLORS.slice();
+const paverFill = k => layerColors[k % layerColors.length] || "#ff9f1c";
+let lcOpen = -1;   // layer whose color menu is open
+const PRESETS = [
+  ["#ff9f1c", "Orange"], ["#ffc61a", "Yellow"], ["#e71d36", "Red"], ["#ff006e", "Pink"],
+  ["#8338ec", "Purple"], ["#3a86ff", "Blue"], ["#2ec4b6", "Teal"], ["#06d6a0", "Green"],
+  ["#8d6e63", "Brown"], ["#b0aca3", "Concrete"], ["#555555", "Charcoal"], ["#f5f5f5", "White"]];
+function drawColorList() {
+  $("lcList").innerHTML = layerColors.map((c, i) =>
+    `<span class="lc">L${i + 1}<button type="button" class="sw" data-open="${i}" style="background:${c}" aria-label="Layer ${i + 1} color"></button>` +
+    (layerColors.length > 1 ? `<button type="button" class="del" data-del="${i}" aria-label="Remove layer ${i + 1} color">\u00d7</button>` : "") + `</span>`).join("");
+}
+function openPop(i, anchor) {
+  lcOpen = i;
+  const c = layerColors[i].toLowerCase();
+  $("lcPresets").innerHTML = PRESETS.map(([pc, n]) =>
+    `<button type="button" class="pre${c === pc ? " on" : ""}" data-pre="${pc}" title="${n}" aria-label="${n}" style="background:${pc}"></button>`).join("");
+  $("lcCustom").value = c;
+  const pop = $("lcPop"), r = anchor.getBoundingClientRect();
+  pop.hidden = false;
+  pop.style.left = Math.min(r.left, window.innerWidth - pop.offsetWidth - 8) + "px";
+  pop.style.top = (r.bottom + 6 + pop.offsetHeight > window.innerHeight ? r.top - pop.offsetHeight - 6 : r.bottom + 6) + "px";
+}
+function closePop() { $("lcPop").hidden = true; lcOpen = -1; }
+function setLayerColor(c) {
+  if (lcOpen < 0) return;
+  layerColors[lcOpen] = c;
+  const sw = document.querySelector(`.sw[data-open="${lcOpen}"]`); if (sw) sw.style.background = c;
+  $("lcPresets").querySelectorAll(".pre").forEach(b => b.classList.toggle("on", b.dataset.pre === c.toLowerCase()));
+  calc();
+}
+function colorsChanged() { drawColorList(); calc(); }
+
+// ---------- Bay drawings ----------
+const PAVER = 12;          // paver length/width, inches
+const UP = 2, SHELF_T = 1.25, BASE = 6, S = 5; // upright width, shelf thickness, base kick (in), px per inch
+const PAD = 26, TOP = 30;            // px margin for labels
+
+function syncBaySelect() {
+  const sel = $("viewBay"), cur = sel.value;
+  sel.innerHTML = counts.map((_, b) => `<option value="${b}">Bay ${b + 1}</option>`).join("");
+  sel.value = cur !== "" && +cur < counts.length ? cur : "0";
+}
+
+function renderBay(C, b, frontEl, sideEl, live) {
+  if (!C.length) return;
+  const shelves = C[Math.max(0, b)];
+  const uid = "p" + (renderBay.n = (renderBay.n || 0) + 1);
+  const w = num($("w")), { cols, botR } = cfg();
+  const cap = num($("cap"), 0), spacing = Math.max(2, num($("spacing"), 12));
+  const depth = Math.max(PAVER, num($("depth"), 16)), thick = Math.max(0.25, num($("thick"), 1));
+  const dbl = $("dbl").checked && shelves.length > 1;
+  const levels = dbl ? Math.ceil(shelves.length / 2) : shelves.length;
+  const sideA = shelves.slice(0, levels), sideB = dbl ? shelves.slice(levels) : [];
+  if (live) $("halfN").textContent = levels;
+  if (live) $("frontSide").textContent = dbl ? "(side A)" : "";
+  if (live) $("sideBay").textContent = `(Bay ${b + 1})`;
+
+  const heightIn = BASE + levels * spacing + 2;
+  const openH = spacing - SHELF_T;
+
+  // helpers
+  const svgOpen = (wIn) => {
+    const W = wIn * S + PAD * 2, H = heightIn * S + PAD + TOP + 26;
+    return { W, H, y: yIn => PAD + TOP + (heightIn - yIn) * S, x: xIn => PAD + xIn * S,
+      head: `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">` };
+  };
+  const shelfColor = (c) => cap > 0 && c * w > cap ? "#c0392b" : "#4a4a48";
+  const stackColor = (c, sh) => Math.ceil(c / sh.per) * thick > openH ? "#d0021b" : "#7a4a00";
+  const botD = Math.max(depth, botR * PAVER);   // bottom shelf is at least deep enough for its rows
+
+  // ---- Front view: every bay side by side, sharing uprights ----
+  const lenIn = cols * PAVER, nb = C.length;
+  const runIn = nb * (lenIn + UP) + UP;
+  const bayX = i => UP + i * (lenIn + UP);       // left edge of bay i's shelf space
+  const f = svgOpen(runIn);
+  let out = f.head.replace("<svg ", `<svg style="font-size:12px" `);
+  out += `<defs><pattern id="${uid}" width="${S * 2}" height="${S * 2}" patternUnits="userSpaceOnUse"><rect width="${S * 2}" height="${S * 2}" fill="#9aa1a9"/><circle cx="${S}" cy="${S}" r="1.1" fill="#7d848c"/></pattern></defs>`;
+  C.forEach((bs, bi) => {
+    const x0 = bayX(bi), front = bs.slice(0, levels);
+    const sel = bi === b;
+    out += `<g class="bayhit" data-bay="${bi}" style="cursor:${live ? "pointer" : "default"}">`;
+    out += `<rect x="${f.x(x0)}" y="${f.y(heightIn)}" width="${lenIn * S}" height="${(heightIn - BASE) * S}" fill="url(#${uid})"/>`;
+    out += `<rect x="${f.x(x0)}" y="${f.y(BASE)}" width="${lenIn * S}" height="${BASE * S}" fill="#d8d8d3"/>`;
+    front.forEach((c, i) => {
+      const top = BASE + i * spacing;
+      const sh = shelfShape(i, bs.length), sc = stackColor(c, sh);
+      const xoff = (lenIn - sh.A * PAVER) / 2;          // centers a narrower bottom shelf load
+      colCounts(c, sh.A, sh.R).forEach((n, j) => {
+        for (let k = 0; k < Math.ceil(n / sh.R); k++)
+          out += `<rect x="${f.x(x0 + xoff + j * PAVER) + 0.5}" y="${f.y(top + (k + 1) * thick)}" width="${PAVER * S - 1}" height="${thick * S}" fill="${paverFill(k)}" stroke="${sc}" stroke-width="0.75"/>`;
+      });
+      out += `<rect x="${f.x(x0)}" y="${f.y(top)}" width="${lenIn * S}" height="${SHELF_T * S}" fill="${shelfColor(c)}"><title>Bay ${bi + 1}, shelf ${i + 1}: ${c} pavers, ${fmt(c * w)} lb</title></rect>`;
+    });
+    const bayTot = bs.reduce((a, c) => a + c, 0) * w;
+    out += `<text x="${f.x(x0 + lenIn / 2)}" y="${f.y(0) + 14}" text-anchor="middle" fill="${sel ? "#2f6f4f" : "#6b6b66"}" font-weight="${sel ? 700 : 400}">Bay ${bi + 1}</text>`;
+    out += `<text x="${f.x(x0 + lenIn / 2)}" y="${f.y(0) + 29}" text-anchor="middle" fill="#6b6b66">${fmt(bayTot)} lb</text>`;
+    if (sel) out += `<rect x="${f.x(x0) - 1}" y="${f.y(heightIn) - 1}" width="${lenIn * S + 2}" height="${heightIn * S + 2}" fill="none" stroke="#2f6f4f" stroke-width="2" stroke-dasharray="5 3"/>`;
+    out += `</g>`;
+  });
+  for (let u = 0; u <= nb; u++)
+    out += `<rect x="${f.x(u * (lenIn + UP))}" y="${f.y(heightIn)}" width="${UP * S}" height="${heightIn * S}" fill="#8a8a86"/>`;
+  // Load on each upright: every shelf (both sides of the gondola) hangs between its bay's two uprights.
+  // Each paver's weight splits by lever rule based on where it sits along the shelf.
+  const upLoad = new Array(nb + 1).fill(0);
+  C.forEach((bs, bi) => bs.forEach((c, si) => {
+    const sh = shelfShape(si, bs.length);
+    const xoff = (lenIn - sh.A * PAVER) / 2;
+    colCounts(c, sh.A, sh.R).forEach((n, j) => {   // n = pavers in column j
+      const xc = xoff + (j + 0.5) * PAVER;          // center of column j from the left upright
+      upLoad[bi] += n * w * (lenIn - xc) / lenIn;
+      upLoad[bi + 1] += n * w * xc / lenIn;
+    });
+  }));
+  const maxUp = Math.max(...upLoad);
+  upLoad.forEach((ld, u) => {
+    const cx = f.x(u * (lenIn + UP) + UP / 2), hi = ld === maxUp && ld > 0;
+    out += `<text x="${cx}" y="${f.y(heightIn) - 18}" text-anchor="middle" fill="#6b6b66">U${u + 1}</text>`;
+    out += `<text x="${cx}" y="${f.y(heightIn) - 5}" text-anchor="middle" font-weight="${hi ? 700 : 500}" fill="${hi ? "#b4441f" : "#1d1d1b"}">${fmt(Math.round(ld))} lb</text>`;
+  });
+  if (live) $("tUp").textContent = fmt(Math.round(maxUp)) + " lb";
+  for (let i = 0; i < levels; i++)
+    out += `<text x="${f.x(0) - 4}" y="${f.y(BASE + i * spacing) + 4}" text-anchor="end" fill="#6b6b66">${i + 1}</text>`;
+  out += `<line x1="${f.x(0) - 10}" y1="${f.y(0)}" x2="${f.x(runIn) + 10}" y2="${f.y(0)}" stroke="#999"/>`;
+  frontEl.innerHTML = out.replace(/height="(\d+(\.\d+)?)" xmlns/, (m, h) => `height="${+h + 18}" xmlns`).replace(/viewBox="0 0 (\S+) (\S+)"/, (m, W, H) => `viewBox="0 0 ${W} ${+H + 18}"`) + "</svg>";
+  if (live) $("runLen").textContent = `${nb} bay${nb > 1 ? "s" : ""} · ${fmt(runIn / 12)} ft run`;
+
+  // ---- Side view ----
+  const D = Math.max(depth, botD);
+  const sideW = dbl ? D * 2 + UP : D + UP;
+  const s = svgOpen(sideW);
+  out = s.head;
+  const cx = dbl ? D : 0;                         // left edge of the center upright
+  out += `<rect x="${s.x(0)}" y="${s.y(BASE)}" width="${sideW * S}" height="${BASE * S}" fill="#d8d8d3"/>`;
+  const drawSide = (list, dir, labelOffset) => {
+    list.forEach((c, i) => {
+      const top = BASE + i * spacing;
+      const sh = shelfShape(i + labelOffset, shelves.length), sc = stackColor(c, sh);
+      const dep = sh.R > 1 || isBottom(i + labelOffset, shelves.length) ? botD : depth;
+      const shelfX = dir < 0 ? cx - dep : cx + UP;      // shelf left edge
+      const bot = isBottom(i + labelOffset, shelves.length);
+      const zoff = bot ? (dep - sh.R * PAVER) / 2 : 0;   // bottom shelf load centered front to back; others against the wall
+      rowCounts(c, sh.A, sh.R).forEach((n, r) => {      // r = 0 is the back row
+        const pavX = dir < 0 ? cx - zoff - (r + 1) * PAVER : cx + UP + zoff + r * PAVER;
+        const layers = Math.ceil(n / sh.A);
+        for (let k = 0; k < layers; k++) {
+          const partial = k === layers - 1 && n % sh.A;
+          out += `<rect x="${s.x(pavX) + 0.5}" y="${s.y(top + (k + 1) * thick)}" width="${PAVER * S - 1}" height="${thick * S}" fill="${paverFill(k)}" stroke="${sc}" stroke-width="0.75" ${partial ? 'fill-opacity="0.5"' : ""}/>`;
+        }
+      });
+      out += `<rect x="${s.x(shelfX)}" y="${s.y(top)}" width="${dep * S}" height="${SHELF_T * S}" fill="${shelfColor(c)}"/>`;
+      const lx = dir < 0 ? s.x(0) - 4 : s.x(sideW) + 4;
+      out += `<text x="${lx}" y="${s.y(top) + 4}" font-size="10" text-anchor="${dir < 0 ? "end" : "start"}" fill="#6b6b66">${i + 1 + labelOffset}</text>`;
+    });
+  };
+  if (dbl) { drawSide(sideA, -1, 0); drawSide(sideB, 1, levels); }
+  else drawSide(sideA, 1, 0);
+  out += `<rect x="${s.x(cx)}" y="${s.y(heightIn)}" width="${UP * S}" height="${heightIn * S}" fill="#9aa1a9" stroke="#6f767e" stroke-width="1"/>`;
+  out += `<line x1="${s.x(0) - 10}" y1="${s.y(0)}" x2="${s.x(sideW) + 10}" y2="${s.y(0)}" stroke="#999"/>`;
+  out += `<text x="${s.x(sideW / 2)}" y="${s.y(0) + 16}" font-size="10" text-anchor="middle" fill="#6b6b66">${dbl ? "A ← | → B" : "front ←"} · ${depth}" deep shelves${botD !== depth ? `, ${botD}" bottom` : ""}</text>`;
+  sideEl.innerHTML = out.replace(/height="(\d+(\.\d+)?)" xmlns/, (m, h) => `height="${+h + 18}" xmlns`).replace(/viewBox="0 0 (\S+) (\S+)"/, (m, W, H) => `viewBox="0 0 ${W} ${+H + 18}"`) + "</svg>";
+}
+function drawViews() {
+  if (!counts.length) return;
+  const b = Math.min(+$("viewBay").value || 0, counts.length - 1);
+  renderBay(counts, b, $("frontSvg"), $("sideSvg"), true);
+}
+
+$("bayGrid").addEventListener("input", e => {
+  const t = e.target; if (t.dataset.b === undefined) return;
+  counts[+t.dataset.b][+t.dataset.s] = Math.max(0, num(t));
+  calc();
+});
+["bays","spb"].forEach(id => $(id).addEventListener("input", build));
+["w","ppl","cap","botA","botR"].forEach(id => $(id).addEventListener("input", calc));
+$("dbl").addEventListener("change", () => { build(); });
+$("lcList").addEventListener("click", e => {
+  const d = e.target.dataset.del;
+  if (d !== undefined) { closePop(); layerColors.splice(+d, 1); colorsChanged(); return; }
+  const o = e.target.dataset.open;
+  if (o !== undefined) { e.stopPropagation(); +o === lcOpen ? closePop() : openPop(+o, e.target); }
+});
+$("lcPresets").addEventListener("click", e => {
+  const c = e.target.dataset.pre; if (!c) return;
+  setLayerColor(c); closePop();
+});
+$("lcCustom").addEventListener("input", e => setLayerColor(e.target.value));
+document.addEventListener("click", e => { if (lcOpen >= 0 && !$("lcPop").contains(e.target)) closePop(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closePop(); });
+window.addEventListener("scroll", closePop, { passive: true });
+$("lcAdd").addEventListener("click", () => {
+  const extra = ["#2ec4b6", "#e71d36", "#3a86ff", "#8338ec", "#06d6a0", "#ff006e"];
+  layerColors.push(extra[(layerColors.length - 2 + extra.length) % extra.length]); colorsChanged();
+});
+$("lcReset").addEventListener("click", () => { layerColors = DEFAULT_COLORS.slice(); closePop(); colorsChanged(); });
+function syncBotFields() {
+  const m = $("botMatch").checked;
+  $("botA").disabled = $("botR").disabled = m;
+  $("botFields").classList.toggle("off", m);
+}
+$("botMatch").addEventListener("change", () => { syncBotFields(); build(); });
+["viewBay","spacing","depth","thick"].forEach(id => $(id).addEventListener(id === "viewBay" || id === "dbl" ? "change" : "input", () => { drawViews(); save(); }));
+$("fillBtn").addEventListener("click", () => {
+  const L = Math.max(0, num($("fillLayers")));
+  counts = counts.map(sh => sh.map((_, s) => Math.round(L * shelfShape(s, sh.length).per))); build();
+});
+$("clearBtn").addEventListener("click", () => { counts = counts.map(sh => sh.map(() => 0)); build(); });
+
+$("frontSvg").addEventListener("click", e => {
+  const g = e.target.closest(".bayhit"); if (!g) return;
+  $("viewBay").value = g.dataset.bay; drawViews(); save();
+});
+
+// ---------- Summary by target bay weight (even full layers on every shelf) ----------
+let sumRows = [];
+const pavLabel = r => r.botDiff ? `${r.pavers} (bottom ${r.botPavers})` : String(r.pavers);
+function drawSummary() {
+  const w = num($("w")), { cols } = cfg();
+  const spb = Math.max(1, Math.round(num($("spb"), 1))), nb = counts.length;
+  const pers = Array.from({ length: spb }, (_, s) => shelfShape(s, spb).per);
+  const botPer = pers[0], botDiff = pers.some(p => p !== cols);
+  const layerBay = pers.reduce((a, p) => a + p, 0) * w;   // weight of one layer on every shelf in a bay
+  const targets = $("targets").value.split(/[,\s]+/).map(Number).filter(t => t > 0);
+  const noOver = $("noOver").checked;
+  sumRows = targets.map(t => {
+    let L = noOver ? Math.floor(t / layerBay) : Math.round(t / layerBay);
+    L = Math.max(0, L);
+    const bay = L * layerBay;
+    return { t, L, pavers: L * cols, botPavers: L * botPer, botDiff, pers, bay, end: bay / 2, inner: nb > 1 ? bay : null };
+  });
+  $("sumBody").innerHTML = sumRows.map(r => {
+    const d = r.bay - r.t;
+    return `<tr><td>${fmt(r.t)} lb</td><td>${r.L}</td><td>${pavLabel(r)}</td>
+      <td>${fmt(r.bay)} lb <span class="diff">(${d >= 0 ? "+" : "\u2212"}${fmt(Math.abs(d))})</span></td>
+      <td>${fmt(r.end)} lb</td><td>${r.inner === null ? "\u2014" : fmt(r.inner) + " lb"}</td></tr>`;
+  }).join("");
+  const sv = $("sumViews"); sv.innerHTML = "";
+  sumRows.forEach(r => {
+    const d = document.createElement("div"); d.className = "scen";
+    d.innerHTML = `<h3>Target ${fmt(r.t)} lb per bay \u2192 ${r.L} layer${r.L === 1 ? "" : "s"} per shelf</h3>
+      <div class="meta">${pavLabel(r)} pavers per shelf \u00b7 ${fmt(r.bay)} lb per bay \u00b7 ${fmt(r.bay * nb)} lb total \u00b7 end upright ${fmt(r.end)} lb${r.inner === null ? "" : " \u00b7 inner upright " + fmt(r.inner) + " lb"}</div>
+      <div class="views"><figure><figcaption>Front view</figcaption><div class="f"></div></figure><figure><figcaption>Side view</figcaption><div class="s"></div></figure></div>`;
+    sv.appendChild(d);
+    const C = Array.from({ length: nb }, () => r.pers.map(p => r.L * p));
+    renderBay(C, -1, d.querySelector(".f"), d.querySelector(".s"), false);
+    d.querySelectorAll(".views figure").forEach(fig => {   // same px-per-inch for both views
+      fig.style.flexGrow = fig.querySelector("svg").viewBox.baseVal.width;
+    });
+  });
+  $("sumNote").textContent = `Based on ${fmt(w)} lb pavers, ${cols} per layer${botDiff ? ` (bottom shelf ${botPer})` : ""}, ${spb} shelves per bay, ${nb} bay${nb > 1 ? "s" : ""}. ` +
+    `Each layer on every shelf adds ${fmt(layerBay)} lb per bay, so bay weights move in ${fmt(layerBay)} lb steps. ` +
+    `End uprights carry half a bay; inner uprights carry half of each neighboring bay. Pavers only, no shelf or fixture weight.`;
+}
+$("targets").addEventListener("input", () => { drawSummary(); save(); });
+$("noOver").addEventListener("change", () => { drawSummary(); save(); });
+$("copySum").addEventListener("click", async () => {
+  const head = ["Target per bay (lb)", "Layers per shelf", "Pavers per shelf", "Weight per bay (lb)", "End upright (lb)", "Inner upright (lb)"];
+  const lines = [head.join("\t"), ...sumRows.map(r => [r.t, r.L, pavLabel(r), r.bay, r.end, r.inner ?? ""].join("\t"))];
+  try { await navigator.clipboard.writeText(lines.join("\n")); $("copyMsg").textContent = "Copied. Paste into Excel or Sheets."; }
+  catch (e) { $("copyMsg").textContent = "Copy was blocked by the browser."; }
+  setTimeout(() => $("copyMsg").textContent = "", 3000);
+});
+
+// ---------- PDF export: one landscape letter page per target ----------
+const PDF_DPI = 200, PG_W = 11 * PDF_DPI, PG_H = 8.5 * PDF_DPI, M = 0.5 * PDF_DPI;
+
+function svgToImage(svgEl) {
+  return new Promise((res, rej) => {
+    const xml = new XMLSerializer().serializeToString(svgEl);
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+  });
+}
+function svgSize(svgEl) {
+  const vb = svgEl.getAttribute("viewBox").split(/\s+/).map(Number);
+  return { w: vb[2], h: vb[3] };
+}
+
+async function renderPage(r, idx, total, frontSvg, sideSvg) {
+  const cv = document.createElement("canvas"); cv.width = PG_W; cv.height = PG_H;
+  const g = cv.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, PG_W, PG_H);
+  const font = (px, wt = 400) => `${wt} ${px}px system-ui, -apple-system, "Segoe UI", Arial, sans-serif`;
+  const w = num($("w")), { cols, botA, botR } = cfg();
+  const spb = Math.max(1, Math.round(num($("spb"), 1))), nb = counts.length;
+
+  // Title
+  g.fillStyle = "#1d1d1b"; g.font = font(50, 700); g.textBaseline = "top";
+  g.fillText(`Target ${fmt(r.t)} lb per bay`, M, M);
+  g.fillStyle = "#6b6b66"; g.font = font(26);
+  g.fillText(`${fmt(w)} lb pavers · ${cols} per layer${r.botDiff ? ` (bottom: ${botA} across × ${botR} deep)` : ""} · ${spb} shelves per bay · ${nb} bay${nb > 1 ? "s" : ""} · even layers on every shelf`, M, M + 66);
+
+  // Stat boxes
+  const d = r.bay - r.t;
+  const stats = [
+    ["Layers per shelf", String(r.L), ""],
+    ["Pavers per shelf", String(r.pavers), r.botDiff ? `bottom shelf: ${r.botPavers}` : ""],
+    ["Weight per bay", `${fmt(r.bay)} lb`, `${d >= 0 ? "+" : "−"}${fmt(Math.abs(d))} lb vs target`],
+    ["End upright", `${fmt(r.end)} lb`, ""],
+    ["Inner upright", r.inner === null ? "—" : `${fmt(r.inner)} lb`, ""],
+    ["Total, all bays", `${fmt(r.bay * nb)} lb`, ""],
+  ];
+  const top = M + 130, gap = 24, bw = (PG_W - 2 * M - gap * (stats.length - 1)) / stats.length, bh = 170;
+  stats.forEach(([k, v, sub], i) => {
+    const x = M + i * (bw + gap);
+    g.fillStyle = "#f5f5f2"; g.strokeStyle = "#e2e2dc"; g.lineWidth = 2;
+    g.beginPath(); g.roundRect ? g.roundRect(x, top, bw, bh, 14) : g.rect(x, top, bw, bh); g.fill(); g.stroke();
+    g.fillStyle = "#6b6b66"; g.font = font(24); g.fillText(k, x + 22, top + 20);
+    g.fillStyle = "#1d1d1b"; g.font = font(54, 650); g.fillText(v, x + 22, top + 58);
+    if (sub) { g.fillStyle = "#6b6b66"; g.font = font(21); g.fillText(sub, x + 22, top + 128); }
+  });
+
+  // Drawings
+  const fs = svgSize(frontSvg), ss = svgSize(sideSvg);
+  const areaTop = top + bh + 50, areaBot = PG_H - M - 70, areaW = PG_W - 2 * M, sgap = 60;
+  const capH = 36;
+  const scale = Math.min((areaW - sgap) / (fs.w + ss.w), (areaBot - areaTop - capH) / Math.max(fs.h, ss.h));
+  const [fi, si] = await Promise.all([svgToImage(frontSvg), svgToImage(sideSvg)]);
+  const fx = M, sx = M + fs.w * scale + sgap, iy = areaTop + capH;
+  g.fillStyle = "#6b6b66"; g.font = font(24);
+  g.fillText("Front view" + ($("dbl").checked ? " (side A)" : ""), fx, areaTop);
+  g.fillText("Side view", sx, areaTop);
+  g.drawImage(fi, fx, iy, fs.w * scale, fs.h * scale);
+  g.drawImage(si, sx, iy, ss.w * scale, ss.h * scale);
+
+  // Footer
+  g.fillStyle = "#6b6b66"; g.font = font(20);
+  g.fillText("Upright loads include both sides of the gondola; end uprights carry half a bay, inner uprights half of each neighboring bay. Pavers only, no shelf or fixture weight.", M, PG_H - M - 30);
+  g.textAlign = "right";
+  g.fillText(`Page ${idx + 1} of ${total}`, PG_W - M, PG_H - M);
+  g.textAlign = "left";
+  return cv;
+}
+
+function canvasJpeg(cv) {
+  const b64 = cv.toDataURL("image/jpeg", 0.92).split(",")[1];
+  const bin = atob(b64), u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+
+// Minimal PDF writer: one full-page JPEG per page.
+function buildPdf(images, pw = 792, ph = 612) {
+  const enc = new TextEncoder(), parts = [], offsets = [];
+  let len = 0;
+  const push = x => { const b = typeof x === "string" ? enc.encode(x) : x; parts.push(b); len += b.length; };
+  const obj = (n, body) => { offsets[n] = len; push(`${n} 0 obj\n`); body(); push("\nendobj\n"); };
+  push("%PDF-1.4\n%âãÏÓ\n");
+  const n = images.length, kids = [];
+  for (let i = 0; i < n; i++) kids.push(`${3 + i * 3} 0 R`);
+  obj(1, () => push("<< /Type /Catalog /Pages 2 0 R >>"));
+  obj(2, () => push(`<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${n} >>`));
+  images.forEach((im, i) => {
+    const pn = 3 + i * 3, cn = pn + 1, xn = pn + 2;
+    const content = `q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;
+    obj(pn, () => push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 ${xn} 0 R >> >> /Contents ${cn} 0 R >>`));
+    obj(cn, () => push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`));
+    obj(xn, () => { push(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.data.length} >>\nstream\n`); push(im.data); push("\nendstream"); });
+  });
+  const xref = len, count = 3 + n * 3;
+  let x = `xref\n0 ${count}\n0000000000 65535 f \n`;
+  for (let i = 1; i < count; i++) x += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+  push(x + `trailer\n<< /Size ${count} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  const out = new Uint8Array(len); let o = 0;
+  parts.forEach(b => { out.set(b, o); o += b.length; });
+  return out;
+}
+
+async function makeSummaryPdf() {
+  const blocks = [...document.querySelectorAll("#sumViews .scen")];
+  const imgs = [];
+  for (let i = 0; i < sumRows.length; i++) {
+    const cv = await renderPage(sumRows[i], i, sumRows.length, blocks[i].querySelector(".f svg"), blocks[i].querySelector(".s svg"));
+    imgs.push({ data: canvasJpeg(cv), w: cv.width, h: cv.height });
+  }
+  return buildPdf(imgs);
+}
+window.__makeSummaryPdf = makeSummaryPdf; // used for testing
+
+$("pdfSum").addEventListener("click", async () => {
+  const btn = $("pdfSum"), msg = $("copyMsg");
+  if (!sumRows.length) { msg.textContent = "Add at least one target weight."; return; }
+  btn.disabled = true; msg.textContent = "Building PDF…";
+  try {
+    const bytes = await makeSummaryPdf();
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    let dl = null;
+    try { if (window.claude && typeof window.claude.use === "function") dl = await window.claude.use("downloads"); } catch (_) {}
+    if (dl) {
+      await dl.save({ filename: "paver-load-summary.pdf", data: blob });
+    } else {                                   // regular website: a normal browser download
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = "paver-load-summary.pdf";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+    msg.textContent = "PDF saved.";
+  } catch (e) {
+    msg.textContent = e && e.code === "declined" ? "Save canceled." : "Couldn't save the PDF" + (e && e.message ? ": " + e.message : ".");
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => { if (!btn.disabled) msg.textContent = ""; }, 5000);
+  }
+});
+load(); syncBotFields(); drawColorList(); build();
+</script>
+</body>
+</html>
