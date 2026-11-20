@@ -231,7 +231,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
   /* ================= SOUND ================= */
   // Everything is synthesized on the fly (square, triangle and noise channels, like an old handheld), so there are no
   // audio files. Browsers only allow sound after you click or press a key, so it wakes up on your first input.
-  const AU = { ctx: null, sfxOn: true, musicOn: true, master: null, sfxG: null, musG: null, noiseBuf: null, song: null, step: 0, next: 0, timer: null };
+  const AU = { ctx: null, sfxOn: true, musicOn: true, master: null, sfxG: null, musG: null, noiseBuf: null, song: null, step: 0, next: 0, timer: null, armed: false };   // armed: music waits until you click into the game
   try { AU.sfxOn = localStorage.getItem("gtal-sfx") !== "0"; AU.musicOn = localStorage.getItem("gtal-music") !== "0"; } catch (e) {}
   const NOTE = { C: 0, "C#": 1, D: 2, "D#": 3, E: 4, F: 5, "F#": 6, G: 7, "G#": 8, A: 9, "A#": 10, B: 11 };
   const hz = n => { const m = /^([A-G]#?)(\d)$/.exec(n); return m ? 440 * Math.pow(2, (NOTE[m[1]] + (+m[2] + 1) * 12 - 69) / 12) : 0; };
@@ -343,7 +343,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
   };
   function musicTick() {
     if (!AU.ctx || AU.ctx.state !== "running") return;
-    const want = AU.musicOn && !document.hidden ? (cur.song ? cur.song() : curName) : null;
+    const want = AU.musicOn && AU.armed && !document.hidden ? (cur.song ? cur.song() : curName) : null;
     if (want !== AU.song) { AU.song = want; AU.step = 0; AU.next = AU.ctx.currentTime + 0.05; }
     if (!want) return;
     const S2 = SONGS[want], sp = 60 / S2.bpm / 2;
@@ -1199,7 +1199,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
     requestAnimationFrame(loop);
   }
   cv.addEventListener("pointermove", e => cur.pointermove(...toXY(e), e));
-  cv.addEventListener("pointerdown", e => { e.preventDefault(); if (entry.hidden) cur.pointerdown(...toXY(e), e); });
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); AU.armed = true; if (entry.hidden) cur.pointerdown(...toXY(e), e); });
   addEventListener("pointerup", e => cur.pointerup && cur.pointerup(e));
   addEventListener("pointercancel", e => cur.pointerup && cur.pointerup(e));
   cv.addEventListener("contextmenu", e => e.preventDefault());
@@ -1207,7 +1207,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
   addEventListener("keydown", e => {
     if (!entry.hidden || e.target.tagName === "INPUT") return;   // typing initials
     const k = e.key.toLowerCase(), m = map[k];
-    if (m || k === "enter") e.preventDefault();
+    if (m || k === "enter") { e.preventDefault(); AU.armed = true; }   // playing by keyboard counts too
     if (m) { if (!keys[m] && (m === "jump" || (m === "up" && cur === hop))) cur.action(); keys[m] = true; }
     if (k === "enter" && !e.repeat) cur.action();
   });
@@ -1219,4 +1219,4 @@ canvas{display:block;width:100%;height:auto;touch-action:none;cursor:none;user-s
 </script>
 </body>
 </html>
-<!-- arcade v6: world and boss music -->
+<!-- arcade v7: music waits for a click -->
