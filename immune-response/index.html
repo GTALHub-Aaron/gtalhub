@@ -289,6 +289,8 @@ i.tmp,i.bst{font-style:normal;font-size:11px;padding:1px 6px;border-radius:8px;b
 #ndUi.ph #ndPow{left:auto;right:10px;flex-direction:column-reverse}#ndUi.ph .ndpw{width:56px;height:56px}#ndUi.ph .ndpw small{display:none}
 @media (pointer:coarse){#ndPow{left:auto;right:12px}}
 .ndpows{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.ndpows span{font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:9px;background:rgba(255,255,255,.06);color:#7d8796}.ndpows span.on{background:rgba(255,210,63,.15);color:#ffe58a}.ndpows em{font-style:normal;color:#9aa3b2}
+.ndmiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px}.ndmile{display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:12px;background:rgba(9,13,22,.8);border:2px dashed rgba(63,209,122,.25);opacity:.75}.ndmile.ok{opacity:1;border-style:solid;border-color:#3fd17a}.ndmile img{width:42px;height:42px}.ndmile b{font-size:13.5px}.ndmile small{display:block;font-size:11.5px;color:#9fb2c8;font-weight:700}.ndmile small.rw{color:#3fd17a}.ndmile:not(.ok) img{filter:grayscale(.8) brightness(.8)}
+.wtile.medal img{filter:grayscale(.7) brightness(.85)}
 .ndgrid2{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 #ndUi.ph .ndgrid2{grid-template-columns:repeat(5,1fr);gap:5px}
 .ndcoin{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 auto 8px;width:max-content;padding:4px 16px;border-radius:999px;background:rgba(5,8,14,.6);border:2px solid var(--dark);font:400 22px var(--display);color:#ffb347;text-shadow:0 2px 0 var(--dark)}
@@ -1528,14 +1530,16 @@ function showCodex(tab){
  show(`<div class="hdr">${back(HUB.on?'hubBack':'menu')}<h2>Codex</h2></div><div class="tabs">${tb}</div><div class="cx">${body}</div>`);
 }
 // ================= COSMETICS · OUTPOSTS · HELPERS =================
-const RAR={c:{n:'Common',col:'#b7c8dc'},r:{n:'Rare',col:'#4fb8ff'},e:{n:'Very Rare',col:'#c27bff'},l:{n:'Legendary',col:'#ffc93c'}};
+const RAR={c:{n:'Common',col:'#b7c8dc'},r:{n:'Rare',col:'#4fb8ff'},e:{n:'Very Rare',col:'#c27bff'},l:{n:'Legendary',col:'#ffc93c'},d:{n:'Defense Medal',col:'#3fd17a'}};
 const COS={
  party:{n:'Party Hat',s:'h',t:'c',cost:300},beanie:{n:'Beanie',s:'h',t:'c',cost:400},cap:{n:'Ball Cap',s:'h',t:'c',cost:500},
  shades:{n:'Shades',s:'f',t:'c',cost:350},specs:{n:'Round Specs',s:'f',t:'c',cost:450},
  tophat:{n:'Top Hat',s:'h',t:'r'},cowboy:{n:'Cowboy Hat',s:'h',t:'r'},viking:{n:'Viking Helmet',s:'h',t:'r'},propeller:{n:'Propeller Cap',s:'h',t:'r'},beret:{n:'Beret',s:'h',t:'r'},
  mustache:{n:'Mustache',s:'f',t:'r'},monocle:{n:'Monocle',s:'f',t:'r'},eyepatch:{n:'Eyepatch',s:'f',t:'r'},glasses3d:{n:'3D Glasses',s:'f',t:'r'},
  crown:{n:'Crown',s:'h',t:'e'},wizard:{n:'Wizard Hat',s:'h',t:'e'},halo:{n:'Halo',s:'h',t:'e'},starshades:{n:'Star Shades',s:'f',t:'e'},
- plattop:{n:'Platinum Top Hat',s:'h',t:'l'},goldstache:{n:'Golden Mustache',s:'f',t:'l'},diamocle:{n:'Diamond Monocle',s:'f',t:'l'},
+ plattop:{n:'Platinum Top Hat',s:'h',t:'l'},goldstache:{n:'Golden Mustache',s:'f',t:'l'},gasmask:{n:'Gas Mask',s:'f',t:'l'},diamocle:{n:'Diamond Monocle',s:'f',t:'l'},
+ nurse:{n:'Nurse Cap',s:'h',t:'d'},mirror:{n:'Head Mirror',s:'h',t:'d'},laurel:{n:'Laurel Wreath',s:'h',t:'d'},helmet:{n:'Field Helmet',s:'h',t:'d'},knight:{n:'Knight Helm',s:'h',t:'d'},
+ mask:{n:'Surgical Mask',s:'f',t:'d'},goggles:{n:'Lab Goggles',s:'f',t:'d'},warpaint:{n:'War Paint',s:'f',t:'d'},
 };
 const HEAD={neutrophil:-0.92,tcell:-0.96,bcell:-0.96,macrophage:-1.06,platelet:-0.84,phage:-1.24,eosinophil:-0.94,basophil:-0.94,alvmac:-1.12,mast:-1.0,goblet:-1.0,paneth:-1.1,microglia:-0.85,astrocyte:-0.8,dendritic:-0.85,plasma:-0.86,gammadelta:-0.96};
 const cosOf=c=>(save.cos.eq[c]||{});
@@ -1547,6 +1551,12 @@ function sparkle(g,x,y,s,t,ph){const k=(Math.sin(t*3+ph)+1)/2;if(k<0.35)return;g
 function drawHat(g,id,x,y,u,t,d){
  g.save();g.translate(x,y);const s=u;
  switch(id){
+  case 'nurse':{g.fillStyle='#f7f7f7';g.beginPath();g.moveTo(-9*s,1*s);g.lineTo(-7*s,-7*s);g.quadraticCurveTo(0,-9*s,7*s,-7*s);g.lineTo(9*s,1*s);g.quadraticCurveTo(0,-1*s,-9*s,1*s);g.closePath();g.fill();cosLine(g,s);g.stroke();g.fillStyle='#ff4f6b';g.fillRect(-1.2*s,-6.5*s,2.4*s,6*s);g.fillRect(-3*s,-4.7*s,6*s,2.4*s);break}
+  case 'helmet':{g.fillStyle='#6b7d3a';g.beginPath();g.arc(0,1*s,10*s,Math.PI,0);g.closePath();g.fill();cosLine(g,s);g.stroke();g.fillStyle='rgba(255,255,255,.18)';g.beginPath();g.ellipse(-3*s,-5*s,4*s,1.6*s,-0.4,0,TAU);g.fill();g.fillStyle='#55652c';g.beginPath();g.ellipse(0,1*s,12.5*s,2.6*s,0,0,TAU);g.fill();g.stroke();g.strokeStyle='rgba(30,40,10,.5)';g.lineWidth=0.8*s;for(let i=-2;i<=2;i++){g.beginPath();g.moveTo(i*3*s,-6*s);g.lineTo(i*3.4*s,0);g.stroke()}break}
+  case 'mirror':{g.strokeStyle='#5d6b7a';g.lineWidth=2.2*s;g.beginPath();g.ellipse(0,1*s,10*s,2.6*s,0,Math.PI*0.05,Math.PI*0.95,true);g.stroke();g.fillStyle=metal(g,-5*s,-11*s,5*s,-1*s,PLAT);circ(g,2*d*s,-6*s,5.2*s);g.fill();cosLine(g,s);g.stroke();g.fillStyle='#1d1a26';circ(g,2*d*s,-6*s,1.2*s);g.fill();g.fillStyle='rgba(255,255,255,.8)';g.beginPath();g.ellipse(0.2*d*s,-8*s,1.8*s,0.8*s,-0.6,0,TAU);g.fill();sparkle(g,5*d*s,-10*s,2*s,t,1);break}
+  case 'laurel':{for(const k of [-1,1])for(let i=0;i<5;i++){const a=Math.PI*(k<0?1.05-i*0.11:-0.05+i*0.11),x=Math.cos(a)*10*s,y=-Math.sin(a)*4*s-i*0.4*s;g.save();g.translate(x,y);g.rotate(k*(0.6+i*0.25));g.fillStyle=i%2?'#7dbb3c':'#9bd44e';g.beginPath();g.ellipse(0,0,3.6*s,1.7*s,0,0,TAU);g.fill();cosLine(g,s*0.7);g.stroke();g.restore()}g.fillStyle='#ffd23f';circ(g,0,-4.5*s,1.6*s);g.fill();cosLine(g,s*0.7);g.stroke();break}
+  case 'knight':{g.fillStyle=metal(g,-10*s,-12*s,10*s,2*s,PLAT);g.beginPath();g.arc(0,2*s,10.5*s,Math.PI,0);g.closePath();g.fill();cosLine(g,s);g.stroke();g.strokeStyle='#5d6b7a';g.lineWidth=1.2*s;g.beginPath();g.moveTo(0,-8.5*s);g.lineTo(0,2*s);g.stroke();
+   g.fillStyle='#ff4f6b';g.beginPath();g.moveTo(0,-8*s);g.quadraticCurveTo(-4*d*s,-18*s,-12*d*s,-15*s);g.quadraticCurveTo(-6*d*s,-13*s,-2*d*s,-7*s);g.closePath();g.fill();cosLine(g,s);g.stroke();sparkle(g,6*s,-6*s,2*s,t,2);break}
   case 'party':{g.beginPath();g.moveTo(-7*s,1*s);g.lineTo(0,-16*s);g.lineTo(7*s,1*s);g.closePath();g.fillStyle='#ff5c9a';g.fill();g.save();g.clip();g.fillStyle='#ffe066';for(let i=0;i<4;i++){g.beginPath();g.moveTo(-9*s,(-1-i*4.5)*s);g.lineTo(9*s,(-4-i*4.5)*s);g.lineTo(9*s,(-6-i*4.5)*s);g.lineTo(-9*s,(-3-i*4.5)*s);g.fill()}g.restore();g.beginPath();g.moveTo(-7*s,1*s);g.lineTo(0,-16*s);g.lineTo(7*s,1*s);g.closePath();cosLine(g,s);g.stroke();g.fillStyle='#4ff0d8';circ(g,0,-16.5*s,2.6*s);g.fill();g.stroke();break}
   case 'beanie':{g.fillStyle='#3fae8a';g.beginPath();g.arc(0,0,9*s,Math.PI,0);g.closePath();g.fill();cosLine(g,s);g.stroke();g.fillStyle='#2b7a66';g.beginPath();g.roundRect(-10*s,-2.5*s,20*s,5*s,2*s);g.fill();g.stroke();g.strokeStyle='rgba(255,255,255,.25)';g.lineWidth=1*s;for(let i=-3;i<=3;i++){g.beginPath();g.moveTo(i*2.6*s,-2*s);g.lineTo(i*2.6*s,2*s);g.stroke()}g.fillStyle='#fff3e0';circ(g,0,-10.5*s,3*s);g.fill();cosLine(g,s);g.stroke();break}
   case 'cap':{g.fillStyle='#ff4f6b';g.beginPath();g.arc(0,1*s,8.5*s,Math.PI,0);g.closePath();g.fill();cosLine(g,s);g.stroke();g.fillStyle='#d13552';g.beginPath();g.ellipse(d*8*s,1*s,7*s,2.2*s,0,0,TAU);g.fill();g.stroke();g.fillStyle='#fff';circ(g,0,-7.6*s,1.4*s);g.fill();g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.ellipse(-3*s,-4*s,2.5*s,1.4*s,-0.5,0,TAU);g.fill();break}
@@ -1566,6 +1576,15 @@ function drawFace(g,id,ex,ey,es,sp,u,t,fx){
  g.save();const s=u,L=ex-sp,R=ex+sp;
  const lens=(x,y,rr,fill,ring)=>{g.fillStyle=fill;circ(g,x,y,rr);g.fill();g.lineWidth=(ring||1.6)*s;g.strokeStyle=O;g.stroke()};
  switch(id){
+  case 'gasmask':{const w=sp*2.75,top=ey-es*2.5,bot=ey+es*3.3;
+   g.fillStyle='#2b3138';g.beginPath();g.moveTo(ex-w,ey-es*0.6);g.quadraticCurveTo(ex-w,top,ex,top);g.quadraticCurveTo(ex+w,top,ex+w,ey-es*0.6);g.quadraticCurveTo(ex+w*0.95,bot,ex,bot+es*0.4);g.quadraticCurveTo(ex-w*0.95,bot,ex-w,ey-es*0.6);g.closePath();g.fill();g.lineWidth=1.6*s;g.strokeStyle=O;g.stroke();
+   g.strokeStyle='#4a535e';g.lineWidth=1.1*s;g.beginPath();g.moveTo(ex-w*0.85,ey+es*0.3);g.quadraticCurveTo(ex,ey+es*1.3,ex+w*0.85,ey+es*0.3);g.stroke();
+   for(const x of [L,R]){g.fillStyle=metal(g,x-es,ey-es,x+es,ey+es,GOLD);circ(g,x,ey-es*0.1,es*1.5);g.fill();g.lineWidth=1*s;g.strokeStyle=O;g.stroke();const gl=g.createRadialGradient(x-es*0.3,ey-es*0.4,es*0.1,x,ey,es*1.05);gl.addColorStop(0,'#d4ffd8');gl.addColorStop(0.5,'#5be37a');gl.addColorStop(1,'#1d6b3a');g.fillStyle=gl;circ(g,x,ey-es*0.1,es*1.18);g.fill();g.fillStyle='rgba(255,255,255,.7)';g.beginPath();g.ellipse(x-es*0.4,ey-es*0.5,es*0.35,es*0.15,-0.6,0,TAU);g.fill()}
+   const cy=ey+es*3,cw=es*1.35;g.fillStyle=metal(g,ex-cw,cy-cw,ex+cw,cy+cw,GOLD);g.beginPath();g.roundRect(ex-cw,cy-cw*0.8,cw*2,cw*1.9,cw*0.5);g.fill();g.lineWidth=1.2*s;g.strokeStyle=O;g.stroke();g.strokeStyle='rgba(120,80,10,.7)';g.lineWidth=0.8*s;for(let i=0;i<3;i++){g.beginPath();g.moveTo(ex-cw*0.7,cy-cw*0.3+i*cw*0.5);g.lineTo(ex+cw*0.7,cy-cw*0.3+i*cw*0.5);g.stroke()}
+   sparkle(g,ex+w*0.8,top+es*0.6,2.2*s,t,3);sparkle(g,ex-cw,cy+cw,1.8*s,t,1);break}
+  case 'mask':{const my=ey+es*1.3,w=sp*1.75;g.strokeStyle='#e7eef5';g.lineWidth=0.9*s;g.beginPath();g.moveTo(ex-w,my+1*s);g.lineTo(ex-w-3*s,ey-es*0.5);g.moveTo(ex+w,my+1*s);g.lineTo(ex+w+3*s,ey-es*0.5);g.stroke();g.fillStyle='#a8e6f0';g.beginPath();g.roundRect(ex-w,my,w*2,es*2.1,es*0.6);g.fill();g.lineWidth=1.3*s;g.strokeStyle=O;g.stroke();g.strokeStyle='rgba(40,110,130,.5)';g.lineWidth=0.8*s;for(let i=1;i<3;i++){g.beginPath();g.moveTo(ex-w*0.85,my+i*es*0.65);g.lineTo(ex+w*0.85,my+i*es*0.65);g.stroke()}break}
+  case 'goggles':{g.strokeStyle='#3b2a1c';g.lineWidth=1.6*s;g.beginPath();g.moveTo(L-es*2.6,ey);g.lineTo(R+es*2.6,ey);g.stroke();for(const x of [L,R]){g.fillStyle='rgba(123,223,242,.38)';circ(g,x,ey,es*1.45);g.fill();g.lineWidth=2.2*s;g.strokeStyle='#ffb347';g.stroke();g.lineWidth=0.9*s;g.strokeStyle=O;circ(g,x,ey,es*1.6);g.stroke();g.fillStyle='rgba(255,255,255,.7)';g.beginPath();g.ellipse(x-es*0.5,ey-es*0.5,es*0.4,es*0.18,-0.6,0,TAU);g.fill()}break}
+  case 'warpaint':{for(const x of [L,R])for(let i=0;i<2;i++){g.fillStyle=i?'#141020':'#ff4f6b';g.beginPath();g.roundRect(x-es*0.9,ey+es*1.25+i*es*0.6,es*1.8,es*0.38,es*0.19);g.fill()}break}
   case 'shades':lens(L,ey,es*1.25,'#141020');lens(R,ey,es*1.25,'#141020');g.strokeStyle=O;g.lineWidth=1.6*s;g.beginPath();g.moveTo(L+es*1.1,ey-es*0.3);g.lineTo(R-es*1.1,ey-es*0.3);g.stroke();g.fillStyle='rgba(255,255,255,.55)';for(const x of [L,R]){g.beginPath();g.ellipse(x-es*0.45,ey-es*0.45,es*0.38,es*0.18,-0.6,0,TAU);g.fill()}break;
   case 'specs':for(const x of [L,R]){g.lineWidth=1.8*s;g.strokeStyle='#5a3b22';circ(g,x,ey,es*1.3);g.stroke()}g.beginPath();g.moveTo(L+es*1.3,ey);g.quadraticCurveTo(ex,ey-es*0.6,R-es*1.3,ey);g.stroke();g.strokeStyle='rgba(255,255,255,.5)';g.lineWidth=1*s;for(const x of [L,R]){g.beginPath();g.arc(x,ey,es*0.95,-2.6,-1.8);g.stroke()}break;
   case 'glasses3d':g.fillStyle='#f5f5f5';g.beginPath();g.roundRect(L-es*1.5,ey-es*1.1,(R-L)+es*3,es*2.2,es*0.4);g.fill();g.lineWidth=1.5*s;g.strokeStyle=O;g.stroke();g.fillStyle='rgba(255,60,90,.85)';g.beginPath();g.roundRect(L-es*1.15,ey-es*0.75,es*2.1,es*1.5,es*0.3);g.fill();g.fillStyle='rgba(60,200,255,.85)';g.beginPath();g.roundRect(R-es*0.95,ey-es*0.75,es*2.1,es*1.5,es*0.3);g.fill();break;
@@ -1584,7 +1603,7 @@ function drawCos(g,id,x,y,r,ex,ey,es,sp,fx,t,eq){
 }
 const COSICON={};
 function cosIcon(id){if(COSICON[id])return COSICON[id];const c=document.createElement('canvas');c.width=c.height=120;const g=c.getContext('2d');g.scale(3,3);const C=COS[id];
- if(C.s==='h')drawHat(g,id,20,30,1.25,0.6,1);else{const es=4.2;drawFace(g,id,20,id==='mustache'||id==='goldstache'?13:20,es,7,1.1,0.6,0.3)}
+ if(C.s==='h')drawHat(g,id,20,30,1.25,0.6,1);else{const es=4.2;drawFace(g,id,20,id==='mustache'||id==='goldstache'||id==='mask'?13:id==='gasmask'?15:id==='warpaint'?15:20,es,7,1.1,0.6,0.3)}
  return COSICON[id]=c.toDataURL()}
 function buyCos(id){const C=COS[id];if(!C||C.t!=='c'||save.cos.owned[id]||save.base.atp<C.cost)return;save.base.atp-=C.cost;save.cos.owned[id]=1;writeSave();sfx('level');toast(`${C.n} bought`);showWardrobe(WARD.c)}
 function equipCos(c,id){const C=COS[id];if(!save.cos.owned[id])return;delete IMG[c];if(typeof ND!=='undefined'){delete ND.img['h'+c];delete ND.img['c'+c]}const e=save.cos.eq[c]||(save.cos.eq[c]={});e[C.s]=e[C.s]===id?null:id;writeSave();showWardrobe(c)}
@@ -1596,8 +1615,9 @@ function showWardrobe(c){
  const tile=id=>{const C=COS[id],own=save.cos.owned[id],on=eq[C.s]===id,R=RAR[C.t];
   if(own)return `<button class="wtile ${on?'on':''}" data-a="wardEq" data-v="${id}" style="--rc:${R.col}"><img src="${cosIcon(id)}" alt=""><b>${C.n}</b><small>${on?'Equipped':R.n}</small></button>`;
   if(C.t==='c')return `<button class="wtile shop bbuy" data-a="wardBuy" data-v="${id}" data-cost="${C.cost}" ${save.base.atp<C.cost?'disabled':''} style="--rc:${R.col}"><img src="${cosIcon(id)}" alt=""><b>${C.n}</b><small>${ATP_SVG}${C.cost}</small></button>`;
+  if(C.t==='d'){const M=ndMileOf(id);return `<div class="wtile lock medal" style="--rc:${R.col}"><img src="${cosIcon(id)}" alt=""><b>${C.n}</b><small>Node Defense: ${M?M.d:''}</small></div>`}
   return `<div class="wtile lock" style="--rc:${R.col}"><img src="${cosIcon(id)}" alt=""><b>???</b><small>${R.n} · found in levels</small></div>`};
- const grid=sl=>Object.keys(COS).filter(k=>COS[k].s===sl).sort((a,b)=>'crel'.indexOf(COS[a].t)-'crel'.indexOf(COS[b].t)).map(tile).join('');
+ const grid=sl=>Object.keys(COS).filter(k=>COS[k].s===sl).sort((a,b)=>'cdrel'.indexOf(COS[a].t)-'cdrel'.indexOf(COS[b].t)).map(tile).join('');
  const n=Object.keys(save.cos.owned).length,tot=Object.keys(COS).length;
  show(`<div class="hdr">${back(HUB.on?'hubBack':'menu')}<div style="flex:1"><span class="lbl">Golgi Boutique</span><h2>Wardrobe</h2></div><div class="hubatp" style="font-size:18px">${ATP_SVG}<span id="baseAtp">${fmtN(save.base.atp)}</span></div></div>
  <div class="wwrap"><div class="wcells">${cells}</div><div class="wprev">${isH?helperImg(c,120):charSVG(c,120)}<div><div class="bn">${isH?HELPERS[c].n:CHARS[c].name}</div><div class="bd">${n} of ${tot} cosmetics collected. Tap one you own to put it on or take it off. Rare ones only drop from outposts out in the levels.</div></div></div>
@@ -1695,7 +1715,7 @@ function updSites(dt){
  }
 }
 function rollTier(L){const r=Math.random()/L;return r<0.002?'l':r<0.01?'e':r<0.05?'r':null}
-function rollCos(L){const t=rollTier(L);if(!t)return null;let pool=Object.keys(COS).filter(k=>COS[k].t===t&&!save.cos.owned[k]);if(!pool.length)pool=Object.keys(COS).filter(k=>COS[k].t!=='c'&&!save.cos.owned[k]);return pool.length?pick(pool):null}
+function rollCos(L){const t=rollTier(L);if(!t)return null;let pool=Object.keys(COS).filter(k=>COS[k].t===t&&!save.cos.owned[k]);if(!pool.length)pool=Object.keys(COS).filter(k=>COS[k].t!=='c'&&COS[k].t!=='d'&&!save.cos.owned[k]);return pool.length?pick(pool):null}
 function rollHelper(L){const kind=G.S.deco.kind,r=Math.random()/L;let pool=null;
  if(r<0.004)pool=Object.keys(HELPERS).filter(k=>HELPERS[k].t==='l');else if(r<0.02)pool=Object.keys(HELPERS).filter(k=>HELPERS[k].t==='e');else if(r<0.14)pool=Object.keys(HELPERS).filter(k=>HELPERS[k].o===kind);
  if(!pool)return null;pool=pool.filter(k=>!save.helpers[k]);return pool.length?pick(pool):null}
@@ -2423,7 +2443,7 @@ function ndSummary(B){
  show(`<div class="panel"><div class="lbl">Node Defense</div><h2>${B.over?'The node was overrun':'Defense ended'}</h2>
  <div class="setrow"><span>Waves held</span><b>${B.held}</b></div><div class="setrow"><span>Best wave on ${ND_REG[ND_LEVELS[ND.L].r].n} ${ND_LEVELS[ND.L].k+1}</span><b>${ndM().best}</b></div>
  <div class="setrow"><span>ATP earned</span><b class="ib">${ATP_SVG} ${fmtN(B.atp)}</b></div><div class="setrow"><span>DNA earned</span><b class="ib">${DNA_SVG} ${B.dna}</b></div>
- <div class="setrow"><span>Idle defense</span><b>+${ndIdleRate().toFixed(1)} ATP/min</b></div>${(B.newHeroes||[]).map(k=>`<div class="setrow"><span>New hero</span><b style="color:#ffd23f">${charSVG(HEROES[k].id,28)} ${HEROES[k].n}</b></div>`).join('')}
+ <div class="setrow"><span>Idle defense</span><b>+${ndIdleRate().toFixed(1)} ATP/min</b></div>${(B.newCos||[]).map(k=>`<div class="setrow"><span>Milestone reward</span><b style="color:#3fd17a"><img src="${cosIcon(k)}" width="26" height="26" style="vertical-align:middle" alt=""> ${COS[k].n}</b></div>`).join('')}${(B.newHeroes||[]).map(k=>`<div class="setrow"><span>New hero</span><b style="color:#ffd23f">${charSVG(HEROES[k].id,28)} ${HEROES[k].n}</b></div>`).join('')}
  <div class="row"><button class="btn big" data-a="ndPrep">Defend again</button><button class="btn" data-a="ndRegion">Levels</button><button class="btn ghost" data-a="hub">Lymph Node</button></div></div>`,'modal');
 }
 // ---- building and upgrading ----
@@ -2659,6 +2679,7 @@ function ndWaveDone(B){
  if(w%10===0&&Math.random()<0.35){const c=Object.keys(COS).filter(k=>COS[k].t==='r'&&!save.cos.owned[k]);if(c.length){const id=pick(c);save.cos.owned[id]=1;toast(`Boss loot: ${COS[id].n}!`)}}
  writeSave();toast(`Wave ${w} held · +${atp} ATP${dna?` · +${dna} DNA`:''}`);
  for(const k in HEROES)if(heroOk(k)&&!had.includes(k)){B.newHeroes=(B.newHeroes||[]).concat(k);setTimeout(()=>toast(`New hero unlocked: ${HEROES[k].n}!`),900)}
+ ndCheckMiles(B);
 }
 function ndLose(B){B.over=true;B.node=0;sfx('lose');setTimeout(()=>{if(ND.on)ndExit()},1800)}
 // ---- drawing ----
@@ -2886,6 +2907,20 @@ function ndBodyMap(){
  <g class="ndscale"><path d="M22 736 H82" stroke="#cfe0f0" stroke-width="2"/><path d="M22 731 V741 M82 731 V741" stroke="#cfe0f0" stroke-width="2"/><text x="52" y="726" text-anchor="middle">10 cm</text></g>
  ${marks}</svg>`;
 }
+// ---- Node Defense milestones: each one awards a cosmetic ----
+const ND_MILE=[
+ {id:'m10',cos:'nurse',n:'First Line',d:'Reach wave 10 on any level',t:()=>ND_LEVELS.some((L,i)=>ndBestI(i)>=10)},
+ {id:'m20',cos:'mask',n:'Holding Steady',d:'Reach wave 20 on any level',t:()=>ND_LEVELS.some((L,i)=>ndBestI(i)>=20)},
+ {id:'reg',cos:'mirror',n:'Region Secured',d:'Reach wave 10 on all 4 levels of a region',t:()=>ND_REG.some((R,r)=>[0,1,2,3].every(k=>ndBestI(r*4+k)>=10))},
+ {id:'open',cos:'goggles',n:'Full Body Scan',d:'Open the first level of every region',t:()=>ND_REG.every((R,r)=>ndLvOpen(r*4))},
+ {id:'m30',cos:'laurel',n:'Unbreakable',d:'Reach wave 30 on any level',t:()=>ND_LEVELS.some((L,i)=>ndBestI(i)>=30)},
+ {id:'t50',cos:'helmet',n:'Veteran',d:'Reach 50 total best waves',t:()=>ndTotalBest()>=50},
+ {id:'m40',cos:'warpaint',n:'Relentless',d:'Reach wave 40 on any level',t:()=>ND_LEVELS.some((L,i)=>ndBestI(i)>=40)},
+ {id:'all',cos:'knight',n:'Total Immunity',d:'Reach wave 10 on all 16 levels',t:()=>ND_LEVELS.every((L,i)=>ndBestI(i)>=10)},
+];
+const ndMileOf=c=>ND_MILE.find(m=>m.cos===c);
+function ndCheckMiles(B){if(!save.nd||!save.nd.maps)return;const got=[];for(const m of ND_MILE)if(!save.cos.owned[m.cos]&&m.t()){save.cos.owned[m.cos]=1;got.push(m)}
+ if(got.length){writeSave();if(B)B.newCos=(B.newCos||[]).concat(got.map(m=>m.cos));got.forEach((m,j)=>setTimeout(()=>toast(`Milestone · ${m.n}: ${COS[m.cos].n} unlocked!`),1400+j*2200))}}
 function showRegion(r){
  if(r!=null&&!isNaN(r))ND.R=+r;r=ND.R||0;ndInitSave();ND.prep=false;const R=ND_REG[r];
  const cards=[0,1,2,3].map(k=>{const i=r*4+k,L=ND_LEVELS[i],open=ndLvOpen(i),b=ndBestI(i),hu=Object.keys(HEROES).filter(h=>HEROES[h].un&&HEROES[h].un[0]===i);
@@ -2893,11 +2928,11 @@ function showRegion(r){
  show(`<div class="hdr">${back('ndSetup')}<div style="flex:1"><span class="lbl">Node Defense · Region ${r+1}</span><h2>${R.n}</h2></div><div class="hubatp" style="font-size:18px">${ATP_SVG}<span>${fmtN(save.base.atp)}</span></div></div><div class="bwrap">${cards}</div>`);
 }
 function showND(tab){
- ndInitSave();ND.prep=false;if(tab)ND.tab=tab;tab=ND.tab||'maps';const back2=HUB.on?'hubBack':'menu';HUB.list=HUB.on;if(HUB.on){hubPanel(null);hubUi.classList.add('hidden')}
+ ndInitSave();ndCheckMiles();ND.prep=false;if(tab)ND.tab=tab;tab=ND.tab||'maps';const back2=HUB.on?'hubBack':'menu';HUB.list=HUB.on;if(HUB.on){hubPanel(null);hubUi.classList.add('hidden')}
  const ks=Object.keys(NDB),av=ks.filter(ndAvail),lock=ks.filter(k=>!ndAvail(k));let body='';
  if(tab==='maps'){
   body=`<div class="bstat"><div class="bmeta"><span>Idle defense <b>+${ndIdleRate().toFixed(1)}</b> ATP/min</span><span>Total best <b>${ndTotalBest()}</b> waves</span></div></div>
-  <div class="ndbwrap">${ndBodyMap()}</div><p class="hint" style="text-align:left">Tap a region on the body to pick one of its 4 levels. Pathogens flow down the vessels toward your Lymph Node, and you build towers with cytokines (◆) during the defense. Your best wave on each map sets how much ATP it pays while you're away.</p>`}
+  <div class="ndbwrap">${ndBodyMap()}</div><h3 style="margin:10px 0 6px">Milestones <small style="color:#9fb2c8">${ND_MILE.filter(m=>save.cos.owned[m.cos]).length}/${ND_MILE.length} · each awards a cosmetic</small></h3><div class="ndmiles">${ND_MILE.map(m=>{const ok=!!save.cos.owned[m.cos];return `<div class="ndmile ${ok?'ok':''}"><img src="${cosIcon(m.cos)}" alt=""><div><b>${m.n}</b><small>${m.d}</small><small class="rw">${ok?'✓ ':''}${COS[m.cos].n}</small></div></div>`}).join('')}</div><p class="hint" style="text-align:left">Tap a region on the body to pick one of its 4 levels. Pathogens flow down the vessels toward your Lymph Node, and you build towers with cytokines (◆) during the defense. Your best wave on each map sets how much ATP it pays while you're away.</p>`}
  else if(tab==='heroes'){
   const slots=ndHeroSlots();
   body=`<p class="hint" style="text-align:left">Heroes are champion cells you control directly: move with WASD or the arrow keys (or the joystick on touch screens) and fire powers with Q, E and R or their buttons. Leveling a hero unlocks its 2nd power at level 3 and its 3rd at level 6. Unlock them by reaching milestones in Node Defense, and level them up with ATP. You can bring ${slots} hero${slots>1?'es':''} into a defense${slots<2?' (a second slot opens at 60 total best waves)':''}.</p>`+
