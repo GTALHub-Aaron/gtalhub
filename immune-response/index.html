@@ -162,7 +162,7 @@ body.ib #specimen{display:none}
 .pi .ok{color:var(--good)}
 .lab{width:100%;height:100%;display:flex;flex-direction:column;align-items:center}
 .labbody{position:relative;flex:1;min-height:0;width:100%;max-width:1100px;display:flex}
-.treewrap{flex:1;min-height:0;width:100%;overflow:auto;border-radius:22px;background:radial-gradient(circle at center,#17243c,#070a12 72%);border:3px solid var(--dark);box-shadow:inset 0 0 60px rgba(0,0,0,.6);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+.treewrap.grab{cursor:grabbing}.treewrap #tree{display:block;margin:auto;flex:none}.treewrap{display:flex;cursor:grab;flex:1;min-height:0;width:100%;overflow:auto;border-radius:22px;background:radial-gradient(circle at center,#17243c,#070a12 72%);border:3px solid var(--dark);box-shadow:inset 0 0 60px rgba(0,0,0,.6);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 .treewrap svg{display:block}
 .zoom{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:8px;z-index:2}
 .zoom button{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a4b68,#141c2a 75%);border:3px solid var(--dark);box-shadow:0 3px 0 var(--dark);font-family:var(--display);font-size:22px}
@@ -1437,7 +1437,18 @@ function showLab(){
  <div class="labbody"><div class="zoom"><button data-a="zoom" data-v="1.25">+</button><button data-a="zoom" data-v="0.8">−</button></div><div class="treewrap" id="tw"><svg id="tree" viewBox="-800 -800 1600 1600"></svg></div></div>
  <div class="detail" id="detail"></div></div>`,'full');
  const tw=$('#tw');labZoom=Math.min(tw.clientWidth,tw.clientHeight)<700?0.8:clamp(Math.min(tw.clientWidth,tw.clientHeight)/1500,0.45,1);
- renderLab(true);
+ renderLab(true);labInput(tw);
+}
+// mouse wheel zooms toward the cursor, dragging the background pans, clicking empty map clears the selection
+function labInput(tw){
+ const minZ=()=>Math.min(tw.clientWidth,tw.clientHeight)/TREE_SZ*0.95;
+ tw.addEventListener('wheel',e=>{e.preventDefault();const r=tw.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,fx=(tw.scrollLeft+mx)/(TREE_SZ*labZoom),fy=(tw.scrollTop+my)/(TREE_SZ*labZoom);
+  labZoom=clamp(labZoom*Math.exp(-e.deltaY*(e.deltaMode===1?0.05:0.0015)),minZ(),2);renderLab(false);tw.scrollLeft=fx*TREE_SZ*labZoom-mx;tw.scrollTop=fy*TREE_SZ*labZoom-my},{passive:false});
+ let drag=null,moved=false;
+ tw.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;drag={x:e.clientX,y:e.clientY,sl:tw.scrollLeft,st:tw.scrollTop};moved=false});
+ addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4){moved=true;tw.classList.add('grab')}if(moved){tw.scrollLeft=drag.sl-dx;tw.scrollTop=drag.st-dy}});
+ addEventListener('pointerup',()=>{drag=null;tw.classList.remove('grab')});
+ tw.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;return}if(!e.target.closest('.node')&&labSel){labSel=null;refundArm=false;renderLab(false)}},true);
 }
 function renderLab(center){
  const svg=$('#tree'),tw=$('#tw');if(!svg)return;
@@ -1446,7 +1457,7 @@ function renderLab(center){
  if(center){tw.scrollLeft=(sz-tw.clientWidth)/2;tw.scrollTop=(sz-tw.clientHeight)/2}
 }
 const TREE_SZ=1600;
-function zoomLab(f){const tw=$('#tw');const cx=(tw.scrollLeft+tw.clientWidth/2)/(TREE_SZ*labZoom),cy=(tw.scrollTop+tw.clientHeight/2)/(TREE_SZ*labZoom);labZoom=clamp(labZoom*f,0.3,2);renderLab(false);tw.scrollLeft=cx*TREE_SZ*labZoom-tw.clientWidth/2;tw.scrollTop=cy*TREE_SZ*labZoom-tw.clientHeight/2}
+function zoomLab(f){const tw=$('#tw');const cx=(tw.scrollLeft+tw.clientWidth/2)/(TREE_SZ*labZoom),cy=(tw.scrollTop+tw.clientHeight/2)/(TREE_SZ*labZoom);labZoom=clamp(labZoom*f,Math.min(tw.clientWidth,tw.clientHeight)/TREE_SZ*0.95,2);renderLab(false);tw.scrollLeft=cx*TREE_SZ*labZoom-tw.clientWidth/2;tw.scrollTop=cy*TREE_SZ*labZoom-tw.clientHeight/2}
 function buyNode(id){const N=TN[id];if(!N||!nodeAvail(N)||rank(id)>=N.max)return;const c=nodeCost(N);if(save.dna<c)return;save.dna-=c;save.ranks[id]=rank(id)+1;writeSave();renderLab(false)}
 function refundAll(){if(!refundArm){refundArm=true;renderLab(false);return}let s=0;for(const n of TREE){const r=rank(n[0]);s+=n[6]*r*(r+1)/2}save.dna+=s;save.ranks={};refundArm=false;writeSave();renderLab(false)}
 
@@ -2586,7 +2597,7 @@ const A={
  itemsPos:v=>{save.settings.itemsPos=v;writeSave();applyItemsPos();if(modal==='pause'){modal=null;showPause()}else showSettings()},
  reset:()=>{if(resetArm){save=clone(DEFAULT_SAVE);writeSave();resetArm=false;showMenu()}else{resetArm=true;showSettings()}},
 };
-screenEl.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||b.disabled)return;{const a=b.dataset.a;sfx(b.classList.contains('back')?'back':(b.classList.contains('big')||['pickChar','pickStage','choose','buy','retry'].includes(a))?'confirm':'click')}const f=A[b.dataset.a];if(f)f(b.dataset.v)});
+screenEl.addEventListener('click',e=>{if(e.target===screenEl||e.target.classList.contains('lab')||e.target.classList.contains('labbody')){const bk=screenEl.querySelector('.lab .hdr .back');if(bk){sfx('back');const f=A[bk.dataset.a];if(f)f(bk.dataset.v);return}}const b=e.target.closest('[data-a]');if(!b||b.disabled)return;{const a=b.dataset.a;sfx(b.classList.contains('back')?'back':(b.classList.contains('big')||['pickChar','pickStage','choose','buy','retry'].includes(a))?'confirm':'click')}const f=A[b.dataset.a];if(f)f(b.dataset.v)});
 screenEl.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.vol;if(!k)return;audioInit();save.settings[k]=e.target.value/100;applyVolumes();if(k==='sfx')sfx('xp');clearTimeout(window.__vs);window.__vs=setTimeout(writeSave,300)});
 $('#pauseBtn').addEventListener('click',()=>{sfx('click');if(modal==='pause'){closeModal();nextModal()}else showPause()});
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;
