@@ -161,12 +161,13 @@ body.ib #specimen{display:none}
 .pi small{color:var(--mut);font-weight:600}
 .pi .ok{color:var(--good)}
 .lab{width:100%;height:100%;display:flex;flex-direction:column;align-items:center}
-.labbody{position:relative;flex:1;min-height:0;width:100%;max-width:1100px;display:flex}
+.labbody{position:relative;flex:1;min-height:0;width:100%;max-width:1700px;display:flex}
+.treewrap{scrollbar-width:none;-ms-overflow-style:none}.treewrap::-webkit-scrollbar{display:none;width:0;height:0}
 .treewrap.grab{cursor:grabbing}.treewrap #tree{display:block;margin:auto;flex:none}.treewrap{display:flex;cursor:grab;flex:1;min-height:0;width:100%;overflow:auto;border-radius:22px;background:radial-gradient(circle at center,#17243c,#070a12 72%);border:3px solid var(--dark);box-shadow:inset 0 0 60px rgba(0,0,0,.6);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 .treewrap svg{display:block}
 .zoom{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:8px;z-index:2}
 .zoom button{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a4b68,#141c2a 75%);border:3px solid var(--dark);box-shadow:0 3px 0 var(--dark);font-family:var(--display);font-size:22px}
-.detail{position:relative;width:100%;max-width:1100px;margin-top:12px;padding:12px 16px;border-radius:20px;background:var(--panel);border:3px solid var(--dark);box-shadow:0 5px 0 var(--dark);min-height:98px;display:flex;gap:12px;align-items:center}
+.detail{position:relative;width:100%;max-width:1700px;margin-top:10px;padding:12px 16px;border-radius:20px;background:var(--panel);border:3px solid var(--dark);box-shadow:0 5px 0 var(--dark);min-height:98px;display:flex;gap:12px;align-items:center}
 .detail .dt{flex:1}
 .detail h3{margin:0;font-family:var(--display);font-weight:400;font-size:22px}
 .detail p{margin:2px 0;color:#d0dcec;font-size:14px;font-weight:700}
@@ -1967,10 +1968,10 @@ const QUARTERS={neutrophil:'Barracks',tcell:'Sniper Nest',bcell:'Antibody Forge'
 const DRILLS={off:{n:'Offense',ic:'⚔',t:'+3% damage per rank'},def:{n:'Defense',ic:'⛨',t:'+6 max HP per rank, +1 armor every 3'},agi:{n:'Agility',ic:'➶',t:'+2% speed, +4% pickup range per rank'}};
 const thySlots=l=>l?1+Math.floor(l/3):0,thySpd=l=>1+0.15*Math.max(0,l-1),xRate=l=>Math.round(25-2.5*(l-1));
 const CORE={
- marrow:{n:'Bone Marrow',d:'Raises all ATP production.',max:10,cost:l=>Math.round(100*Math.pow(1.75,l)),eff:l=>l?`+${20*l}% production`:'Not built'},
- spleen:{n:'Spleen',d:'Holds ATP made while you’re away.',max:8,cost:l=>Math.round(120*Math.pow(1.9,l)),eff:l=>`${8+2*l}h offline storage`},
- thymus:{n:'Thymus',d:'Trains cells over time for permanent ranks.',max:6,cost:l=>l?Math.round(250*Math.pow(1.8,l)):150,eff:l=>l?`${thySlots(l)} slot${thySlots(l)>1?'s':''}${l>1?` · ${Math.round((thySpd(l)-1)*100)}% faster`:''}`:'Not built'},
- exchange:{n:'Plasma Exchange',d:'Converts ATP into DNA at a poor rate.',max:5,cost:l=>l?Math.round(300*Math.pow(1.8,l)):300,eff:l=>l?`${xRate(l)} ATP → 1 DNA`:'Not built'},
+ marrow:{n:'Bone Marrow',d:'Raises all ATP production.',max:10,cost:l=>Math.round(80*Math.pow(1.6,l)),eff:l=>l?`+${10*l}% production`:'Not built'},
+ spleen:{n:'Spleen',d:'Holds ATP made while you’re away.',max:8,cost:l=>Math.round(100*Math.pow(1.7,l)),eff:l=>`${8+2*l}h offline storage`},
+ thymus:{n:'Thymus',d:'Trains cells over time for permanent ranks.',max:6,cost:l=>l?Math.round(200*Math.pow(1.6,l)):150,eff:l=>l?`${thySlots(l)} slot${thySlots(l)>1?'s':''}${l>1?` · ${Math.round((thySpd(l)-1)*100)}% faster`:''}`:'Not built'},
+ exchange:{n:'Plasma Exchange',d:'Converts ATP into DNA at a poor rate.',max:5,cost:l=>l?Math.round(250*Math.pow(1.6,l)):300,eff:l=>l?`${xRate(l)} ATP → 1 DNA`:'Not built'},
 };
 const CORE_ART={
  marrow:`<g transform="rotate(-35 24 24)"><circle cx="9" cy="19.5" r="5.6" fill="#f3e6c4" ${sw()}/><circle cx="9" cy="28.5" r="5.6" fill="#f3e6c4" ${sw()}/><circle cx="39" cy="19.5" r="5.6" fill="#f3e6c4" ${sw()}/><circle cx="39" cy="28.5" r="5.6" fill="#f3e6c4" ${sw()}/><rect x="8" y="18.4" width="32" height="11.2" fill="#f3e6c4"/><path d="M9.5 18.4H38.5M9.5 29.6H38.5" ${sw()}/><rect x="13" y="21.6" width="22" height="4.8" rx="2.4" fill="#e2445c" stroke="#8a1830" stroke-width="1.2"/><circle cx="18" cy="24" r="1.2" fill="#ffb3c0"/><circle cx="25" cy="24" r="1.2" fill="#ffb3c0"/><circle cx="31" cy="24" r="1.2" fill="#ffb3c0"/></g>${HL(12,14,4,2)}`,
@@ -1982,13 +1983,13 @@ const coreIcon=id=>`<svg viewBox="0 0 48 48">${CORE_ART[id]}</svg>`;
 const bL=id=>save.base.b[id]||0;
 const cR=(c,d)=>(save.base.cr[c]||{})[d]||0;
 const Q_MAX=15,DRILL_MAX=10;
-const qCost=l=>l?Math.round(40*Math.pow(1.55,l)):50;
+const qCost=l=>l?Math.round(25*Math.pow(1.45,l)):30;
 const drillCost=r=>Math.round(40*Math.pow(1.5,r));
 const drillTime=r=>Math.round(180*Math.pow(1.6,r)/thySpd(bL('thymus')));
 const clearedCount=()=>Math.max(save.stages-1,(save.base.cl||[]).length);
-const organMult=()=>1+0.25*clearedCount();
-const qRate=l=>l?l*Math.pow(1.08,l-1):0;
-function atpRate(){let r=0;for(const c in CHARS)if(charUnlocked(c))r+=qRate(bL(c));return r*(1+0.2*bL('marrow'))*organMult()+ndIdleRate()}
+const organMult=()=>1+0.15*clearedCount();
+const qRate=l=>l?0.2+0.055*l:0;
+function atpRate(){let r=0;for(const c in CHARS)if(charUnlocked(c))r+=qRate(bL(c));return r*(1+0.1*bL('marrow'))*organMult()+ndIdleRate()}
 const capH=()=>8+2*bL('spleen');
 const fmtN=n=>n>=1e6?(n/1e6).toFixed(n>=1e7?0:1)+'M':n>=1e4?(n/1e3).toFixed(n>=1e5?0:1)+'k':Math.floor(n).toLocaleString();
 const fmtDur=s=>{s=Math.max(0,Math.ceil(s));if(s>=3600)return Math.floor(s/3600)+'h '+String(Math.floor(s%3600/60)).padStart(2,'0')+'m';return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
@@ -2032,13 +2033,13 @@ function cellCardHTML(c,inHub){const B=save.base,ch=CHARS[c],ts=thySlots(bL('thy
   return `<button class="drill bbuy" data-a="drill" data-v="${c}:${d}" data-cost="${cost}" ${busy||full||mx||B.atp<cost?'disabled':''} ${busy||full||mx?'data-lock="1"':''} title="${DRILLS[d].t}"><span class="dn">${DRILLS[d].ic} ${DRILLS[d].n} <em>${r}</em></span><span class="dc">${mx?'Max':`${ATP_SVG}${fmtN(cost)} · ${fmtDur(drillTime(r))}`}</span></button>`}).join('')}</div>`:'';
  const sel=inHub?(hubChar()===c?`<span class="bselon">Your cell</span>`:`<button class="btn sm" data-a="hubSel" data-v="${c}">Play as ${ch.name}</button>`):'';
  return `<div class="bcard" style="--cc:${ch.color}"><div class="bic">${charSVG(c,58)}</div><div class="bbody"><div class="bn">${QUARTERS[c]}${l?`<span class="blv">Lv ${l}</span>`:''}</div>
-  <div class="bd">${ch.name} · ${l?`${ATP_SVG}${(qRate(l)*(1+0.2*bL('marrow'))*organMult()).toFixed(1)}/min`:'Not built'}</div>
+  <div class="bd">${ch.name} · ${l?`${ATP_SVG}${Math.round(qRate(l)*(1+0.1*bL('marrow'))*organMult()*60)}/hr`:'Not built'}</div>
   <div class="be">${l?CELL_PERK[c].v(l):`Each level: ${CELL_PERK[c].t}`} <span class="bnx">${l&&l<Q_MAX?`→ ${CELL_PERK[c].v(l+1)}`:''}</span></div>
   ${tr?`<div class="be trn">Training ${DRILLS[tr.d].n} · <span data-tc="${c}">${fmtDur((tr.end-Date.now())/1000)}</span></div>`:''}
   <div class="brow">${upBtn(c,qCost(l),l?'Upgrade':'Build',l,Q_MAX)}${sel}</div>${drills}
   ${cellBonusText(c)?`<div class="bsum">In runs: ${cellBonusText(c)}</div>`:''}</div></div>`}
 function statHTML(){const B=save.base;return `<div class="bstat"><div class="batp">${ATP_SVG}<span id="baseAtp">${fmtN(B.atp)}</span></div>
- <div class="bmeta"><span><b id="baseRate">+${atpRate().toFixed(1)}</b> ATP/min</span><span><b>${capH()}h</b> offline storage</span><span><b>×${organMult().toFixed(2)}</b> from ${clearedCount()} organ${clearedCount()===1?'':'s'} cleared</span></div></div>`}
+ <div class="bmeta"><span><b id="baseRate">+${Math.round(atpRate()*60)}</b> ATP/hr</span><span><b>${capH()}h</b> offline storage</span><span><b>×${organMult().toFixed(2)}</b> from ${clearedCount()} organ${clearedCount()===1?'':'s'} cleared</span></div></div>`}
 function showBase(){
  baseTick();HUB.list=true;hubPanel(null);hubUi.classList.add('hidden');
  show(`<div class="hdr">${back(HUB.on?'hubBack':'menu')}<div style="flex:1"><span class="lbl">Command monitor</span><h2>Lymph Node</h2></div></div>
@@ -2087,7 +2088,7 @@ function enterHub(){
  closeModal();baseTick();hubUi.classList.remove('hidden');hubTop();hubPanel(null);
 }
 function exitHub(){HUB.on=false;HUB.list=false;joy=null;hubUi.classList.add('hidden');$('#hubPanel').innerHTML='';HUB.pk=null}
-function hubTop(){$('#hubTop').innerHTML=`${back('menu')}<div class="hubatp">${ATP_SVG}<span id="hubAtp">${fmtN(save.base.atp)}</span><small>+${atpRate().toFixed(1)}/min</small></div><div class="hubhint">${IS_TOUCH?'Drag':'WASD'} to walk · walk up to a building</div>`}
+function hubTop(){$('#hubTop').innerHTML=`${back('menu')}<div class="hubatp">${ATP_SVG}<span id="hubAtp">${fmtN(save.base.atp)}</span><small>+${Math.round(atpRate()*60)}/hr</small></div><div class="hubhint">${IS_TOUCH?'Drag':'WASD'} to walk · walk up to a building</div>`}
 function hubPanel(b,force){
  const el=$('#hubPanel'),key=b?b.id+'|'+force:null;
  if(!b){if(HUB.pk){el.innerHTML='';el.className='';HUB.pk=null}return}
@@ -2109,7 +2110,7 @@ const LAB_SVG=`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" vi
 function labCardHTML(){const n=labRanks();return `<div class="bcard" style="--cc:#ffc93c"><div class="bic">${LAB_SVG.replace(' width="96" height="96"','')}</div><div class="bbody"><div class="bn">DNA Lab</div><div class="bd">Spend DNA on permanent upgrades for every cell.</div><div class="be">${DNA_SVG.replace('<svg ','<svg style="width:14px;height:14px;vertical-align:-2px" ')} ${Math.floor(save.dna)} DNA · ${n} rank${n===1?'':'s'} unlocked</div><button class="btn sm cyan" data-a="labHub">Open DNA Lab</button></div></div>`}
 const GATE_SVG=`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 48 48"><path d="M24 4 40 10v12c0 11-7 18-16 22C15 40 8 33 8 22V10z" fill="#3a6f8f" stroke="#140a1c" stroke-width="3" stroke-linejoin="round"/><path d="M24 9 35 13.5V22c0 8-5 13.5-11 16.5C18 35.5 13 30 13 22v-8.5z" fill="#7bdff2"/><path d="M24 9v29.5C18 35.5 13 30 13 22v-8.5z" fill="#5cc0dc"/><path d="M17 23l5 5 9-10" fill="none" stroke="#140a1c" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 23l5 5 9-10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function shopCardHTML(){const n=Object.keys(save.cos.owned).length;return `<div class="bcard" style="--cc:#ff9ec4"><div class="bic"><img src="${cosIcon('tophat')}" alt=""></div><div class="bbody"><div class="bn">Golgi Boutique</div><div class="bd">Hats, glasses and more for your cells. A few basics are for sale here. Rare ones only drop from outposts out in the levels.</div><div class="be">${n} of ${Object.keys(COS).length} collected</div><button class="btn sm cyan" data-a="wardOpen">Open wardrobe</button></div></div>`}
-function gateCardHTML(){ndInitSave();const got=Object.keys(HELPERS).filter(k=>save.helpers[k]);return `<div class="bcard" style="--cc:#7bdff2"><div class="bic">${GATE_SVG.replace(' width="96" height="96"','')}</div><div class="bbody"><div class="bn">Defense Gate</div><div class="bd">Hold the line against waves of pathogens. ${ND_LEVELS.filter((L,i)=>ndLvOpen(i)).length} of ${ND_LEVELS.length} maps open · best total ${ndTotalBest()} waves · idle defense +${ndIdleRate().toFixed(1)} ATP/min.</div><div class="be">${got.length} of ${Object.keys(HELPERS).length} helpers rescued</div>${got.length?`<div class="hrow">${got.map(k=>`<span title="${HELPERS[k].n}">${helperImg(k,40)}</span>`).join('')}</div>`:''}<div class="brow"><button class="btn sm cyan" data-a="ndSetup">Defend!</button><button class="btn sm ghost" data-a="helpersCodex">Helpers</button></div></div></div>`}
+function gateCardHTML(){ndInitSave();const got=Object.keys(HELPERS).filter(k=>save.helpers[k]);return `<div class="bcard" style="--cc:#7bdff2"><div class="bic">${GATE_SVG.replace(' width="96" height="96"','')}</div><div class="bbody"><div class="bn">Defense Gate</div><div class="bd">Hold the line against waves of pathogens. ${ND_LEVELS.filter((L,i)=>ndLvOpen(i)).length} of ${ND_LEVELS.length} maps open · best total ${ndTotalBest()} waves · idle defense +${Math.round(ndIdleRate()*60)} ATP/hr.</div><div class="be">${got.length} of ${Object.keys(HELPERS).length} helpers rescued</div>${got.length?`<div class="hrow">${got.map(k=>`<span title="${HELPERS[k].n}">${helperImg(k,40)}</span>`).join('')}</div>`:''}<div class="brow"><button class="btn sm cyan" data-a="ndSetup">Defend!</button><button class="btn sm ghost" data-a="helpersCodex">Helpers</button></div></div></div>`}
 const MON_SVG=`<svg viewBox="0 0 48 48"><rect x="21" y="30" width="6" height="11" fill="#5a6b85" stroke="#140a1c" stroke-width="2.4"/><rect x="12" y="39" width="24" height="5" rx="2.5" fill="#3a4964" stroke="#140a1c" stroke-width="2.4"/><rect x="5" y="6" width="38" height="26" rx="5" fill="#2a3448" stroke="#140a1c" stroke-width="2.6"/><rect x="9" y="10" width="30" height="18" rx="2.5" fill="#0d3b3a"/><path d="M12 24l5-6 4 3 5-7 4 4 5-5" fill="none" stroke="#4ff0d8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function hubUpdate(dt){
  HUB.t+=dt;
@@ -2317,7 +2318,7 @@ const NDB={
 const ND_EN={cocci:[0.6,1.1],virus:[1,1],spore:[0.45,1.7],bacillus:[2.2,0.8],amoeba:[3,0.6],spitter:[1.3,0.9],dasher:[1.2,1.8],parasite:[5,0.7]};
 const ndAvail=k=>{const b=NDB[k];return b.src==='c'?charUnlocked(b.id):!!save.helpers[b.id]};
 const ndLv=id=>save.nd.lv[id]||1;
-const ndIdleK=i=>0.12*(1+0.3*ND_LEVELS[i].r)*(1+0.15*ND_LEVELS[i].k);
+const ndIdleK=i=>0.007*(1+0.3*ND_LEVELS[i].r)*(1+0.15*ND_LEVELS[i].k);
 function ndIdleRate(){if(!save.nd||!save.nd.maps)return 0;let h=0;for(const k in NDB)if(ndAvail(k))h+=ndTrLv(k)-1;let r=0;ND_LEVELS.forEach((L,i)=>{const m=save.nd.maps[L.id];if(m&&m.best)r+=m.best*ndIdleK(i)});return r*(1+0.05*h)}
 // ---- tower defense map: a winding lymph vessel from the right edge to the node core ----
 // ---- defense maps: each level has a giant lymph node at one edge and one or more vessels flowing into it ----
@@ -2379,7 +2380,7 @@ function ndMap(li){
 }
 let NDP=ndMap(0);
 const ndBuildCost=k=>NDB[k].cost*2,ndLvCost=t=>Math.round(NDB[t.k].cost*1.5*t.lv);
-const ndTrLv=k=>(save.nd.tr&&save.nd.tr[k])||1,ndTrMul=k=>1+0.12*(ndTrLv(k)-1),ndTrCost=k=>Math.round(120*Math.pow(1.6,ndTrLv(k)-1));
+const ndTrLv=k=>(save.nd.tr&&save.nd.tr[k])||1,ndTrMul=k=>1+0.12*(ndTrLv(k)-1),ndTrCost=k=>Math.round(100*Math.pow(1.5,ndTrLv(k)-1));
 
 const HEROES={
  neutro:{un:null,n:'Captain Neutro',id:'neutrophil',hp:720,dmg:30,cd:0.7,spd:95,r:16,regen:10,d:'Balanced brawler that charges into the fray.'},
@@ -2387,7 +2388,7 @@ const HEROES={
  killer:{un:[5,10],n:'Killer T',id:'tcell',hp:620,dmg:50,cd:0.55,spd:105,r:15,regen:10,d:'Fast duelist with huge single-target damage.'},
  prof:{un:[1,10],n:'Professor B',id:'bcell',hp:460,dmg:28,cd:0.7,spd:88,r:15,range:190,shot:'antibody',regen:8,d:'Fires antibodies from range while others block.'},
 };
-const heroLv=k=>save.nd.hero[k]||1,heroMul=k=>1+0.2*(heroLv(k)-1),heroCost=k=>Math.round(200*Math.pow(1.8,heroLv(k)-1)),heroOk=k=>{const u=HEROES[k].un;if(!u)return true;const m=save.nd.maps&&save.nd.maps[ND_LEVELS[u[0]].id];return !!m&&m.best>=u[1]};
+const heroLv=k=>save.nd.hero[k]||1,heroMul=k=>1+0.2*(heroLv(k)-1),heroCost=k=>Math.round(150*Math.pow(1.6,heroLv(k)-1)),heroOk=k=>{const u=HEROES[k].un;if(!u)return true;const m=save.nd.maps&&save.nd.maps[ND_LEVELS[u[0]].id];return !!m&&m.best>=u[1]};
 const ndHeroUnTxt=k=>{const u=HEROES[k].un;return `Reach wave ${u[1]} on ${ndLvName(u[0])}`};
 function ndTotalBest(){let t=0;for(const L of ND_LEVELS)t+=(save.nd.maps&&save.nd.maps[L.id]&&save.nd.maps[L.id].best)||0;return t}
 const ndHeroSlots=()=>ndTotalBest()>=60?2:1;
@@ -2443,7 +2444,7 @@ function ndSummary(B){
  show(`<div class="panel"><div class="lbl">Node Defense</div><h2>${B.over?'The node was overrun':'Defense ended'}</h2>
  <div class="setrow"><span>Waves held</span><b>${B.held}</b></div><div class="setrow"><span>Best wave on ${ND_REG[ND_LEVELS[ND.L].r].n} ${ND_LEVELS[ND.L].k+1}</span><b>${ndM().best}</b></div>
  <div class="setrow"><span>ATP earned</span><b class="ib">${ATP_SVG} ${fmtN(B.atp)}</b></div><div class="setrow"><span>DNA earned</span><b class="ib">${DNA_SVG} ${B.dna}</b></div>
- <div class="setrow"><span>Idle defense</span><b>+${ndIdleRate().toFixed(1)} ATP/min</b></div>${(B.newCos||[]).map(k=>`<div class="setrow"><span>Milestone reward</span><b style="color:#3fd17a"><img src="${cosIcon(k)}" width="26" height="26" style="vertical-align:middle" alt=""> ${COS[k].n}</b></div>`).join('')}${(B.newHeroes||[]).map(k=>`<div class="setrow"><span>New hero</span><b style="color:#ffd23f">${charSVG(HEROES[k].id,28)} ${HEROES[k].n}</b></div>`).join('')}
+ <div class="setrow"><span>Idle defense</span><b>+${Math.round(ndIdleRate()*60)} ATP/hr</b></div>${(B.newCos||[]).map(k=>`<div class="setrow"><span>Milestone reward</span><b style="color:#3fd17a"><img src="${cosIcon(k)}" width="26" height="26" style="vertical-align:middle" alt=""> ${COS[k].n}</b></div>`).join('')}${(B.newHeroes||[]).map(k=>`<div class="setrow"><span>New hero</span><b style="color:#ffd23f">${charSVG(HEROES[k].id,28)} ${HEROES[k].n}</b></div>`).join('')}
  <div class="row"><button class="btn big" data-a="ndPrep">Defend again</button><button class="btn" data-a="ndRegion">Levels</button><button class="btn ghost" data-a="hub">Lymph Node</button></div></div>`,'modal');
 }
 // ---- building and upgrading ----
@@ -2924,14 +2925,14 @@ function ndCheckMiles(B){if(!save.nd||!save.nd.maps)return;const got=[];for(cons
 function showRegion(r){
  if(r!=null&&!isNaN(r))ND.R=+r;r=ND.R||0;ndInitSave();ND.prep=false;const R=ND_REG[r];
  const cards=[0,1,2,3].map(k=>{const i=r*4+k,L=ND_LEVELS[i],open=ndLvOpen(i),b=ndBestI(i),hu=Object.keys(HEROES).filter(h=>HEROES[h].un&&HEROES[h].un[0]===i);
-  return `<div class="ndlv ${open?'':'lock'}"><img class="mapic" src="${ndThumb(i)}" alt=""><div><b>Level ${k+1}: ${L.n}</b><small>${L.d}</small><small>${open?`Best wave <b>${b}</b> · enemies ×${L.hp} health · idle +${(b*ndIdleK(i)).toFixed(1)}/min`:k?`Reach wave 10 on Level ${k} to open`:`Reach wave 10 on ${ND_REG[r-1].n} 1 to open`}</small>${hu.map(h=>`<small class="hun ${heroOk(h)?'got':''}">${heroOk(h)?'✓ Unlocked':'Hero reward at wave '+HEROES[h].un[1]}: ${HEROES[h].n}</small>`).join('')}</div>${open?`<div class="row"><button class="btn sm big" data-a="ndPrep" data-v="${i}">Defend</button></div>`:''}</div>`}).join('');
+  return `<div class="ndlv ${open?'':'lock'}"><img class="mapic" src="${ndThumb(i)}" alt=""><div><b>Level ${k+1}: ${L.n}</b><small>${L.d}</small><small>${open?`Best wave <b>${b}</b> · enemies ×${L.hp} health · idle +${Math.round(b*ndIdleK(i)*60)}/hr`:k?`Reach wave 10 on Level ${k} to open`:`Reach wave 10 on ${ND_REG[r-1].n} 1 to open`}</small>${hu.map(h=>`<small class="hun ${heroOk(h)?'got':''}">${heroOk(h)?'✓ Unlocked':'Hero reward at wave '+HEROES[h].un[1]}: ${HEROES[h].n}</small>`).join('')}</div>${open?`<div class="row"><button class="btn sm big" data-a="ndPrep" data-v="${i}">Defend</button></div>`:''}</div>`}).join('');
  show(`<div class="hdr">${back('ndSetup')}<div style="flex:1"><span class="lbl">Node Defense · Region ${r+1}</span><h2>${R.n}</h2></div><div class="hubatp" style="font-size:18px">${ATP_SVG}<span>${fmtN(save.base.atp)}</span></div></div><div class="bwrap">${cards}</div>`);
 }
 function showND(tab){
  ndInitSave();ndCheckMiles();ND.prep=false;if(tab)ND.tab=tab;tab=ND.tab||'maps';const back2=HUB.on?'hubBack':'menu';HUB.list=HUB.on;if(HUB.on){hubPanel(null);hubUi.classList.add('hidden')}
  const ks=Object.keys(NDB),av=ks.filter(ndAvail),lock=ks.filter(k=>!ndAvail(k));let body='';
  if(tab==='maps'){
-  body=`<div class="bstat"><div class="bmeta"><span>Idle defense <b>+${ndIdleRate().toFixed(1)}</b> ATP/min</span><span>Total best <b>${ndTotalBest()}</b> waves</span></div></div>
+  body=`<div class="bstat"><div class="bmeta"><span>Idle defense <b>+${Math.round(ndIdleRate()*60)}</b> ATP/hr</span><span>Total best <b>${ndTotalBest()}</b> waves</span></div></div>
   <div class="ndbwrap">${ndBodyMap()}</div><h3 style="margin:10px 0 6px">Milestones <small style="color:#9fb2c8">${ND_MILE.filter(m=>save.cos.owned[m.cos]).length}/${ND_MILE.length} · each awards a cosmetic</small></h3><div class="ndmiles">${ND_MILE.map(m=>{const ok=!!save.cos.owned[m.cos];return `<div class="ndmile ${ok?'ok':''}"><img src="${cosIcon(m.cos)}" alt=""><div><b>${m.n}</b><small>${m.d}</small><small class="rw">${ok?'✓ ':''}${COS[m.cos].n}</small></div></div>`}).join('')}</div><p class="hint" style="text-align:left">Tap a region on the body to pick one of its 4 levels. Pathogens flow down the vessels toward your Lymph Node, and you build towers with cytokines (◆) during the defense. Your best wave on each map sets how much ATP it pays while you're away.</p>`}
  else if(tab==='heroes'){
   const slots=ndHeroSlots();
