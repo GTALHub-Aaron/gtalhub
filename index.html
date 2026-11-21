@@ -678,12 +678,15 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
 
     // ---- run / stage state
     function newRun() {
-      S = { stage: 0, score: 0, chips: 0, lives: START_LIVES, best: best.get("hop"), state: "title", msg: "BIT HOP", sub: "CLICK, TAP OR SPACE TO START", t: 0, wait: 0,
+      S = { stage: 0, builtStage: -1, score: 0, chips: 0, lives: START_LIVES, best: best.get("hop"), state: "title", msg: "BIT HOP", sub: "CLICK, TAP OR SPACE TO START", t: 0, wait: 0,
             touchUI: false, vk: { left: false, right: false, jump: false }, ptrs: new Map(), pops: [] };
       loadStage(false);
     }
     function loadStage(fromCheckpoint) {
-      L = build(S.stage);
+      // after a lost life on the same stage, coins you grabbed and blocks you bumped stay gone
+      const keep = L && S.builtStage === S.stage ? { got: L.coins.map(c => !!c.got), used: Array.from(L.g, (v, i) => v === USED ? i : -1).filter(i => i >= 0) } : null;
+      L = build(S.stage); S.builtStage = S.stage;
+      if (keep) { L.coins.forEach((c, i) => { if (keep.got[i]) c.got = true; }); keep.used.forEach(i => { if (L.g[i] === BONUS) L.g[i] = USED; }); }
       // stand on the first plain stretch of ground at (or after) the start point
       let tx = Math.floor((fromCheckpoint ? L.midX : 40) / T), gy = ROWS - 1;
       for (; tx < L.cols - 1; tx++) {
@@ -2081,4 +2084,4 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
 </script>
 </body>
 </html>
-<!-- arcade v10: mouse lock, esc pauses -->
+<!-- arcade v11: coins stay collected -->
