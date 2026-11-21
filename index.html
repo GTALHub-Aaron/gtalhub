@@ -138,6 +138,10 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
 (() => {
   const cv = document.getElementById("game"), ctx = cv.getContext("2d");
   let RES = 1;   // backing pixels per game pixel
+  // mouse lock: on a desktop, clicking into a game traps the mouse inside it until Esc pauses
+  let held = false, releasing = false, vx = 320, vy = 180;
+  const locked = () => document.pointerLockElement === cv;
+  function release() { if (locked()) { releasing = true; document.exitPointerLock(); } }
   (() => {
     const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "shadowBlur");
     Object.defineProperty(ctx, "shadowBlur", { get() { return d.get.call(this) / RES; }, set(v) { d.set.call(this, v * RES); } });
@@ -229,6 +233,7 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
     e.preventDefault();
   });
   function gameOver(g, score) {   // each game calls this when a run ends
+    release();   // let the mouse go at the end of a run
     if (!qualifies(g, score)) return;
     pending = { g, score };
     document.getElementById("entryScore").textContent = NAMES[g].toUpperCase() + "  ·  " + score;
@@ -384,7 +389,7 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
   };
   function musicTick() {
     if (!AU.ctx || AU.ctx.state !== "running") return;
-    const want = AU.musicOn && AU.armed && !document.hidden ? (cur.song ? cur.song() : curName) : null;
+    const want = AU.musicOn && AU.armed && !document.hidden && !held ? (cur.song ? cur.song() : curName) : null;
     if (want !== AU.song) { AU.song = want; AU.step = 0; AU.next = AU.ctx.currentTime + 0.05; }
     if (!want) return;
     const S2 = SONGS[want], sp = 60 / S2.bpm / 2;
@@ -1992,14 +1997,16 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
   function choose(name) {
     if (!entry.hidden) { entry.hidden = true; pending = null; }
     if (!cab.hidden && name === curName) { cur.pause(); cab.hidden = true; document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", false)); return; }
-    cab.hidden = false;
-    cur.pause(); cur = games[name]; curName = name; cur.start(); hint.textContent = cur.hint; renderBoard();
+    cab.hidden = false; held = false;
+    cur.pause(); cur = games[name]; curName = name; cur.start(); setHint(); renderBoard();
     document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.game === name));
     for (const k in keys) keys[k] = false;
   }
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => choose(b.dataset.game)));
+  const canLock = !!cv.requestPointerLock && matchMedia("(hover:hover) and (pointer:fine)").matches;
+  function setHint() { hint.textContent = cur.hint + (canLock ? " Clicking in locks your mouse to the game; Esc pauses and lets it go." : " Esc pauses."); }
   Object.values(games).forEach(g => g.start());
-  hint.textContent = cur.hint;
+  setHint();
   renderBoard(); Object.keys(games).forEach(loadBoard);
 
   let last = 0, acc = 0;
@@ -2007,12 +2014,35 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
     if (!last) last = t;
     acc += Math.min(100, t - last); last = t;
     if (cab.hidden) { acc = 0; requestAnimationFrame(loop); return; }   // nothing runs until a game is picked
+    if (held) acc = 0;
     while (acc >= 1000 / 60) { cur.step(); acc -= 1000 / 60; }   // same speed on any screen
     fitRes(); ctx.clearRect(0, 0, W, H); cur.draw();
+    if (held) {
+      ctx.fillStyle = "rgba(10,10,15,.72)"; ctx.fillRect(0, 0, W, H);
+      banner("PAUSED", canLock ? "CLICK TO KEEP PLAYING  ·  YOUR MOUSE IS FREE" : "CLICK, TAP OR SPACE TO KEEP PLAYING", H / 2 - 10);
+    }
     requestAnimationFrame(loop);
   }
-  cv.addEventListener("pointermove", e => cur.pointermove(...toXY(e), e));
-  cv.addEventListener("pointerdown", e => { e.preventDefault(); AU.armed = true; if (entry.hidden) cur.pointerdown(...toXY(e), e); });
+  cv.addEventListener("pointermove", e => {
+    if (locked()) {   // the real cursor is pinned, so move a virtual one by how far the mouse moved
+      const r = cv.getBoundingClientRect();
+      vx = Math.max(0, Math.min(W, vx + e.movementX / r.width * W)); vy = Math.max(0, Math.min(H, vy + e.movementY / r.height * H));
+      if (!held) cur.pointermove(vx, vy, e);
+    } else { [vx, vy] = toXY(e); if (!held) cur.pointermove(vx, vy, e); }
+  });
+  cv.addEventListener("pointerdown", e => {
+    e.preventDefault(); AU.armed = true;
+    if (!entry.hidden) return;
+    if (!locked()) [vx, vy] = toXY(e);
+    if (canLock && e.pointerType === "mouse" && !locked()) { const p = cv.requestPointerLock(); p && p.catch && p.catch(() => {}); }
+    if (held) { held = false; return; }   // this click just resumes
+    cur.pointerdown(vx, vy, e);
+  });
+  document.addEventListener("pointerlockchange", () => {
+    if (locked()) return;
+    if (releasing) { releasing = false; return; }
+    if (!cab.hidden && entry.hidden) { held = true; for (const k in keys) keys[k] = false; }   // Esc (or leaving the page) pauses
+  });
   addEventListener("pointerup", e => cur.pointerup && cur.pointerup(e));
   addEventListener("pointercancel", e => cur.pointerup && cur.pointerup(e));
   cv.addEventListener("contextmenu", e => e.preventDefault());
@@ -2020,6 +2050,8 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
   addEventListener("keydown", e => {
     if (!entry.hidden || e.target.tagName === "INPUT") return;   // typing initials
     const k = e.key.toLowerCase(), m = map[k];
+    if (k === "escape" && !cab.hidden) { held = true; release(); for (const q in keys) keys[q] = false; return; }
+    if (held) { if (m === "jump" || k === "enter") { e.preventDefault(); held = false; } return; }
     if (m || k === "enter") { e.preventDefault(); AU.armed = true; }   // playing by keyboard counts too
     if (m) { if (!keys[m] && (m === "jump" || (m === "up" && cur === hop))) cur.action(); keys[m] = true; }
     if (k === "enter" && !e.repeat) cur.action();
@@ -2049,4 +2081,4 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
 </script>
 </body>
 </html>
-<!-- arcade v9: pick a game, resizable screen -->
+<!-- arcade v10: mouse lock, esc pauses -->
