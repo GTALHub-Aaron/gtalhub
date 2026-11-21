@@ -26,12 +26,28 @@ p{color:var(--muted);margin:0 auto;max-width:520px}
 p+p{margin-top:14px}
 .rule{width:64px;height:2px;margin:0 auto 22px;background:linear-gradient(90deg,transparent,var(--green),transparent)}
 
+/* arcade: a collapsible list of games with a snapshot of each */
+.arc{margin:28px 0 12px}
+.arcbar{display:flex;justify-content:center;gap:8px}
+.arctog,.arcx{font:20px/1 var(--display);letter-spacing:.06em;color:var(--text);background:rgba(17,17,24,.7);border:1px solid rgba(0,255,136,.35);border-radius:4px;padding:10px 18px 8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.arctog:hover,.arcx:hover{border-color:var(--green);box-shadow:0 0 18px rgba(0,255,136,.2)}
+.arctog .car{display:inline-block;color:var(--green);transition:transform .15s}
+.arctog[aria-expanded="true"] .car{transform:rotate(90deg)}
+.arctog .cnt{color:var(--muted);font-size:15px;margin-left:6px}
+.arctog .now{color:var(--green)}
+.arcx{color:var(--muted);padding:10px 14px 8px}
+.glist{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left}
+.glist button{display:flex;align-items:center;gap:12px;width:100%;padding:8px;background:rgba(17,17,24,.7);border:1px solid var(--line);border-radius:6px;cursor:pointer;color:inherit;font:inherit;text-align:left;transition:border-color .15s,box-shadow .15s}
+.glist button:hover,.glist button:focus-visible{border-color:rgba(0,255,136,.5);box-shadow:0 0 18px rgba(0,255,136,.12);outline:none}
+.glist button[aria-pressed="true"]{border-color:var(--green);box-shadow:0 0 18px rgba(0,255,136,.2)}
+.glist .thumb{flex:none;width:128px;height:72px;border-radius:4px;border:1px solid var(--line);display:block;object-fit:cover;background:#0a0a0f}
+.glist .gt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.glist b{font:20px/1 var(--display);font-weight:400;letter-spacing:.06em;color:var(--text)}
+.glist button[aria-pressed="true"] b{color:var(--green)}
+.glist small{font-size:11px;line-height:1.4;color:var(--muted)}
+.glist[hidden]{display:none}
+@media (max-width:560px){.glist{grid-template-columns:1fr}.glist .thumb{width:112px;height:63px}}
 /* arcade */
-.tabs{display:flex;justify-content:center;gap:8px;margin:28px 0 12px;flex-wrap:wrap}
-.tabs button{font:20px/1 var(--display);letter-spacing:.06em;color:var(--muted);background:transparent;border:1px solid var(--line);
-border-radius:4px;padding:9px 16px 7px;cursor:pointer;transition:color .15s,border-color .15s,box-shadow .15s}
-.tabs button:hover{color:var(--text);border-color:rgba(0,255,136,.35)}
-.tabs button[aria-selected="true"]{color:#04130b;background:var(--green);border-color:var(--green);box-shadow:0 0 18px rgba(0,255,136,.3)}
 .screen{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:rgba(10,10,15,.85);
 box-shadow:0 0 0 1px rgba(0,255,136,.06),0 0 40px rgba(0,255,136,.06)}
 .screen::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);z-index:1}
@@ -104,13 +120,45 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
 <div class="rule"></div>
 <p>Congratulations, you found the home page. There's nothing on it. If someone sent you one of our tools, the full link they gave you works way better than deleting half of it.</p>
 <p>Since you came all this way, here are some games. They're the only things on this page that do anything, so try not to lose to them.</p>
-<div class="tabs" role="tablist" aria-label="Games">
-<button role="tab" data-game="paddle" aria-selected="false">Paddle Battle</button>
-<button role="tab" data-game="hop" aria-selected="false">Bit Hop</button>
-<button role="tab" data-game="bug" aria-selected="false">Bug Zapper</button>
-<button role="tab" data-game="brick" aria-selected="false">Brick Breaker</button>
-<button role="tab" data-game="rock" aria-selected="false">Rock Field</button>
-<button role="tab" data-game="race" aria-selected="false">Turbo Wings</button>
+<div class="arc">
+<div class="arcbar"><button type="button" class="arctog" id="arcTog" aria-expanded="false" aria-controls="glist"><span class="car">▸</span> <span id="arcLbl">ARCADE</span> <span class="cnt" id="arcCnt"></span></button><button type="button" class="arcx" id="arcX" hidden aria-label="Close the game">✕</button></div>
+<ul class="glist" id="glist" hidden>
+<li><button type="button" data-game="paddle" aria-pressed="false"><svg class="thumb" viewBox="0 0 160 90" width="128" height="72" aria-hidden="true"><defs></defs><rect width="160" height="90" fill="#08080d"/><rect x="10.0" y="5.0" width="140.0" height="80.0" fill="none" stroke="#00ff88" stroke-opacity="0.65"/><rect x="29.6" y="16.2" width="100.8" height="57.6" fill="none" stroke="#00ff88" stroke-opacity="0.51"/><rect x="43.6" y="24.2" width="72.8" height="41.6" fill="none" stroke="#00ff88" stroke-opacity="0.41"/><rect x="54.1" y="30.2" width="51.8" height="29.6" fill="none" stroke="#00ff88" stroke-opacity="0.33"/><rect x="61.8" y="34.6" width="36.4" height="20.8" fill="none" stroke="#00ff88" stroke-opacity="0.28"/>
+<path d="M10 5 L62 34 M150 5 L98 34 M10 85 L62 56 M150 85 L98 56" stroke="#00ff88" stroke-opacity=".3"/>
+<rect x="68" y="38" width="24" height="14" fill="none" stroke="#f5f5f5" stroke-width="1.2"><animate attributeName="opacity" values=".4;.9;.4" dur="1.6s" repeatCount="indefinite"/></rect>
+<circle cx="80" cy="45" fill="#00ff88"><animate attributeName="r" values="2;9;2" dur="1.6s" repeatCount="indefinite"/><animate attributeName="cy" values="45;52;45" dur="1.6s" repeatCount="indefinite"/></circle>
+<rect x="44" y="26" width="72" height="44" rx="3" fill="#00ff88" fill-opacity=".1" stroke="#00ff88" stroke-width="2"><animate attributeName="x" values="44;50;40;44" dur="3.2s" repeatCount="indefinite"/></rect></svg><span class="gt"><b>Paddle Battle</b><small>3D pong with spin. First to 7 wins.</small></span></button></li>
+<li><button type="button" data-game="hop" aria-pressed="false"><svg class="thumb" viewBox="0 0 160 90" width="128" height="72" aria-hidden="true"><defs></defs><rect width="160" height="90" fill="#08080d"/>
+<rect x="8" y="22" width="22" height="48" fill="#12301f"/><rect x="40" y="12" width="18" height="58" fill="#0f2a1b"/><rect x="118" y="18" width="26" height="52" fill="#12301f"/>
+<rect y="70" width="160" height="20" fill="#0d1f15"/><line y1="70" x2="160" y2="70" stroke="#00ff88" stroke-width="1.5"/>
+<rect x="96" y="30" width="12" height="12" fill="#ffcc00" stroke="#8a6a00"/><text x="102" y="40" text-anchor="middle" font-size="10" font-family="monospace" fill="#5a4400">?</text>
+<ellipse cx="102" cy="22" rx="3" ry="3.5" fill="#ffcc00"><animate attributeName="rx" values="3;.6;3" dur=".8s" repeatCount="indefinite"/></ellipse>
+<g><g fill="#00ff88"><rect x="64" y="54" width="12" height="12" rx="2"/><rect x="69" y="50" width="2" height="4"/><rect x="66" y="57" width="3" height="3" fill="#08080d"/><rect x="71" y="57" width="3" height="3" fill="#08080d"/><rect x="65" y="66" width="3" height="4"/><rect x="72" y="66" width="3" height="4"/></g>
+<animateTransform attributeName="transform" type="translate" values="-30 0;0 -26;30 0;30 0;-30 0" keyTimes="0;.25;.5;.9;1" dur="2.4s" repeatCount="indefinite"/></g></svg><span class="gt"><b>Bit Hop</b><small>Run, jump and stomp through four worlds.</small></span></button></li>
+<li><button type="button" data-game="bug" aria-pressed="false"><svg class="thumb" viewBox="0 0 160 90" width="128" height="72" aria-hidden="true"><defs></defs><rect width="160" height="90" fill="#08080d"/>
+<path d="M0 70 H160 M0 80 H160 M80 62 V90 M50 62 L20 90 M110 62 L140 90 M30 62 L-20 90 M130 62 L180 90" stroke="#00ff88" stroke-opacity=".3"/><line y1="62" x2="160" y2="62" stroke="#00ff88" stroke-width="1.5"/>
+<g><g><ellipse rx="5" ry="3.5" fill="#ffcc00"/><ellipse cx="-1" cy="-4" rx="3" ry="2" fill="#f5f5f5" opacity=".6"/><circle cx="4" r="1.2" fill="#08080d"/></g>
+<animateMotion path="M20 40 C 50 10, 70 50, 100 22 S 140 30, 130 50 S 60 60, 20 40" dur="4s" repeatCount="indefinite"/></g>
+<g><g><ellipse rx="4" ry="3" fill="#ff5c7a"/><ellipse cx="-1" cy="-3.5" rx="2.5" ry="1.6" fill="#f5f5f5" opacity=".6"/></g>
+<animateMotion path="M140 20 C 110 40, 90 10, 60 30 S 20 15, 40 45 S 120 45, 140 20" dur="3.3s" repeatCount="indefinite"/></g>
+<g><circle r="8" fill="none" stroke="#00ff88" stroke-width="1.4"/><path d="M-12 0H-4M4 0H12M0 -12V-4M0 4V12" stroke="#00ff88" stroke-width="1.4"/>
+<animateMotion path="M40 50 L90 25 L120 42 L70 35 Z" dur="4.5s" repeatCount="indefinite"/></g></svg><span class="gt"><b>Bug Zapper</b><small>Zap the bugs before they get away.</small></span></button></li>
+<li><button type="button" data-game="brick" aria-pressed="false"><svg class="thumb" viewBox="0 0 160 90" width="128" height="72" aria-hidden="true"><defs></defs><rect width="160" height="90" fill="#08080d"/><rect x="6" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="25" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="44" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="63" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="82" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="101" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="120" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="139" y="8" width="17" height="5" fill="#ff5c7a"/><rect x="6" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="25" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="44" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="63" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="82" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="101" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="120" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="139" y="15" width="17" height="5" fill="#ff9a3c"/><rect x="6" y="22" width="17" height="5" fill="#ffcc00"/><rect x="25" y="22" width="17" height="5" fill="#ffcc00"/><rect x="44" y="22" width="17" height="5" fill="#ffcc00"/><rect x="63" y="22" width="17" height="5" fill="#ffcc00"/><rect x="82" y="22" width="17" height="5" fill="#ffcc00"/><rect x="101" y="22" width="17" height="5" fill="#ffcc00"/><rect x="120" y="22" width="17" height="5" fill="#ffcc00"/><rect x="139" y="22" width="17" height="5" fill="#ffcc00"/><rect x="6" y="29" width="17" height="5" fill="#00ff88"/><rect x="25" y="29" width="17" height="5" fill="#00ff88"/><rect x="44" y="29" width="17" height="5" fill="#00ff88"/><rect x="101" y="29" width="17" height="5" fill="#00ff88"/><rect x="120" y="29" width="17" height="5" fill="#00ff88"/><rect x="139" y="29" width="17" height="5" fill="#00ff88"/><rect x="6" y="36" width="17" height="5" fill="#00ccff"/><rect x="25" y="36" width="17" height="5" fill="#00ccff"/><rect x="44" y="36" width="17" height="5" fill="#00ccff"/><rect x="63" y="36" width="17" height="5" fill="#00ccff"/><rect x="82" y="36" width="17" height="5" fill="#00ccff"/><rect x="101" y="36" width="17" height="5" fill="#00ccff"/><rect x="120" y="36" width="17" height="5" fill="#00ccff"/><rect x="139" y="36" width="17" height="5" fill="#00ccff"/>
+<rect x="62" y="80" width="30" height="4" fill="#00ff88"><animate attributeName="x" values="40;95;62;40" dur="3s" repeatCount="indefinite"/></rect>
+<circle r="2.6" fill="#f5f5f5"><animateMotion path="M55 78 L85 44 L118 64 L110 78 L76 46 L55 78" dur="3s" repeatCount="indefinite"/></circle></svg><span class="gt"><b>Brick Breaker</b><small>Smash every brick and catch the capsules.</small></span></button></li>
+<li><button type="button" data-game="rock" aria-pressed="false"><svg class="thumb" viewBox="0 0 160 90" width="128" height="72" aria-hidden="true"><defs></defs><rect width="160" height="90" fill="#06060c"/><rect x="0" y="7" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="37" y="30" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="74" y="53" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="111" y="76" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="148" y="9" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="25" y="32" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="62" y="55" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="99" y="78" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="136" y="11" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="13" y="34" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="50" y="57" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="87" y="80" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="124" y="13" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="1" y="36" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="38" y="59" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="75" y="82" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="112" y="15" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="149" y="38" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="26" y="61" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="63" y="84" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="100" y="17" width="1" height="1" fill="#f5f5f5" opacity=".5"/><rect x="137" y="40" width="1" height="1" fill="#f5f5f5" opacity=".5"/><g><polygon points="43.0,25.0 38.0,31.7 32.1,37.2 25.1,33.4 17.8,29.4 19.6,21.2 24.1,14.9 31.6,16.0 39.5,17.1" fill="none" stroke="#dcdce8" stroke-width="1.2"/><animateTransform attributeName="transform" type="rotate" from="0 30 25" to="360 30 25" dur="14s" repeatCount="indefinite"/></g><g><polygon points="140.0,62.0 134.2,69.7 127.5,76.0 119.4,71.7 110.9,67.1 113.0,57.6 118.2,50.3 126.8,51.7 135.9,52.8" fill="none" stroke="#dcdce8" stroke-width="1.2"/><animateTransform attributeName="transform" type="rotate" from="0 125 62" to="360 125 62" dur="18s" repeatCount="indefinite"/></g><g><polygon points="117.0,18.0 114.3,21.6 111.2,24.5 107.4,22.5 103.4,20.4 104.4,16.0 106.8,12.5 110.9,13.2 115.1,13.7" fill="none" stroke="#dcdce8" stroke-width="1.2"/><animateTransform attributeName="transform" type="rotate" from="0 110 18" to="360 110 18" dur="9s" repeatCount="indefinite"/></g><g><polygon points="46.0,70.0 43.7,73.1 41.0,75.6 37.8,73.9 34.4,72.1 35.2,68.3 37.3,65.3 40.7,65.9 44.4,66.3" fill="none" stroke="#dcdce8" stroke-width="1.2"/><animateTransform attributeName="transform" type="rotate" from="0 40 70" to="360 40 70" dur="8s" repeatCount="indefinite"/></g>
+<g transform="translate(72 50) rotate(-35)"><polygon points="10,0 -7,-6 -4,0 -7,6" fill="none" stroke="#00ccff" stroke-width="1.5"/></g>
+<circle r="1.5" fill="#00ff88"><animateMotion path="M80 45 L118 18" dur=".7s" repeatCount="indefinite"/></circle>
+<circle r="1.5" fill="#00ff88"><animateMotion path="M80 45 L118 18" dur=".7s" begin=".35s" repeatCount="indefinite"/></circle></svg><span class="gt"><b>Rock Field</b><small>Blast space rocks. Watch for the saucer.</small></span></button></li>
+<li><button type="button" data-game="race" aria-pressed="false"><svg class="thumb" viewBox="0 0 160 90" width="128" height="72" aria-hidden="true"><defs><linearGradient id="twSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0218"/><stop offset=".6" stop-color="#2a0a40"/><stop offset="1" stop-color="#5a1450"/></linearGradient><linearGradient id="twSun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3cac"/></linearGradient></defs><rect width="160" height="90" fill="url(#twSky)"/>
+<circle cx="80" cy="44" r="20" fill="url(#twSun)"/><rect x="58" y="44.0" width="44" height="0.9" fill="#3a0c48"/><rect x="58" y="47.4" width="44" height="1.3" fill="#3a0c48"/><rect x="58" y="50.8" width="44" height="1.7" fill="#3a0c48"/><rect x="58" y="54.2" width="44" height="2.1" fill="#3a0c48"/><rect x="58" y="57.6" width="44" height="2.5" fill="#3a0c48"/>
+<path d="M0 52 L20 42 L38 48 L58 38 L80 50 L100 40 L122 47 L140 39 L160 46 V52 Z" fill="#1c0630" stroke="#ff3cac" stroke-opacity=".5"/>
+<rect y="52" width="160" height="38" fill="#120420"/><polygon points="62,52 98,52 160,90 0,90" fill="#24243a"/><polygon points="62,52 64,52 8,90 0,90" fill="#ff3cac"/><polygon points="96,52 98,52 160,90 152,90" fill="#ff3cac"/>
+<path d="M80 54 V90" stroke="#f5f5f5" stroke-dasharray="4 5" stroke-opacity=".6"><animate attributeName="stroke-dashoffset" from="0" to="-9" dur=".3s" repeatCount="indefinite"/></path>
+<g><g><rect x="-26" y="-1.5" width="52" height="3" fill="#00ccff"/><rect x="-11" y="-6" width="22" height="10" rx="1.5" fill="#00ff88"/><rect x="-7" y="-10" width="14" height="5" fill="#18202e"/><rect x="-9" y="1" width="5" height="2" fill="#ff5c7a"/><rect x="4" y="1" width="5" height="2" fill="#ff5c7a"/>
+<animateTransform attributeName="transform" type="rotate" values="0;0;-360;-360" keyTimes="0;.3;.7;1" dur="2.6s" repeatCount="indefinite"/></g>
+<animateTransform attributeName="transform" type="translate" values="80 78;80 40;80 40;80 78" keyTimes="0;.3;.7;1" dur="2.6s" repeatCount="indefinite"/></g></svg><span class="gt"><b>Turbo Wings</b><small>Hit ramps, pop the wings, flip and land.</small></span></button></li>
+</ul>
 </div>
 <div id="cab" hidden>
 <div class="screen" id="screen"><canvas id="game" width="640" height="360" aria-label="Game screen"></canvas>
@@ -1999,17 +2047,33 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
   const cab = document.getElementById("cab");
   function choose(name) {
     if (!entry.hidden) { entry.hidden = true; pending = null; }
-    if (!cab.hidden && name === curName) { cur.pause(); cab.hidden = true; document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", false)); return; }
+    showList(false);
+    if (!cab.hidden && name === curName) return;
     cab.hidden = false; held = false;
     cur.pause(); cur = games[name]; curName = name; cur.start(); setHint(); renderBoard();
-    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.game === name));
+    document.querySelectorAll(".glist button").forEach(b => b.setAttribute("aria-pressed", b.dataset.game === name));
     for (const k in keys) keys[k] = false;
+    setBar();
   }
-  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => choose(b.dataset.game)));
+  // ---- the game list: collapsed until opened; shows what's playing when a game is open
+  const glist = document.getElementById("glist"), arcTog = document.getElementById("arcTog"), arcX = document.getElementById("arcX");
+  function setBar() {
+    const open = !cab.hidden;
+    document.getElementById("arcLbl").innerHTML = open ? 'NOW PLAYING: <span class="now">' + NAMES[curName].toUpperCase() + "</span>" : "ARCADE";
+    document.getElementById("arcCnt").textContent = open ? "· CHANGE GAME" : "· " + Object.keys(games).length + " GAMES";
+    arcX.hidden = !open;
+  }
+  function showList(on) {
+    glist.hidden = !on; arcTog.setAttribute("aria-expanded", on);
+    if (on && !cab.hidden) { cur.pause(); held = true; release(); }
+  }
+  arcTog.addEventListener("click", () => showList(glist.hidden));
+  arcX.addEventListener("click", () => { cur.pause(); release(); held = false; cab.hidden = true; showList(false); document.querySelectorAll(".glist button").forEach(b => b.setAttribute("aria-pressed", false)); setBar(); });
+  document.querySelectorAll(".glist button").forEach(b => b.addEventListener("click", () => { held = false; choose(b.dataset.game); }));
   const canLock = !!cv.requestPointerLock && matchMedia("(hover:hover) and (pointer:fine)").matches;
   function setHint() { hint.textContent = cur.hint + (canLock ? " Clicking in locks your mouse to the game; Esc pauses and lets it go." : " Esc pauses."); }
   Object.values(games).forEach(g => g.start());
-  setHint();
+  setHint(); setBar();
   renderBoard(); Object.keys(games).forEach(loadBoard);
 
   let last = 0, acc = 0;
@@ -2052,6 +2116,7 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
   const map = { w: "up", arrowup: "up", s: "down", arrowdown: "down", a: "left", arrowleft: "left", d: "right", arrowright: "right", " ": "jump" };
   addEventListener("keydown", e => {
     if (!entry.hidden || e.target.tagName === "INPUT") return;   // typing initials
+    if (e.target.closest && e.target.closest(".arc") && (e.key === " " || e.key === "Enter")) return;   // working the game list
     const k = e.key.toLowerCase(), m = map[k];
     if (k === "escape" && !cab.hidden) { held = true; release(); for (const q in keys) keys[q] = false; return; }
     if (held) { if (m === "jump" || k === "enter") { e.preventDefault(); held = false; } return; }
@@ -2084,4 +2149,4 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
 </script>
 </body>
 </html>
-<!-- arcade v11: coins stay collected -->
+<!-- arcade v12: game list with drawn thumbnails -->
