@@ -1153,6 +1153,8 @@ if(document.fonts)document.fonts.ready.then(()=>{for(const k in PREV)delete PREV
 let lastT=performance.now();
 function frame(now){const dt=Math.min(.05,(now-lastT)/1000);lastT=now;nowS=now/1000;update(dt);draw(nowS);requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
+/* offline support on the real site (gtalhub.com); does nothing in previews */
+try{if('serviceWorker' in navigator&&/(^|\.)gtalhub\.com$|^localhost$|^127\.0\.0\.1$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 }
 </script>
 </body>
