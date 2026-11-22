@@ -228,13 +228,44 @@ const BANNERS = {
     `<linearGradient id="psBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14161f"/><stop offset="1" stop-color="#0b0b10"/></linearGradient>${grid("psGrid", 26, "#2a7fd4", .08)}`);
   },
 
+  // Marble Wall: marbles dropping onto wooden rails on a kitchen-tile wall and landing in a copper cup
+  marble: () => {
+    const rail = (x1, y1, x2, y2) => `<line x1="${x1+2}" y1="${y1+3}" x2="${x2+2}" y2="${y2+3}" stroke="#000" stroke-opacity=".3" stroke-width="7" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#7a4c22" stroke-width="7" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#e0b373" stroke-width="5" stroke-linecap="round"/><line x1="${x1}" y1="${y1 - 1}" x2="${x2}" y2="${y2 - 1}" stroke="#ffeccc" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round"/>`;
+    const bolt = (x, y) => `<rect x="${x - 5}" y="${y - 7}" width="10" height="11" rx="2" fill="#aeb8c2"/><circle cx="${x}" cy="${y - 3}" r="2.2" fill="#d9b44a"/>`;
+    const path = "M150 40 L152 54 L284 69 Q296 72 301 85 L214 95 Q202 99 196 108";
+    const marble = (c1, c2, c3, begin, glow) => `<g opacity="0">
+      ${glow ? `<circle r="11" fill="${c2}" opacity=".35"><animate attributeName="r" values="9;13;9" dur=".8s" repeatCount="indefinite"/></circle>` : ""}
+      <circle r="5.5" fill="url(#mw${c3})"/><circle cx="-1.8" cy="-2" r="1.4" fill="#fff" opacity=".9"/>
+      <animateMotion path="${path}" dur="4.2s" begin="${begin}s" repeatCount="indefinite" calcMode="spline" keyPoints="0;.1;.55;.66;.86;1;1" keyTimes="0;.12;.42;.5;.64;.74;1" keySplines=".5 0 1 1;.4 0 .8 .6;.2 .4 .6 1;.4 0 .8 .6;.5 0 1 1;0 0 1 1"/>
+      <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.04;.74;.78;1" dur="4.2s" begin="${begin}s" repeatCount="indefinite"/></g>`;
+    const grad = (id, a, b, c) => `<radialGradient id="mw${id}" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="${a}"/><stop offset=".55" stop-color="${b}"/><stop offset="1" stop-color="${c}"/></radialGradient>`;
+    return SVG(`
+    <rect width="400" height="130" fill="#34514a"/><rect width="400" height="130" fill="url(#mwTile)"/>
+    <rect x="0" y="0" width="400" height="130" fill="url(#mwLight)"/>
+    <g transform="translate(72 74)"><circle r="17" fill="#6b4b2a"/><circle r="14" fill="#f6f1e4"/>
+      <line y2="-9" stroke="#222" stroke-width="1.6" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="12s" repeatCount="indefinite"/></line>
+      <line y2="-6" stroke="#222" stroke-width="2.2" stroke-linecap="round" transform="rotate(110)"/><circle r="1.6" fill="#222"/></g>
+    <path d="M136 26 Q150 21 164 26 L156 36 L156 40 L146 40 L146 36 Z" fill="#e2664a" stroke="#7a2412" stroke-width="1.2"/>
+    ${bolt(176, 62)}${bolt(256, 72)}${bolt(320, 88)}${bolt(236, 98)}
+    ${rail(140, 58, 284, 75)}${rail(342, 86, 210, 101)}
+    <g transform="translate(332 60)"><path d="M-7 4 Q-7 -8 0 -9 Q7 -8 7 4 L9 7 H-9 Z" fill="#f2c230" stroke="#8a6200" stroke-width="1"/><circle cy="9" r="2" fill="#7a5800"/>
+      <circle r="10" fill="none" stroke="#ffe36b" stroke-width="1.5" opacity="0"><animate attributeName="r" values="8;20" dur="2.1s" repeatCount="indefinite"/><animate attributeName="opacity" values=".8;0" dur="2.1s" repeatCount="indefinite"/></circle></g>
+    <path d="M178 100 L180 112 Q196 121 212 112 L214 100" fill="#d9773a" stroke="#6e3412" stroke-width="1.5"/><ellipse cx="196" cy="101" rx="17" ry="3.2" fill="#6e3412" opacity=".55"/>
+    <rect y="117" width="400" height="13" fill="#e9e2d3"/><rect y="114" width="400" height="4" fill="#6b7580"/>
+    ${marble("#f2fdff", "#6cc8ef", "B", 0)}${marble("#fff8cf", "#f2c230", "G", 1.4, true)}${marble("#ffc2ca", "#ff4d6a", "R", 2.8)}
+    <text x="220" y="112" font-family="Roboto Mono, monospace" font-size="10" font-weight="700" fill="#ffe36b" opacity="0">+24<animate attributeName="opacity" values="0;0;1;0" keyTimes="0;.72;.78;.95" dur="1.4s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="translate" values="0 6;0 6;0 0;0 -8" keyTimes="0;.72;.78;.95" dur="1.4s" repeatCount="indefinite"/></text>`,
+    `<pattern id="mwTile" width="40" height="20" patternUnits="userSpaceOnUse"><rect x="1" y="1" width="38" height="8" rx="2" fill="#4c7068"/><rect x="-19" y="11" width="38" height="8" rx="2" fill="#4a6c64"/><rect x="21" y="11" width="38" height="8" rx="2" fill="#4e736a"/></pattern>
+     <radialGradient id="mwLight" cx="75%" cy="15%" r="80%"><stop offset="0" stop-color="#fff0d0" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient>
+     ${grad("B", "#f2fdff", "#6cc8ef", "#1f6f99")}${grad("G", "#fff8cf", "#f2c230", "#8a6200")}${grad("R", "#ffc2ca", "#ff4d6a", "#8c1029")}`);
+  },
+
   // anything new without its own scene yet
   other: () => SVG(`<rect width="400" height="130" fill="#0d0d14"/><rect width="400" height="130" fill="url(#gnGrid)"/><circle cx="200" cy="72" r="34" fill="#00ff88" opacity=".08"/><path d="M182 72 h36 M200 54 v36" stroke="#00ff88" stroke-width="3" opacity=".6"/>`, grid("gnGrid", 24, "#00ff88", .08))
 };
 function bannerFor(a) {
   const k = `${a.url} ${a.name}`.toLowerCase();
   return (/pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
-    : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : BANNERS.other)();
+    : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : /marble/.test(k) ? BANNERS.marble : BANNERS.other)();
 }
 
 function show(which){ $("gate").hidden = which !== "gate"; $("list").hidden = which !== "list"; }
