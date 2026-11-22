@@ -154,7 +154,7 @@ body.side .card .nm{font-size:13.5px}
 <div id="menu"><div class="mbox" id="mbox"></div></div>
 <div id="help"><div class="box">
   <h2>Marble Wall</h2>
-  <p><b>Build:</b> tap a part in the tray to stick it on the wall. Drag to move, twist the yellow knob (or ⟲ ⟳) to rotate. Track ends snap together.</p>
+  <p><b>Build:</b> tap a part in the tray to stick it on the wall. Tap a part to select it, then drag to move it (dragging an unselected part just pans the view), twist the yellow knob (or ⟲ ⟳) to rotate. Track ends snap together.</p>
   <p><b>Drops:</b> marbles fall from the dropper on their own. Tap the timer to pause while you build. They score for distance rolled and for tricks: big air, transfers between parts, bumpers, bells, rings, loops and portals.</p>
   <p><b>Combo:</b> every trick raises the run's multiplier. A Goal Cups pay ×2.</p>
   <p><b>Walls:</b> fill a wall's milestone (marbles in Goal Cups, points earned, and uses of its glowing key item) to unlock the next wall. Hit loose items hard enough and they fall off the wall. Walls you leave keep dropping and earning.</p>
@@ -1052,9 +1052,8 @@ cv.addEventListener('pointerdown',e=>{try{cv.setPointerCapture(e.pointerId)}catc
  const w=s2w(e.clientX,e.clientY);
  if(sel){const h=handlePos(sel);if(Math.hypot((h[0]-w.x)*cam.z,(h[1]-w.y)*cam.z)<26){mode='rot';return}}
  const hit=hitTest(w.x,w.y);
- if(!hit){const lk=hitTest(w.x,w.y,1);if(lk)toast(lk.t==='finish'?'The Finish is permanent. Build a route to it!':lk.t==='dropper'?'The dropper is fixed on this level.':'Fixed obstacle. Build around it.')}
- if(hit){select(hit);mode='move';dg={ox:hit.x-w.x,oy:hit.y-w.y,sx:e.clientX,sy:e.clientY};return}
- mode='pan';dg={sx:e.clientX,sy:e.clientY,cx:cam.x,cy:cam.y,moved:false}});
+ if(hit&&hit===sel){mode='move';dg={ox:hit.x-w.x,oy:hit.y-w.y,sx:e.clientX,sy:e.clientY};return}
+ mode='pan';dg={sx:e.clientX,sy:e.clientY,cx:cam.x,cy:cam.y,moved:false,tap:hit,lk:hit?null:hitTest(w.x,w.y,1)}});
 cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(mode==='pinch'&&ptrs.size===2){const m=midDist();cam.z=Math.max(.25,Math.min(2.5,pinch.z*m.d/pinch.d));cam.x=pinch.w.x-(m.x-CX)/cam.z;cam.y=pinch.w.y-(m.y-CY)/cam.z;lastPan=nowS;return}
  const w=s2w(e.clientX,e.clientY);
@@ -1062,7 +1061,7 @@ cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(
  else if(mode==='rot'&&sel){const a=Math.atan2(w.y-sel.y,w.x-sel.x)+Math.PI/2;sel.a=Math.round(a/(5*D2R))*5*D2R;rebuild()}
  else if(mode==='pan'){const dx=e.clientX-dg.sx,dy=e.clientY-dg.sy;if(Math.abs(dx)+Math.abs(dy)>6)dg.moved=true;cam.x=dg.cx-dx/cam.z;cam.y=dg.cy-dy/cam.z;if(dg.moved)lastPan=nowS}});
 function pUp(e){if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);
- if(mode==='pan'&&!dg.moved)select(null);
+ if(mode==='pan'&&!dg.moved){if(dg.tap){select(dg.tap);SFX('click')}else{select(null);const lk=dg.lk;if(lk)toast(lk.t==='finish'?'The Finish is permanent. Build a route to it!':lk.t==='dropper'?'The dropper is fixed on this level.':'Fixed obstacle. Build around it.')}}
  if(mode==='move'||mode==='rot'){chEdit();save()}
  if(ptrs.size===0||mode==='pinch')mode=null}
 cv.addEventListener('pointerup',pUp);cv.addEventListener('pointercancel',pUp);

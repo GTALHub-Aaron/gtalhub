@@ -2,7 +2,7 @@
    First visit with internet: saves the game, its icons and its font on the device.
    After that the game opens without internet. When online, it still fetches the newest page first,
    so updates show up on the next launch. Bump VERSION whenever these files change. */
-const VERSION = 'marble-wall-v1';
+const VERSION = 'marble-wall-v2';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap';
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
