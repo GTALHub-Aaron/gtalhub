@@ -248,6 +248,32 @@ tr:last-child td{border-bottom:0}
   table.hist td.empty{grid-column:1/-1}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.player{position:relative}
+.reign{position:absolute;top:-20px;left:-14px;font-size:34px;line-height:1;transform:rotate(-28deg);filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));pointer-events:auto;z-index:2;animation:reignIn .6s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes reignIn{from{transform:translateY(-14px) rotate(-60deg);opacity:0}to{transform:rotate(-28deg);opacity:1}}
+@media (prefers-reduced-motion:reduce){.reign{animation:none}}
+.trophies{display:inline-flex;align-items:center;gap:0;margin-left:6px;font-size:14px;line-height:1;vertical-align:middle;white-space:nowrap}
+.trophies i{font-style:normal;margin-right:-3px}
+.trophies b{font-family:var(--body);font-size:12px;font-weight:700;margin-left:5px;color:var(--muted)}
+.wk{display:grid;gap:10px}
+.wk-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.wk-top select{font:inherit;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.wk-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wk-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.wk-list li.mine{border-color:var(--good)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.badge2{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.badge2 .bi{font-size:24px;line-height:1;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--plum-soft);flex:none}
+.badge2 b{display:block;font-size:13.5px}
+.badge2 span{display:block;font-size:12px;color:var(--muted);line-height:1.3}
+.badge2.locked{opacity:.55}
+.badge2.locked .bi{filter:grayscale(1)}
+#fw{position:fixed;inset:0;pointer-events:none;z-index:50}
+.fw-banner{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:51;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:18px;padding:18px 22px 16px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;max-width:min(92vw,420px)}
+.fw-banner .big1{font-size:44px;line-height:1}
+.fw-banner h3{margin:8px 0 4px;font-family:var(--display);font-size:22px}
+.fw-banner p{margin:0 0 12px;color:var(--muted);font-size:14px}
+.ach-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:52;background:var(--surface);border:1px solid var(--good);border-radius:14px;padding:10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.25);font-size:14px}
 </style>
 </head>
 <body>
@@ -346,6 +372,10 @@ tr:last-child td{border-bottom:0}
             <div class="note" id="lNote" aria-live="polite"></div>
           </form>
         </section>
+      </section>
+      <section class="card" aria-labelledby="achTitle">
+        <div class="chart-head"><h3 id="achTitle">Achievements</h3><span class="small muted" id="achCount"></span></div>
+        <div class="badges" id="achList"></div>
       </section>
       <section class="card" aria-labelledby="chartTitle">
         <div class="chart-head"><h3 id="chartTitle">Your percent lost over time</h3></div>
@@ -523,6 +553,9 @@ async function loadPairings(){
   const acc=S.pairings.filter(p=>p.status==="accepted");
   const res=await Promise.all(acc.map(p=>sb.rpc("partner_progress",{p_id:p.id})));
   S.partner={}; acc.forEach((p,i)=>{ if(!res[i].error) S.partner[p.id]=res[i].data; });
+  // weekly trophies, worked out on the server so nobody's hidden numbers leave it
+  const tr=await Promise.all(acc.map(p=>sb.rpc("pairing_trophies",{p_id:p.id})));
+  S.trophies={}; acc.forEach((p,i)=>{ S.trophies[p.id]= (!tr[i].error && tr[i].data) || {week_end:6, weeks:[]}; });
   S.names={}; S.pairings.forEach(p=>{ if(p.partner_id) S.names[p.partner_id]=p.partner_name; });
   // weigh-ins of people who let you log for them
   const editable=acc.filter(p=>p.their_share && p.their_share.edit);
@@ -539,7 +572,8 @@ function render(){
   const p=S.profile;
   setWho(p.display_name, "@"+p.username);
   if(!$("qShare").innerHTML) $("qShare").innerHTML=shareHTML("q", DEFAULT_SHARE);
-  renderMe(); renderHistory(); renderPairings(); route();
+  renderMe(); renderHistory(); renderPairings(); renderAchievements(); route();
+  celebrate();
 }
 function setWho(name, sub){
   $("whoName").innerHTML=`${esc(name)}${sub?`<div class="muted">${esc(sub)}</div>`:""}`;
@@ -601,10 +635,10 @@ function renderMe(){
 }
 
 /* partner card from filtered data */
-function partnerCard(d, leading){
-  const head=`<div class="p-head"><div class="avatar">${esc((d.name||"?")[0])}</div><div><h2>${esc(d.name)}</h2>
+function partnerCard(d, leading, trophies, crown){
+  const head=`<div class="p-head"><div class="avatar">${esc((d.name||"?")[0])}</div><div><h2>${esc(d.name)}${trophiesHTML(trophies||0)}</h2>
     <div class="sub">@${esc(d.username)}${d.started&&d.start_date?` · started ${fmtDate(d.start_date)}`:""}</div></div>${leading?'<span class="crown">Leading</span>':""}</div>`;
-  if(!d.started) return `<article class="card player them">${head}<div class="hidden-note">Hasn't set a starting weight yet.</div></article>`;
+  if(!d.started) return `<article class="card player them">${crown||""}${head}<div class="hidden-note">Hasn't set a starting weight yet.</div></article>`;
   const sh=d.share||{}, last=d.points[d.points.length-1]||{};
   let big="";
   if(sh.pct||sh.lbs){
@@ -620,7 +654,7 @@ function partnerCard(d, leading){
   }
   const SHORT={pct:"percent lost", lbs:"pounds lost", trend:"history over time", goal:"goal progress", weights:"actual weights"};
   const hiddenBits=SHARE_FIELDS.filter(([k])=>k!=="edit" && !sh[k]).map(([k])=>SHORT[k]);
-  return `<article class="card player them${leading?" is-leading":""}">${head}${big}
+  return `<article class="card player them${leading?" is-leading":""}">${crown||""}${head}${big}
     <div class="stats num">${stats.map(([l,v])=>`<div class="stat"><div class="label">${l}</div><div class="v">${v}</div></div>`).join("")}</div>${goal}
     ${!sh.pct&&!sh.lbs?'<div class="hidden-note">They\'re keeping their progress numbers private.</div>':""}
     ${hiddenBits.length?`<div class="small muted">Not shared: ${esc(hiddenBits.join(", "))}.</div>`:""}
@@ -683,7 +717,7 @@ function renderPairings(){
         ? `<div class="cr-nums"><span class="y">You <b>${n1(c.mine)}${unit}</b></span><span class="t">${esc(name)} <b>${n1(c.theirs)}${unit}</b></span></div>` : `<div></div>`;
       return `<a class="cmprow" href="#vs-${p.id}" aria-label="Open your comparison with ${esc(name)}">
         <div class="avatar">${esc((name||"?")[0])}</div>
-        <div style="min-width:0"><div class="cr-name">You <em>vs</em> ${esc(name)}</div><div class="cr-sub${c.leadMe?" me":""}">${d?esc(c.leader):"Couldn't load their progress"}</div></div>
+        <div style="min-width:0"><div class="cr-name">You${trophiesHTML(tCount(p.id,S.user.id))} <em>vs</em> ${esc(name)}${trophiesHTML(tCount(p.id,p.partner_id))}</div><div class="cr-sub${c.leadMe?" me":""}">${d?esc(c.leader):"Couldn't load their progress"}</div></div>
         ${nums}${CHEV}</a>`;
     }).join("");
   }
@@ -705,15 +739,16 @@ function renderDetail(id){
     <section class="card cmp" data-id="${p.id}">
       <div class="cmp-head"><h3>You <em>vs</em> ${esc(d.name)}</h3><span class="leaderline">${esc(leader)}</span></div>
       <div class="grid2">
-        <article class="card player${c.leadMe?" is-leading":""}" style="--c:var(--plum);--cs:var(--plum-soft)">
-          <div class="p-head"><div class="avatar">${esc(S.profile.display_name[0])}</div><div><h2>You</h2><div class="sub">What you see of yourself</div></div>${c.leadMe?'<span class="crown">Leading</span>':""}</div>
+        <article class="card player${c.leadMe?" is-leading":""}" style="--c:var(--plum);--cs:var(--plum-soft)">${reignHTML(p.id,S.user.id,"You")}
+          <div class="p-head"><div class="avatar">${esc(S.profile.display_name[0])}</div><div><h2>You${trophiesHTML(tCount(p.id,S.user.id))}</h2><div class="sub">What you see of yourself</div></div>${c.leadMe?'<span class="crown">Leading</span>':""}</div>
           ${me?`<div class="big num"><span class="pct">${n1(me.pct)}%</span><span class="lbs">${me.lost>=0?n1(me.lost)+" lbs lost":n1(-me.lost)+" lbs gained"}</span></div>`:'<div class="hidden-note">Set your starting weight first.</div>'}
         </article>
-        ${partnerCard(d, c.leadThem)}
+        ${partnerCard(d, c.leadThem, tCount(p.id,p.partner_id), reignHTML(p.id,p.partner_id,d.name))}
       </div>
       ${m && d.share.trend ? `<div><div class="chart-head"><span class="label">${m==="pct"?"Percent lost":"Pounds lost"} over time</span>
         <div class="legend"><span><i style="background:var(--plum)"></i>You</span><span><i style="background:var(--orchid)"></i>${esc(d.name)}</span></div></div>
         <div class="chartbox" data-chart="${p.id}"></div></div>` : ""}
+      ${weeklyHTML(p,d)}
       ${manageHTML(p,d)}
       ${p.my_share && p.my_share.edit ? `<div class="small muted">${esc(d.name)} can add and remove your weigh-ins. Entries they make show "logged by ${esc(d.name)}" in your history.</div>` : ""}
       <details${S.openShare===p.id?" open":""} data-sharebox><summary>What ${esc(d.name)} can see about you</summary>
@@ -731,6 +766,134 @@ function renderDetail(id){
     series.push({name:d.name, color:"var(--orchid)", pts: d.points.filter(x=>x[m]!=null).map(x=>({date:x.date, v:+x[m]}))});
     drawChart(cb, series, m==="pct"?"%":" lb", `${m==="pct"?"Percent":"Pounds"} lost over time: you and ${d.name}`);
   }
+}
+
+/* ---------- weekly trophies ---------- */
+const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const tCount=(pid,uid)=>((S.trophies&&S.trophies[pid]&&S.trophies[pid].weeks)||[]).filter(w=>w.winner===uid).length;
+function trophiesHTML(n){
+  if(!n) return "";
+  const lbl=`${n} weekly ${n===1?"win":"wins"}`;
+  return n<=5 ? `<span class="trophies" title="${lbl}" aria-label="${lbl}">${"<i aria-hidden=\"true\">🏆</i>".repeat(n)}</span>`
+              : `<span class="trophies" title="${lbl}" aria-label="${lbl}"><i aria-hidden="true">🏆</i><b>×${n}</b></span>`;
+}
+// last week's winner wears the crown until the next week is decided
+function reignHTML(pid, uid, name){
+  const W=(S.trophies&&S.trophies[pid]&&S.trophies[pid].weeks)||[], w=W[W.length-1];
+  if(!w || w.winner!==uid) return "";
+  const lbl=`${name==="You"?"You":name} won the week ending ${fmtDate(w.ends)}`;
+  return `<span class="reign" role="img" title="${esc(lbl)}" aria-label="${esc(lbl)}">👑</span>`;
+}
+function nextWeekEnd(wd){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+((wd-d.getDay()+7)%7)); return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}); }
+function weeklyHTML(p,d){
+  const T=(S.trophies&&S.trophies[p.id])||{week_end:6,weeks:[]};
+  const rows=T.weeks.slice().reverse().map(w=>{
+    const who = w.winner===S.user.id ? "You" : w.winner===p.partner_id ? d.name : "Tie";
+    return `<li class="${w.winner===S.user.id?"mine":""}"><span>Week ending ${fmtDate(w.ends)}</span><strong>${w.winner?"🏆 "+esc(who):"Tie, no trophy"}</strong></li>`;
+  }).join("");
+  return `<div class="wk"><div class="wk-top"><span class="label">Weekly weigh-offs</span>
+      <label class="small muted">Week ends on <select data-weekend="${p.id}" aria-label="Day the week ends">${DAYS.map((n,i)=>`<option value="${i}"${i===T.week_end?" selected":""}>${n}</option>`).join("")}</select></label></div>
+    <div class="small muted">Whoever is further ahead overall (percent of starting weight lost) when the week ends wins a trophy. Both of you need a weigh-in that week. This week ends ${nextWeekEnd(T.week_end)}.</div>
+    ${rows?`<ul class="wk-list">${rows}</ul>`:`<div class="empty">No finished weeks yet. The first trophy comes after your first full week together.</div>`}</div>`;
+}
+document.addEventListener("change", async e=>{
+  const sel=e.target.closest("select[data-weekend]"); if(!sel) return;
+  sel.disabled=true;
+  const {error}=await sb.rpc("set_week_end",{p_id:sel.dataset.weekend, d:+sel.value});
+  if(error){ sel.disabled=false; $("status").textContent="Couldn't change the week: "+errMsg(error); return; }
+  await refresh();
+});
+
+/* fireworks: once per finished week, for whoever won it */
+function celebrate(){
+  if(S.celebrated) return;
+  const queue=[];
+  for(const p of S.pairings.filter(x=>x.status==="accepted")){
+    const T=S.trophies&&S.trophies[p.id]; if(!T||!T.weeks.length) continue;
+    const w=T.weeks[T.weeks.length-1]; if(!w.winner) continue;
+    const key=`wo-fw-${S.user.id}-${p.id}-${w.ends}`;
+    try{ if(localStorage.getItem(key)) continue; localStorage.setItem(key,"1"); }catch(e){}
+    const name=(S.partner[p.id]&&S.partner[p.id].name)||p.partner_name;
+    queue.push(w.winner===S.user.id ? {title:"You won the week!", sub:`Week ending ${fmtDate(w.ends)} against ${name}. That's ${tCount(p.id,S.user.id)} 🏆 so far.`}
+                                    : {title:`${name} won the week`, sub:`Week ending ${fmtDate(w.ends)}. Next week's trophy is up for grabs.`});
+  }
+  S.celebrated=true;
+  const next=()=>{ const q=queue.shift(); if(q) fireworks(q.title, q.sub, next); };
+  next();
+}
+function fireworks(title, sub, done){
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const cv=document.createElement("canvas"); cv.id="fw"; document.body.appendChild(cv);
+  const ban=document.createElement("div"); ban.className="fw-banner"; ban.setAttribute("role","status");
+  ban.innerHTML=`<div class="big1" aria-hidden="true">🏆</div><h3>${esc(title)}</h3><p>${esc(sub)}</p><button class="btn sm" type="button">Nice!</button>`;
+  document.body.appendChild(ban);
+  const ctx=cv.getContext("2d"), dpr=Math.min(2,devicePixelRatio||1);
+  const size=()=>{ cv.width=innerWidth*dpr; cv.height=innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }; size();
+  const COLS=["#ff4d6d","#ffd166","#06d6a0","#4cc9f0","#c77dff","#ff9f1c","#ffffff"];
+  const rockets=[], sparks=[]; let t=0, raf=0, over=false;
+  const launch=()=>rockets.push({x:innerWidth*(0.15+Math.random()*0.7), y:innerHeight+10, vx:(Math.random()-0.5)*2, vy:-(9+Math.random()*4), c:COLS[Math.random()*COLS.length|0]});
+  const pop=r=>{ const n=60+Math.random()*30|0, sp=2+Math.random()*3; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, v=sp*(0.6+Math.random()*0.6); sparks.push({x:r.x,y:r.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:60+Math.random()*30,c:Math.random()<0.8?r.c:"#fff"}); } };
+  function frame(){
+    t++; ctx.clearRect(0,0,innerWidth,innerHeight);
+    if(t<200 && t%14===0) launch();
+    for(const r of rockets){ r.x+=r.vx; r.y+=r.vy; r.vy+=0.16; ctx.fillStyle=r.c; ctx.fillRect(r.x-1.5,r.y-1.5,3,3); if(r.vy>-1.5){ r.done=true; pop(r); } }
+    for(let i=rockets.length-1;i>=0;i--) if(rockets[i].done) rockets.splice(i,1);
+    ctx.globalCompositeOperation="lighter";
+    for(const s of sparks){ s.x+=s.vx; s.y+=s.vy; s.vx*=0.985; s.vy=s.vy*0.985+0.05; s.life--; ctx.globalAlpha=Math.max(0,Math.min(1,s.life/40)); ctx.fillStyle=s.c; ctx.fillRect(s.x-1.2,s.y-1.2,2.4,2.4); }
+    ctx.globalAlpha=1; ctx.globalCompositeOperation="source-over";
+    for(let i=sparks.length-1;i>=0;i--) if(sparks[i].life<=0) sparks.splice(i,1);
+    if(!over && (t<200 || rockets.length || sparks.length)) raf=requestAnimationFrame(frame); else cv.remove();
+  }
+  if(!reduce) raf=requestAnimationFrame(frame); else cv.remove();
+  addEventListener("resize", size);
+  const close=()=>{ over=true; cancelAnimationFrame(raf); cv.remove(); ban.remove(); removeEventListener("resize", size); done&&done(); };
+  ban.querySelector("button").addEventListener("click", close);
+  ban.querySelector("button").focus();
+}
+
+/* ---------- achievements ---------- */
+function achievementList(){
+  const s=mySeries(), p=S.profile, lost=s?s.lost:0, pct=s?s.pct:0;
+  // longest run of back-to-back weeks (Sunday to Saturday) with at least one weigh-in
+  const wkOf=d=>{ const [y,m,dd]=d.split("-").map(Number); const x=new Date(Date.UTC(y,m-1,dd)); return Math.floor((x/864e5+4)/7); };
+  const weeks=[...new Set(S.weighins.map(w=>wkOf(w.date)))].sort((a,b)=>a-b);
+  let best=0, run=0; weeks.forEach((w,i)=>{ run = i && w===weeks[i-1]+1 ? run+1 : 1; best=Math.max(best,run); });
+  const wins=Object.keys(S.trophies||{}).reduce((n,id)=>n+tCount(id,S.user.id),0);
+  const comps=S.pairings.filter(x=>x.status==="accepted").length;
+  const goalNeed = p.goal_weight && s && +p.goal_weight < s.sw ? s.sw-p.goal_weight : null;
+  const prog=(v,n,u)=>`${Math.min(n,Math.max(0,Math.floor(v*10)/10))} of ${n}${u}`;
+  return [
+    {id:"first", i:"👣", t:"First step", d:"Log your first weigh-in", ok:S.weighins.length>0},
+    {id:"lbs5", i:"🎈", t:"5 lbs down", d:prog(lost,5," lbs"), ok:lost>=5},
+    {id:"lbs10", i:"🎯", t:"10 lbs down", d:prog(lost,10," lbs"), ok:lost>=10},
+    {id:"lbs25", i:"🚀", t:"25 lbs down", d:prog(lost,25," lbs"), ok:lost>=25},
+    {id:"lbs50", i:"🌟", t:"50 lbs down", d:prog(lost,50," lbs"), ok:lost>=50},
+    {id:"pct5", i:"📉", t:"5% lighter", d:prog(pct,5,"%"), ok:pct>=5},
+    {id:"pct10", i:"💪", t:"10% lighter", d:prog(pct,10,"%"), ok:pct>=10},
+    {id:"pct15", i:"🔥", t:"15% lighter", d:prog(pct,15,"%"), ok:pct>=15},
+    {id:"streak4", i:"📅", t:"On a roll", d:`Weigh in 4 weeks in a row (best: ${best})`, ok:best>=4},
+    {id:"streak12", i:"🗓️", t:"Habit formed", d:`Weigh in 12 weeks in a row (best: ${best})`, ok:best>=12},
+    {id:"half", i:"⛰️", t:"Halfway there", d:goalNeed?prog(lost/goalNeed*100,50,"% of your goal"):"Set a goal weight first", ok:!!goalNeed && lost>=goalNeed/2},
+    {id:"goal", i:"🏁", t:"Goal reached", d:goalNeed?"Hit your goal weight":"Set a goal weight first", ok:!!goalNeed && lost>=goalNeed},
+    {id:"rival", i:"🤝", t:"Game on", d:"Start a comparison", ok:comps>0},
+    {id:"win1", i:"🏆", t:"Weekly winner", d:"Win a weekly weigh-off", ok:wins>=1},
+    {id:"win5", i:"👑", t:"Champion", d:`Win 5 weekly weigh-offs (${Math.min(wins,5)} of 5)`, ok:wins>=5},
+  ];
+}
+function renderAchievements(){
+  const L=achievementList(), got=L.filter(a=>a.ok);
+  $("achCount").textContent=`${got.length} of ${L.length} earned`;
+  $("achList").innerHTML=L.map(a=>`<div class="badge2${a.ok?"":" locked"}"><div class="bi" aria-hidden="true">${a.i}</div><div><b>${esc(a.t)}</b><span>${a.ok?"Earned":esc(a.d)}</span></div></div>`).join("");
+  // a quick toast for anything newly earned (the first visit just records what you already have)
+  const key="wo-ach-"+S.user.id; let seen=null; try{ seen=JSON.parse(localStorage.getItem(key)||"null"); }catch(e){}
+  const now=got.map(a=>a.id);
+  if(seen){ const fresh=got.filter(a=>!seen.includes(a.id)); if(fresh.length) achToast(fresh); }
+  try{ localStorage.setItem(key, JSON.stringify(now)); }catch(e){}
+}
+function achToast(list){
+  const el=document.createElement("div"); el.className="ach-toast"; el.setAttribute("role","status");
+  el.textContent=`Achievement unlocked: ${list.map(a=>a.i+" "+a.t).join(", ")}`;
+  document.body.appendChild(el); setTimeout(()=>el.remove(), 4500);
 }
 
 /* logging for a partner who granted edit */
@@ -1078,3 +1241,4 @@ sb.auth.onAuthStateChange((event, session)=>{
 </script>
 </body>
 </html>
+<!-- weigh-off v2: trophies, crown, fireworks, achievements -->
