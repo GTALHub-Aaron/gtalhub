@@ -259,12 +259,42 @@ const BANNERS = {
      ${grad("B", "#f2fdff", "#6cc8ef", "#1f6f99")}${grad("G", "#fff8cf", "#f2c230", "#8a6200")}${grad("R", "#ffc2ca", "#ff4d6a", "#8c1029")}`);
   },
 
+  // Gift Exchange: two gift tags whose names spin like a slot reel, slow down and land, with snow falling
+  gift: () => {
+    const N = ["Sam", "Ava", "Leo", "Mia", "Max", "Jo", "Eli", "Zoe", "Ben", "Ivy", "Kai", "Nora"];
+    const reel = (y, names, begin, id) => `<g clip-path="url(#${id})"><g>
+      ${names.map((n, i) => `<text x="294" y="${y + 5 + i * 18}" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="12" font-weight="700" fill="${i === names.length - 1 ? "#d62839" : "#14231d"}">${n}</text>`).join("")}
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 ${-(names.length - 1) * 18};0 ${-(names.length - 1) * 18}" keyTimes="0;.62;1" calcMode="spline" keySplines=".12 .75 .3 1;0 0 1 1" dur="4.4s" begin="${begin}s" repeatCount="indefinite"/></g></g>`;
+    const tag = (y, giver, names, begin, id) => `
+      <path d="M156 ${y - 13} H346 Q354 ${y - 13} 354 ${y - 5} V${y + 5} Q354 ${y + 13} 346 ${y + 13} H156 L146 ${y} Z" fill="#000" opacity=".25" transform="translate(2 3)"/>
+      <path d="M156 ${y - 13} H346 Q354 ${y - 13} 354 ${y - 5} V${y + 5} Q354 ${y + 13} 346 ${y + 13} H156 L146 ${y} Z" fill="#fdfbf5"/>
+      <circle cx="158" cy="${y}" r="3" fill="#0f3d2e" stroke="#e8b53a" stroke-width="1.5"/>
+      <text x="170" y="${y + 4}" font-family="Roboto Mono, monospace" font-size="11" font-weight="700" fill="#14231d">${giver}</text>
+      <text x="218" y="${y + 4}" font-family="Roboto Mono, monospace" font-size="10" fill="#d62839">→</text>
+      <rect x="246" y="${y - 9}" width="90" height="18" rx="4" fill="#eef3ef" stroke="#e8b53a" stroke-dasharray="3 2"/>
+      ${reel(y, names, begin, id)}
+      <rect x="246" y="${y - 9}" width="90" height="18" rx="4" fill="none" stroke="#d62839" stroke-width="1.6" opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.6;.64;.92;1" dur="4.4s" begin="${begin}s" repeatCount="indefinite"/></rect>`;
+    return SVG(`
+    <rect width="400" height="130" fill="url(#gxBg)"/>
+    ${[[30, 0], [96, 1.2], [128, 2.6], [372, .5], [388, 2], [232, 3.1], [60, 3.6], [330, 1.7], [190, .9]].map(([x, b], i) => `<circle cx="${x}" r="${1.2 + (i % 3) * .5}" fill="#fff" opacity=".55"><animate attributeName="cy" from="-4" to="134" dur="${4 + (i % 4)}s" begin="-${b}s" repeatCount="indefinite"/></circle>`).join("")}
+    <g transform="translate(8 0)"><ellipse cx="88" cy="118" rx="44" ry="5" fill="#000" opacity=".3"/>
+    <g><animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 -5;0 0;0 0" keyTimes="0;.6;.66;.72;1" dur="4.4s" repeatCount="indefinite"/>
+      <path d="M88 64 C80 46 62 46 64 57 C66 65 80 64 88 64 C96 64 110 65 112 57 C114 46 96 46 88 64Z" fill="none" stroke="#e8b53a" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="60" y="64" width="56" height="15" rx="2" fill="#d62839"/></g>
+    <rect x="64" y="78" width="48" height="38" rx="2" fill="#b81f2f"/>
+    <rect x="83" y="64" width="10" height="52" fill="#e8b53a"/></g>
+    <g transform="translate(-20 0)">${tag(58, "Sam", [...N.slice(2), "Mia"], 0, "gxR1")}
+    ${tag(96, "Ava", [...N.slice(5), ...N.slice(0, 4), "Leo"], .35, "gxR2")}</g>`,
+    `<linearGradient id="gxBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#145240"/><stop offset="1" stop-color="#08241b"/></linearGradient>
+     <clipPath id="gxR1"><rect x="246" y="49" width="90" height="18"/></clipPath><clipPath id="gxR2"><rect x="246" y="87" width="90" height="18"/></clipPath>`);
+  },
+
   // anything new without its own scene yet
   other: () => SVG(`<rect width="400" height="130" fill="#0d0d14"/><rect width="400" height="130" fill="url(#gnGrid)"/><circle cx="200" cy="72" r="34" fill="#00ff88" opacity=".08"/><path d="M182 72 h36 M200 54 v36" stroke="#00ff88" stroke-width="3" opacity=".6"/>`, grid("gnGrid", 24, "#00ff88", .08))
 };
 function bannerFor(a) {
   const k = `${a.url} ${a.name}`.toLowerCase();
-  return (/pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
+  return (/gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
     : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : /marble/.test(k) ? BANNERS.marble : BANNERS.other)();
 }
 
