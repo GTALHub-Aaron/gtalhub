@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gift Exchange</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gift Exchange">
+<meta name="theme-color" content="#0f3d2e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* VOICE: warm, festive, quick to use on a phone
+   IDEA: a stack of gift tags pulled from a hat
+   PICTURE: the pairing list itself, each row a tag strung giver -> receiver
+   COLOUR and TYPE: evergreen field, white tags, cranberry accent, gold string; Lilita One + Nunito
+   LAYOUT: one column, names box then tag list, actions in a sticky bar */
+:root{color-scheme:light dark;
+--bg:light-dark(#0f3d2e,#08241b);--band:light-dark(#145240,#0d3226);
+--tag:light-dark(#ffffff,#13241e);--ink:light-dark(#14231d,#eef5f1);--muted:light-dark(#5a6b63,#9fb3aa);
+--on:#ffffff;--red:#d62839;--gold:#e8b53a;--line:light-dark(#dfe7e3,#24392f)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--on);font:16px/1.55 Nunito,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:760px;margin:0 auto;padding:calc(clamp(24px,4vw,48px) + env(safe-area-inset-top)) max(5vw,16px) 120px}
+h1{font:400 clamp(34px,7vw,52px)/1.05 "Lilita One",system-ui,sans-serif;margin:0 0 6px;text-wrap:balance}
+.sub{margin:0 0 24px;color:#cfe3da;max-width:60ch}
+.card{background:var(--tag);color:var(--ink);border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+label{font-weight:800;display:block;margin-bottom:6px}
+textarea{width:100%;min-height:150px;font:16px/1.5 Nunito,sans-serif;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:transparent;color:var(--ink);resize:vertical}
+textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hint{font-size:14px;color:var(--muted);margin:8px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+button{font:800 16px Nunito,sans-serif;min-height:44px;padding:0 18px;border-radius:999px;border:0;cursor:pointer}
+.primary{background:var(--red);color:#fff}
+.ghost{background:transparent;color:inherit;border:2px solid currentColor}
+button.icon{width:44px;padding:0;display:grid;place-items:center;flex:none}
+button:disabled{opacity:.4;cursor:default}
+.err{color:var(--red);font-weight:700;margin:10px 0 0;min-height:1em}
+h2{font:400 28px/1.1 "Lilita One",sans-serif;margin:36px 0 6px}
+.tags{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px}
+.tag{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.2fr);align-items:center;gap:12px;background:var(--tag);color:var(--ink);border-radius:14px 26px 26px 14px;padding:12px 16px 12px 40px;box-shadow:0 6px 18px rgba(0,0,0,.22);animation:drop .35s ease both}
+.tag::before{content:"";position:absolute;left:10px;top:50%;width:20px;height:20px;margin-top:-11px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 7C10 3 6 3 6 5.5S9 7 12 7c3 0 6-.5 6-1.5S14 3 12 7z' fill='none' stroke='%23e8b53a' stroke-width='2' stroke-linejoin='round'/%3E%3Crect x='3' y='7' width='18' height='5' rx='1' fill='%23d62839'/%3E%3Crect x='4.5' y='12' width='15' height='10' rx='1' fill='%23b81f2f'/%3E%3Crect x='10.5' y='7' width='3' height='15' fill='%23e8b53a'/%3E%3C/svg%3E") no-repeat center/contain}
+.tag.bad{box-shadow:0 0 0 3px var(--red),0 6px 18px rgba(0,0,0,.22)}
+.giver{font-weight:800;font-size:17px;overflow-wrap:anywhere}
+.arrow{color:var(--red);font-size:13px;font-weight:800;white-space:nowrap}
+select{width:100%;font:600 16px Nunito,sans-serif;min-height:44px;padding:0 36px 0 12px;border-radius:10px;border:2px solid var(--line);color:var(--ink);background:var(--tag) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d62839' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none}
+.warn{grid-column:1/-1;color:var(--red);font-size:14px;font-weight:700;margin:-2px 0 0}
+.flash{animation:flash .9s ease}
+.reel{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;border:2px dashed var(--gold);font:800 17px Nunito,sans-serif;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.reel.landed{border-style:solid;border-color:var(--red);color:var(--ink);animation:pop .35s ease}
+@keyframes pop{40%{transform:scale(1.08)}}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--band);padding:12px max(5vw,16px) calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.25)}
+.bar .row{max-width:760px;margin:0 auto;justify-content:center}
+.bar button{color:#fff}
+.status{text-align:center;font-size:14px;color:#cfe3da;margin:14px 0 0;min-height:1.4em}
+.empty{color:#cfe3da;font-style:italic}
+@keyframes drop{from{opacity:0;transform:translateY(-8px)}}
+@keyframes flash{30%{background:color-mix(in srgb,var(--gold) 35%,var(--tag))}}
+@media(prefers-reduced-motion:reduce){.tag,.flash{animation:none}}
+@media(max-width:520px){.bar .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 44px;gap:6px}.bar button{padding:0 4px;font-size:14px;border-width:1.5px}h2{margin-top:28px}.wrap{padding-bottom:100px}.tag{grid-template-columns:minmax(0,1fr);gap:6px}.arrow{display:none}.giver::after{content:" gives to";font-weight:600;color:var(--muted);font-size:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Christmas Gift Exchange</h1>
+  <p class="sub">Enter everyone's name, draw, then fine-tune. Changing someone's recipient swaps it with whoever had that person, so everyone still gives one gift and gets one.</p>
+
+  <div class="card">
+    <label for="names">Names, one per line</label>
+    <textarea id="names" placeholder="Aaron&#10;Caitlin&#10;Mom&#10;Dad"></textarea>
+    <p class="hint">Commas work too. Duplicate names are combined.</p>
+    <div class="row"><button class="primary" id="draw">Draw names</button></div>
+    <p class="err" id="err"></p>
+  </div>
+
+  <h2 id="resultsTitle">Pairings</h2>
+  <ul class="tags" id="list"><li class="empty">No draw yet.</li></ul>
+  <p class="status" id="status" aria-live="polite"></p>
+</div>
+
+<div class="bar"><div class="row">
+  <button class="ghost" id="redraw" disabled>Redraw</button>
+  <button class="ghost" id="undo" disabled>Undo</button>
+  <button class="ghost" id="copy" disabled>Copy list</button>
+  <button class="ghost icon" id="sound" aria-pressed="true" aria-label="Sound on"></button>
+</div></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let names=[],recv=[],history=[],lastChanged=[];
+
+function parse(){
+  const seen=new Set(),out=[];
+  for(const raw of $('names').value.split(/[\n,]/)){
+    const n=raw.trim();if(!n)continue;
+    const k=n.toLowerCase();if(seen.has(k))continue;seen.add(k);out.push(n);
+  }
+  return out;
+}
+function derange(n){
+  // random permutation with no one drawing themselves
+  for(;;){
+    const p=[...Array(n).keys()];
+    for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+    if(p.every((v,i)=>v!==i))return p;
+  }
+}
+function save(){try{localStorage.setItem('gx',JSON.stringify({text:$('names').value,names,recv}))}catch(e){}}
+function load(){
+  try{const d=JSON.parse(localStorage.getItem('gx')||'null');
+    if(d){$('names').value=d.text||'';names=d.names||[];recv=d.recv||[];if(recv.length!==names.length){names=[];recv=[]}}
+  }catch(e){}
+}
+function render(){
+  const list=$('list');
+  if(!names.length){list.innerHTML='<li class="empty">No draw yet.</li>'}
+  else list.innerHTML=names.map((g,i)=>{
+    const bad=recv[i]===i;
+    const opts=names.map((r,j)=>`<option value="${j}"${j===recv[i]?' selected':''}>${esc(r)}${j===i?' (self)':''}</option>`).join('');
+    return `<li class="tag${bad?' bad':''}${lastChanged.includes(i)?' flash':''}">
+      <span class="giver">${esc(g)}</span><span class="arrow">gives to</span>
+      <select data-i="${i}" aria-label="${esc(g)} gives to">${opts}</select>
+      ${bad?'<p class="warn">Drawing themselves. Pick someone else.</p>':''}</li>`;
+  }).join('');
+  lastChanged=[];
+  const has=names.length>0;
+  $('redraw').disabled=!has;$('copy').disabled=!has;$('undo').disabled=!history.length;
+  const selfs=recv.filter((r,i)=>r===i).length;
+  $('resultsTitle').textContent=has?`Pairings (${names.length})`:'Pairings';
+  if(selfs)$('status').textContent=`${selfs} ${selfs>1?'people are':'person is'} drawing themselves.`;
+}
+let ac=null,muted=false,lastClick=0;
+try{muted=localStorage.getItem('gx-muted')==='1'}catch(e){}
+// iPhone: a silent looping <audio> puts the page in "playback" mode, so ticks play even with the ring/silent switch on
+let keepAlive=null;
+function silentWav(){
+  const n=4410,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,44100,true);v.setUint32(28,88200,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'}));
+}
+function audio(){
+  if(muted)return;
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+  try{if(!keepAlive){keepAlive=new Audio(silentWav());keepAlive.loop=true;keepAlive.setAttribute('playsinline','')}
+    const p=keepAlive.play();if(p)p.catch(()=>{})}catch(e){}
+  try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume().catch(()=>{})}catch(e){ac=null}
+}
+function quiet(){try{keepAlive&&keepAlive.pause()}catch(e){}}
+function blip(freq,dur,vol,type){
+  if(muted||!ac)return;
+  try{const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
+    o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g).connect(ac.destination);o.start(t);o.stop(t+dur+0.02);}catch(e){}
+}
+function clickSound(){
+  if(!ac)return;const t=ac.currentTime;
+  if(t-lastClick<0.04)return;lastClick=t; // keep many reels from turning into a buzz
+  blip(1500+Math.random()*300,0.03,0.07,'square');
+}
+function landSound(i){blip(660+i%6*110,0.25,0.06,'sine')}
+function setSoundLabel(){
+  const spk='<path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
+  const on='<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  const off='<path d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  $('sound').innerHTML=`<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">${spk}${muted?off:on}</svg>`;
+  $('sound').setAttribute('aria-label',muted?'Sound off':'Sound on');
+  $('sound').setAttribute('aria-pressed',String(!muted));
+}
+$('sound').addEventListener('click',()=>{
+  muted=!muted;try{localStorage.setItem('gx-muted',muted?'1':'0')}catch(e){}
+  if(!muted)audio();setSoundLabel();
+});
+setSoundLabel();
+function draw(){
+  if(spinning)return;
+  audio();
+  const n=parse();
+  if(n.length<2){$('err').textContent='Add at least two names.';return}
+  $('err').textContent='';
+  if(names.length)history.push({names:[...names],recv:[...recv]});
+  names=n;recv=derange(n.length);
+  save();spin();
+}
+let spinning=false;
+function spin(){
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){lastChanged=[...names.keys()];$('status').textContent='Names drawn.';render();return}
+  spinning=true;
+  ['draw','redraw','undo','copy'].forEach(id=>$(id).disabled=true);
+  $('status').textContent='Shuffling…';
+  $('resultsTitle').textContent=`Pairings (${names.length})`;
+  $('list').innerHTML=names.map((g,i)=>`<li class="tag"><span class="giver">${esc(g)}</span><span class="arrow">gives to</span><span class="reel" id="reel${i}">?</span></li>`).join('');
+  const n=names.length,gap=Math.min(260,2400/n),start=1600;
+  let done=0;
+  names.forEach((g,i)=>{
+    const el=$('reel'+i),dur=start+i*gap,t0=performance.now();
+    const pool=names.map((_,j)=>j).filter(j=>j!==i);
+    let last=-1;
+    const tick=()=>{
+      const t=performance.now()-t0;
+      if(t>=dur){
+        el.textContent=names[recv[i]];el.classList.add('landed');landSound(i);
+        if(++done===n)setTimeout(finish,500);
+        return;
+      }
+      let k;do{k=pool[Math.floor(Math.random()*pool.length)]}while(pool.length>1&&k===last);
+      last=k;el.textContent=names[k];clickSound();
+      const p=t/dur;
+      setTimeout(tick,35+320*p*p*p);
+    };
+    tick();
+  });
+}
+function finish(){
+  spinning=false;$('draw').disabled=false;setTimeout(quiet,400);
+  $('status').textContent='Names drawn. Use the dropdowns to swap.';
+  render();
+}
+$('draw').addEventListener('click',draw);
+$('redraw').addEventListener('click',draw);
+
+$('list').addEventListener('change',e=>{
+  const s=e.target.closest('select');if(!s)return;
+  const i=+s.dataset.i,newR=+s.value,oldR=recv[i];
+  if(newR===oldR)return;
+  const j=recv.indexOf(newR);
+  history.push({names:[...names],recv:[...recv]});
+  recv[i]=newR;recv[j]=oldR;
+  lastChanged=[i,j];
+  $('status').textContent=`${names[i]} now gives to ${names[newR]}; ${names[j]} now gives to ${names[oldR]}.`;
+  save();render();
+});
+
+$('undo').addEventListener('click',()=>{
+  const h=history.pop();if(!h)return;
+  names=h.names;recv=h.recv;$('status').textContent='Undone.';
+  save();render();
+});
+
+$('copy').addEventListener('click',async()=>{
+  const txt=names.map((g,i)=>`${g} → ${names[recv[i]]}`).join('\n');
+  try{await navigator.clipboard.writeText(txt);$('status').textContent='List copied.'}
+  catch(e){$('status').textContent='Copy was blocked here. Select the list and copy by hand.'}
+});
+
+$('names').addEventListener('input',save);
+load();render();
+}
+</script>
+</body>
+</html>
