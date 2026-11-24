@@ -22,6 +22,9 @@
    LAYOUT: slim HUD strip, big game canvas, chunky control deck under it */
 :root{color-scheme:dark;--bg:#14123a;--deck:#1d1b4d;--ink:#fff6ea;--mute:#b8b3e0;--red:#e3261c;--redd:#9e130c;--blue:#2d5be0;--gold:#ffc93c;--navy:#1b1840}
 *{box-sizing:border-box;min-width:0}
+html,body{overscroll-behavior:none}
+html.fit,html.fit body{height:100%;overflow:hidden}
+.wrap{overflow:clip}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 Rubik,system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:1240px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) max(2vw,10px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(2vw,10px,env(safe-area-inset-left))}
 html,body{touch-action:manipulation}
@@ -111,6 +114,11 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .help{color:var(--mute);font-size:14px;margin:10px 4px 0}
 .help kbd{background:#2e2b6e;border-radius:5px;padding:1px 6px;font:600 13px Rubik,sans-serif;color:var(--ink)}
 @media(max-width:600px){.deck{grid-template-columns:1fr}.aim{justify-content:center}.stat b{font-size:18px}.outfits{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}}
+@media(min-height:601px),(orientation:portrait){
+  .wrap{height:100vh;height:100dvh;display:flex;flex-direction:column}
+  .fig{flex:1 1 auto;height:auto;min-height:260px}
+  .deck{flex:none}
+}
 @media(orientation:landscape) and (max-height:600px){
   html,body{height:100%;overflow:hidden}
   .wrap{max-width:none;height:100vh;height:100dvh;padding:8px max(8px,env(safe-area-inset-right)) 8px max(8px,env(safe-area-inset-left));display:grid;grid-template-columns:minmax(0,1fr) clamp(140px,22vw,190px);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"fig hud" "fig deck";gap:8px}
@@ -323,7 +331,11 @@ function makeCity(){
   LTOWER.col=`rgb(${ST.bld[1]})`;
   makeRings();makeTramps();makeHazards();
   S.cityWind=ST.wind?grnd(25,90)*(GR()<.5?-1:1):0;
+  MAINR=lastRight();let ex=MAINR+grnd(60,150),i=city.length;
+  while(ex<MAINR+4200){const w=grnd(ST.wMin,ST.wMax),hh=grnd(ST.hMin,Math.min(ST.hMax-230+S.level*40,ST.hMax));
+    city.push({x:ex,w,h:hh,col:`rgb(${ST.bld[i%4]})`,seed:GR()*1e4,tower:GR()<.35,ant:GR()<.3,tramp:null,extra:true});ex+=w+grnd(50,160);i++}
 }
+let MAINR=0;
 function trajY(a,x){const r=a*Math.PI/180,dx=Math.cos(r),dy=Math.sin(r),x0=CANX+dx*BARREL,y0=CANY+dy*BARREL,t=(x-x0)/(ST.V*dx);return y0+ST.V*dy*t-ST.G*t*t/2}
 function underAt(x,p=0){return Math.max(0,...city.filter(b=>x>b.x-p&&x<b.x+b.w+p).map(b=>b.h))}
 function pathClear(a,tx,tb){
@@ -391,7 +403,9 @@ function startShow(daily){
   makeCity();resetMan();cam.x=-90;cam.y=0;hideMsg();updateUI();
 }
 
-function resize(){
+function fitPage(){const d=document.documentElement,w=document.querySelector('.wrap');if(!w)return;d.classList.toggle('fit',w.getBoundingClientRect().height<=innerHeight+2)}
+setInterval(fitPage,600);
+function resize(){fitPage();
   DPR=Math.min(devicePixelRatio||1,2);W=fig.clientWidth;H=fig.clientHeight;
   cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
 }
@@ -677,9 +691,9 @@ function step(dt){
       for(const b of city){
         if(man.x>b.x&&man.x<b.x+b.w){
           const top=b.h,t=b.tramp;
-          if(t&&Math.abs(man.x-t.x)<t.w/2&&py-HALF>=top+17&&man.y-HALF<top+18&&man.vy<0){bounce(b,false);done=true;break}
+          if(t&&S.state==='fly'&&man.bounces<4&&Math.abs(man.x-t.x)<t.w/2&&py-HALF>=top+17&&man.y-HALF<top+18&&man.vy<0){bounce(b,false);done=true;break}
           if(py-HALF>=top-1&&man.y-HALF<top&&man.vy<0){land(b);done=true;break}
-          if(man.y-HALF<top-4){splat(b,px<=b.x+b.w/2);done=true;break}
+          if(man.y-HALF<top-4){if(S.state==='fall'){man.x=px<=b.x+b.w/2?b.x-7:b.x+b.w+7;man.vx=0;continue}splat(b,px<=b.x+b.w/2);done=true;break}
         }
       }
       if(done&&S.state!=='fly')break;
@@ -710,7 +724,7 @@ function step(dt){
     const b=man.b,fr=(man.quality==='clean'?1500:2200)*ST.fric;
     man.vx=Math.max(0,man.vx-fr*dt);man.x+=man.vx*dt;
     if(Math.random()<.5&&man.vx>40)dust(man.x,b.h,1);
-    if(b.tramp&&Math.abs(man.x-b.tramp.x)<b.tramp.w/2&&man.vx>30)bounce(b,true);
+    if(b.tramp&&man.bounces<4&&man.quality!=='wall'&&Math.abs(man.x-b.tramp.x)<b.tramp.w/2&&man.vx>30)bounce(b,true);
     else if(man.x>b.x+b.w-4){S.state='fall';man.x=b.x+b.w+3;man.vx=Math.max(man.vx,60);man.vy=0;man.fspin=1.2;man.b=null;man.quality='edge';floatText(man.x,b.h+80,'WHOA!','#ff6a5c');updateUI()}
     else if(man.vx<=0)finishLanding();
   }
@@ -723,8 +737,8 @@ function step(dt){
   if(man.cheer)man.cheer+=dt;
   // camera
   const flying=S.state!=='aim';
-  const topY=Math.max(LH+260,...city.map(b=>b.h+140),...rings.map(r=>r.y+r.r+120));
-  const fitSc=Math.min((W-20)/(lastRight()+200),(H-40)/topY);
+  const topY=Math.max(LH+260,...city.filter(b=>!b.extra).map(b=>b.h+140),...rings.map(r=>r.y+r.r+120));
+  const fitSc=Math.min((W-20)/((MAINR||lastRight())+200),(H-40)/topY);
   const tSc=flying?Math.min((H-30)/820,W/700)*(1+(1-S.ts)*.7):fitSc;
   const tX=flying?Math.max(-90,man.x-(W/tSc)*.42):-90;
   const tY=flying?Math.max(0,man.y-(H/tSc)*.5):0;
@@ -1076,7 +1090,7 @@ tnt.addEventListener('contextmenu',e=>e.preventDefault());
 const deckEl=document.querySelector('.deck'),wrapEl=document.querySelector('.wrap'),sideMQ=matchMedia('(orientation:landscape) and (max-height:600px)');
 function placeTnt(){const d=deckEl.getBoundingClientRect(),w=wrapEl.getBoundingClientRect(),side=sideMQ.matches;tnt.classList.toggle('side-mode',side);
   tnt.style.left=(d.left-w.left+d.width/2)+'px';tnt.style.bottom=(w.bottom-d.bottom+6)+'px'}
-addEventListener('resize',placeTnt);placeTnt();
+addEventListener('resize',()=>{placeTnt();fitPage()});placeTnt();
 function tntVis(){const show=S.state==='aim'&&!S.paused&&!helpOn&&!$('msg').classList.contains('on');
   if(show&&tnt.classList.contains('off')&&!tntFiring){placeTnt();tnt.classList.remove('off');tntSet(0)}else if(!show&&!tnt.classList.contains('off')&&!tntFiring){tnt.classList.add('off')}}
 document.querySelectorAll('.trk').forEach(b=>hold(b,()=>startTrick(b.dataset.trick),()=>endTrick(b.dataset.trick)));
