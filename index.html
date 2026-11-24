@@ -274,7 +274,7 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
     else if (k === "ArrowDown") spin(slot, -1);
     else if (k === "ArrowLeft" || k === "Backspace") { slot = Math.max(0, slot - 1); showIni(); }
     else if (k === "ArrowRight") { slot = Math.min(2, slot + 1); showIni(); }
-    else if (k === "Enter") { if (slot < 2) { slot++; sfx("coin"); showIni(); } else document.getElementById("entryForm").requestSubmit(); }
+    else if (k === "Enter") { if (e.repeat) { e.preventDefault(); return; } if (slot < 2) { slot++; sfx("coin"); showIni(); } else document.getElementById("entryForm").requestSubmit(); }
     else if (k === "Escape") { entry.hidden = true; pending = null; }
     else if (k.length === 1 && CHARS.includes(k.toUpperCase())) { ini[slot] = CHARS.indexOf(k.toUpperCase()); sfx("blip"); slot = Math.min(2, slot + 1); showIni(); }
     else return;
@@ -294,7 +294,9 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
     const v = ini.map(i => CHARS[i]).join("");
     if (BLOCK.includes(v)) { entryErr.textContent = "Nice try. Pick different letters."; return; }
     if (!pending) return;
-    const { g, score } = pending;
+    // claim the score before saving, so a double click or a held Enter key can't send it twice
+    const claimed = pending, { g, score } = claimed; pending = null;
+    const saveBtn = e.submitter || document.querySelector("#entryForm [type=submit]"); if (saveBtn) saveBtn.disabled = true;
     try {
       const r = await fetch(`${SB_URL}/rest/v1/arcade_scores?select=id`, {
         method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json", Prefer: "return=representation" },
@@ -302,8 +304,9 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
       });
       if (!r.ok) throw 0;
       const [row] = await r.json(); myEntry = row && row.id;
-      entry.hidden = true; pending = null; loadBoard(g);
-    } catch (e2) { entryErr.textContent = "Couldn't save that one. Try again in a bit."; }
+      entry.hidden = true; loadBoard(g);
+    } catch (e2) { pending = claimed; entryErr.textContent = "Couldn't save that one. Try again in a bit."; }
+    finally { if (saveBtn) saveBtn.disabled = false; }
   });
 
   /* ================= SOUND ================= */
@@ -2149,4 +2152,5 @@ background:linear-gradient(135deg,transparent 50%,rgba(0,255,136,.55) 50%,rgba(0
 </script>
 </body>
 </html>
-<!-- arcade v12: game list with drawn thumbnails -->
+
+<!-- arcade v13: high score saves once -->
