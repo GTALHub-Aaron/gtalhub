@@ -261,6 +261,28 @@ tr:last-child td{border-bottom:0}
 .wk-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .wk-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .wk-list li.mine{border-color:var(--good)}
+.rank{margin-left:auto;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--muted);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.ptiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));gap:8px 10px}
+.ptile{display:grid;grid-template-columns:30px 40px auto minmax(0,1fr);align-items:center;gap:12px;padding:10px 14px 10px 8px;border:1px solid var(--line);border-radius:14px;background:var(--surface);position:relative}
+.ptile.is-leading{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 10px 28px -20px var(--c)}
+.ptile .rk{font-family:var(--display);font-weight:800;font-size:15px;color:var(--muted);text-align:center}
+.ptile .avatar{width:40px;height:40px;font-size:17px;position:relative}
+.ptile .pinfo{min-width:0}
+.ptile .nm{display:flex;align-items:center;gap:2px;min-width:0;font-family:var(--display);font-weight:700;font-size:17px;color:var(--c);line-height:1.2}
+.ptile .nm>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptile .nm .crown{margin-left:10px;font-size:11px;padding:2px 8px}
+.ptile .sb{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.ptile .val{line-height:1;white-space:nowrap;min-width:88px}
+.ptile .val .p{font-family:var(--display);font-weight:800;font-size:30px;color:var(--c)}
+.ptile .val .p.none{color:var(--muted);font-size:22px}
+.ptile .val .l{font-size:12px;font-weight:600;color:var(--muted);margin-top:4px}
+.reign.mini{top:-13px;left:-9px;font-size:21px}
+@media (max-width:520px){.ptile{grid-template-columns:24px 34px auto minmax(0,1fr);gap:9px;padding:9px 12px 9px 6px}.ptile .val{min-width:74px}.ptile .avatar{width:34px;height:34px;font-size:15px}.ptile .val .p{font-size:26px}.ptile .nm{font-size:15px}.ptile .nm .crown{display:none}}
+.members{display:grid;gap:10px}
+.mem-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mem-list li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.cmprow .avatar svg{display:block}
+.cmp-head h3 .linkbtn{font-size:13px;font-weight:600;margin-left:8px;vertical-align:middle}
 .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .badge2{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .badge2 .bi{font-size:24px;line-height:1;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--plum-soft);flex:none}
@@ -398,10 +420,12 @@ tr:last-child td{border-bottom:0}
         <h4>Challenge someone</h4>
         <form id="reqForm" class="form" novalidate>
           <div class="field sugwrap"><label for="qUser"><span class="small muted" style="font-weight:600">Their username or name</span></label>
-            <input type="text" id="qUser" autocomplete="off" maxlength="40" placeholder="Start typing (3+ letters)" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qSug" required>
+            <input type="text" id="qUser" data-suggest autocomplete="off" maxlength="40" placeholder="Start typing (3+ letters)" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qSug" required>
             <ul id="qSug" class="sug" role="listbox" hidden></ul></div>
+          <label class="field"><span class="small muted" style="font-weight:600">Group name (optional)</span><input type="text" id="qName" maxlength="40" placeholder="e.g. Office Crew"></label>
+          <div class="small muted">You can add more people to the group after it starts.</div>
           <div id="qShare"></div>
-          <div class="actions"><button class="btn" type="submit">Send request</button><button class="btn ghost" type="button" id="btnCloseReq">Cancel</button></div>
+          <div class="actions"><button class="btn" type="submit">Send invite</button><button class="btn ghost" type="button" id="btnCloseReq">Cancel</button></div>
           <div class="note" id="qNote" aria-live="polite"></div>
         </form>
       </div>
@@ -480,7 +504,7 @@ function setMode(mode){
 }
 darkMQ.addEventListener("change", ()=>{ if(!userMode) setMode(null); });
 
-const S = { user:null, profile:null, weighins:[], pairings:[], partner:{}, editing:false, confirmDel:null, confirmEnd:null, authTab:"in" };
+const S = { user:null, profile:null, weighins:[], groups:[], prog:{}, trophies:{}, pw:{}, editing:false, confirmDel:null, confirmEnd:null, authTab:"in" };
 
 /* ---------- views ---------- */
 function show(view){
@@ -504,10 +528,11 @@ const SHARE_FIELDS = [
   ["edit","Let them add and remove my weigh-ins for me (they'll also see my actual weights)"]
 ];
 const DEFAULT_SHARE = {pct:true, lbs:false, trend:true, goal:false, weights:false, edit:false};
-function shareHTML(prefix, val, legend="What they can see about you"){
+function shareHTML(prefix, val, legend="What they can see about you", group=false){
   val = {...DEFAULT_SHARE, ...(val||{})};
+  const lab=(k,l)=> group && k==="edit" ? "Let group members add and remove my weigh-ins for me (they'll also see my actual weights)" : l;
   return `<fieldset class="share" data-share="${prefix}"><legend>${esc(legend)}</legend>
-    ${SHARE_FIELDS.map(([k,l])=>`<label><input type="checkbox" data-k="${k}"${val[k]?" checked":""}> <span>${esc(l)}</span></label>`).join("")}
+    ${SHARE_FIELDS.map(([k,l])=>`<label><input type="checkbox" data-k="${k}"${val[k]?" checked":""}> <span>${esc(lab(k,l))}</span></label>`).join("")}
     <div class="warn" data-warn hidden>Sharing both percent and pounds lets them work out your actual weight.</div>
   </fieldset>`;
 }
@@ -547,20 +572,22 @@ async function loadAll(){
   show("vApp"); render();
 }
 async function loadPairings(){
-  const {data,error}=await sb.rpc("list_pairings");
+  const {data,error}=await sb.rpc("list_groups");
   if(error) throw error;
-  S.pairings=data||[];
-  const acc=S.pairings.filter(p=>p.status==="accepted");
-  const res=await Promise.all(acc.map(p=>sb.rpc("partner_progress",{p_id:p.id})));
-  S.partner={}; acc.forEach((p,i)=>{ if(!res[i].error) S.partner[p.id]=res[i].data; });
+  S.groups=(data||[]).map(g=>({...g, members:g.members||[]}));
+  const me=S.user.id;
+  S.names={}; S.groups.forEach(g=>g.members.forEach(m=>{ if(m.user_id!==me) S.names[m.user_id]=m.name; }));
+  const acc=S.groups.filter(g=>g.my_status==="accepted");
+  // everyone else's progress, each filtered on the server by that person's own sharing settings
+  const res=await Promise.all(acc.map(g=>sb.rpc("group_progress",{g_id:g.id})));
+  S.prog={}; acc.forEach((g,i)=>{ if(!res[i].error) S.prog[g.id]=res[i].data||[]; });
   // weekly trophies, worked out on the server so nobody's hidden numbers leave it
-  const tr=await Promise.all(acc.map(p=>sb.rpc("pairing_trophies",{p_id:p.id})));
-  S.trophies={}; acc.forEach((p,i)=>{ S.trophies[p.id]= (!tr[i].error && tr[i].data) || {week_end:6, weeks:[]}; });
-  S.names={}; S.pairings.forEach(p=>{ if(p.partner_id) S.names[p.partner_id]=p.partner_name; });
-  // weigh-ins of people who let you log for them
-  const editable=acc.filter(p=>p.their_share && p.their_share.edit);
-  const pw=await Promise.all(editable.map(p=>sb.from("weighins").select("*").eq("user_id",p.partner_id).order("date",{ascending:false}).order("created_at",{ascending:false})));
-  S.pw={}; editable.forEach((p,i)=>{ if(!pw[i].error) S.pw[p.id]=pw[i].data||[]; });
+  const tr=await Promise.all(acc.map(g=>sb.rpc("group_trophies",{g_id:g.id})));
+  S.trophies={}; acc.forEach((g,i)=>{ S.trophies[g.id]= (!tr[i].error && tr[i].data) || {week_end:g.week_end, weeks:[]}; });
+  // weigh-ins of people who let the group log for them
+  const jobs=[]; acc.forEach(g=>(S.prog[g.id]||[]).forEach(d=>{ if(d.share&&d.share.edit&&d.started) jobs.push([g.id,d.user_id]); }));
+  const pw=await Promise.all(jobs.map(([,u])=>sb.from("weighins").select("*").eq("user_id",u).order("date",{ascending:false}).order("created_at",{ascending:false})));
+  S.pw={}; jobs.forEach(([gid,u],i)=>{ if(!pw[i].error){ (S.pw[gid]=S.pw[gid]||{})[u]=pw[i].data||[]; } });
 }
 async function refresh(msg){
   try{ await loadAll(); if(msg) $("status").textContent=msg; }
@@ -586,7 +613,7 @@ function route(){
   const h=location.hash.slice(1);
   let view="progress", id=null;
   if(h==="comparisons") view="comparisons";
-  else if(h.startsWith("vs-")){ id=h.slice(3); view=S.pairings.some(p=>p.id===id&&p.status==="accepted")?"detail":"comparisons"; }
+  else if(h.startsWith("vs-")){ id=h.slice(3); view=activeGroups().some(g=>g.id===id)?"detail":"comparisons"; }
   S.view=view; S.cmpId=id;
   $("pgProgress").hidden=view!=="progress";
   $("pgCmp").hidden=view!=="comparisons";
@@ -634,11 +661,91 @@ function renderMe(){
     <div><button class="linkbtn" type="button" data-act="edit">Edit profile and starting point</button></div>`;
 }
 
+/* ---------- groups: helpers ---------- */
+const OTHER_COLORS=["var(--orchid)","#2a9d8f","#e09f00","#4a7bd8","#d1495b","#5fa84f","#9c6ad6","#e8743b","#1f9bb3","#b5457f","#7a8b2e"];
+const activeGroups=()=>S.groups.filter(g=>g.my_status==="accepted" && g.members.some(m=>m.user_id!==S.user.id && m.status==="accepted"));
+const isCreator=g=>g.created_by===S.user.id;
+const others=g=>g.members.filter(m=>m.user_id!==S.user.id);
+const nameOf=uid=>uid===S.user.id?"You":((S.names||{})[uid]||"Someone");
+function groupLabel(g, html){
+  if(g.name) return html?esc(g.name):g.name;
+  const o=others(g).map(m=>m.name);
+  if(o.length===1) return html?`You <em>vs</em> ${esc(o[0])}`:`You vs ${o[0]}`;
+  const shown=o.slice(0,2).join(", "), more=o.length-2;
+  const s=`You, ${shown}${more>0?` & ${more} more`:""}`;
+  return html?esc(s):s;
+}
+function colorFor(g, uid){
+  if(uid===S.user.id) return "var(--plum)";
+  const ids=others(g).map(m=>m.user_id); const i=Math.max(0,ids.indexOf(uid));
+  return OTHER_COLORS[i%OTHER_COLORS.length];
+}
+/* which number the group is compared on: percent, or pounds for a pair where they only share pounds */
+function groupMetric(g){
+  const P=(S.prog[g.id]||[]).filter(d=>d.started);
+  if(P.length===1 && !P[0].share.pct && P[0].share.lbs) return "lbs";
+  return "pct";
+}
+/* everyone's latest number, ranked; people who don't share it are listed last, unranked */
+function standings(g){
+  const me=mySeries(), m=groupMetric(g), P=S.prog[g.id]||[];
+  const rows=[{uid:S.user.id, self:true, name:"You", v: me ? (m==="pct"?me.pct:me.lost) : null}];
+  P.forEach(d=>{ const last=(d.points||[])[d.points?d.points.length-1:0]||{}; rows.push({uid:d.user_id, d, name:d.name, v: d.started && d.share[m] ? +(last[m]??0) : null}); });
+  rows.sort((a,b)=> (b.v!=null)-(a.v!=null) || (b.v??0)-(a.v??0) || (a.self?-1:b.self?1:0));
+  let rank=0, prev=null;
+  rows.forEach((r,i)=>{ if(r.v==null){ r.rank=null; return; } if(prev===null || Math.abs(r.v-prev)>=0.05) rank=i+1; r.rank=rank; prev=r.v; });
+  const ranked=rows.filter(r=>r.v!=null), unit=m==="pct"?" pts":" lbs";
+  let leader="", leadUid=null;
+  if(ranked.length<2){ const P0=P.find(d=>!d.started); leader = P.length===1 && P0 ? `${P0.name} hasn't started yet` : "No shared number to compare"; }
+  else{
+    const a=ranked[0], b=ranked[1], diff=a.v-b.v;
+    if(diff<0.05) leader="Dead even at the top";
+    else{ leadUid=a.uid; leader = `${a.self?"You lead":a.name+" leads"} by ${n1(diff)}${unit}`; }
+  }
+  return {rows, m, leader, leadUid, ranked};
+}
+const ORD=n=>n+(n%100>=11&&n%100<=13?"th":({1:"st",2:"nd",3:"rd"}[n%10]||"th"));
+
+/* compact two-line row for groups of three or more */
+function tileHTML(g, r, leading){
+  const color=colorFor(g,r.uid), me=r.self?mySeries():null, d=r.d, bits=[];
+  let main="", sub="";
+  if(r.self){
+    bits.push("@"+S.profile.username);
+    if(me){ bits.push(`${me.ws.length} weigh-in${me.ws.length===1?"":"s"}`);
+      const gw=S.profile.goal_weight; if(gw && +gw<me.sw) bits.push(`${Math.round(Math.max(0,Math.min(100,me.lost/(me.sw-gw)*100)))}% to goal`);
+      main=`${n1(me.pct)}%`; sub=me.lost>=0?`${n1(me.lost)} lbs lost`:`${n1(-me.lost)} lbs gained`; }
+    else bits.push("Not started yet");
+  } else {
+    bits.push("@"+d.username);
+    if(!d.started) bits.push("Hasn't started yet");
+    else{
+      const sh=d.share||{}, last=d.points[d.points.length-1]||{};
+      bits.push(`${d.count} weigh-in${d.count===1?"":"s"}`);
+      if(sh.goal && d.goal_pct!=null) bits.push(`${d.goal_pct}% to goal`);
+      if(sh.weights && last.weight!=null) bits.push(`now ${n1(last.weight)} lbs`);
+      if(sh.pct) main=`${n1(last.pct??0)}%`;
+      if(sh.lbs){ const l=last.lbs??0, s2=l>=0?`${n1(l)} lbs lost`:`${n1(-l)} lbs gained`; if(main) sub=s2; else main=s2; }
+      if(!sh.pct && !sh.lbs) bits.push("keeping numbers private");
+    }
+  }
+  const nm = r.self ? "You" : d.name;
+  const crown = reignHTML(g.id, r.uid, nm).replace('class="reign"','class="reign mini"');
+  return `<article class="ptile${leading?" is-leading":""}" style="--c:${color};--cs:color-mix(in srgb, ${color} 16%, var(--surface))">
+    <span class="rk">${r.rank?ORD(r.rank):"—"}</span>
+    <div class="avatar">${crown}${esc((r.self?S.profile.display_name:d.name||"?")[0])}</div>
+    <div class="val num">${main?`<div class="p">${main}</div>`:`<div class="p none">—</div>`}${sub?`<div class="l">${sub}</div>`:""}</div>
+    <div class="pinfo"><div class="nm"><span>${esc(nm)}</span>${trophiesHTML(tCount(g.id,r.uid))}</div>
+      <div class="sb">${esc(bits.join(" · "))}</div></div>
+  </article>`;
+}
+
 /* partner card from filtered data */
-function partnerCard(d, leading, trophies, crown){
+function partnerCard(d, leading, trophies, crown, color, rank){
   const head=`<div class="p-head"><div class="avatar">${esc((d.name||"?")[0])}</div><div><h2>${esc(d.name)}${trophiesHTML(trophies||0)}</h2>
-    <div class="sub">@${esc(d.username)}${d.started&&d.start_date?` · started ${fmtDate(d.start_date)}`:""}</div></div>${leading?'<span class="crown">Leading</span>':""}</div>`;
-  if(!d.started) return `<article class="card player them">${crown||""}${head}<div class="hidden-note">Hasn't set a starting weight yet.</div></article>`;
+    <div class="sub">@${esc(d.username)}${d.started&&d.start_date?` · started ${fmtDate(d.start_date)}`:""}</div></div>${leading?'<span class="crown">Leading</span>':rank?`<span class="rank">${rank}</span>`:""}</div>`;
+  const st=`style="--c:${color};--cs:color-mix(in srgb, ${color} 16%, var(--surface))"`;
+  if(!d.started) return `<article class="card player them" ${st}>${crown||""}${head}<div class="hidden-note">Hasn't set a starting weight yet.</div></article>`;
   const sh=d.share||{}, last=d.points[d.points.length-1]||{};
   let big="";
   if(sh.pct||sh.lbs){
@@ -654,70 +761,60 @@ function partnerCard(d, leading, trophies, crown){
   }
   const SHORT={pct:"percent lost", lbs:"pounds lost", trend:"history over time", goal:"goal progress", weights:"actual weights"};
   const hiddenBits=SHARE_FIELDS.filter(([k])=>k!=="edit" && !sh[k]).map(([k])=>SHORT[k]);
-  return `<article class="card player them${leading?" is-leading":""}">${crown||""}${head}${big}
+  return `<article class="card player them${leading?" is-leading":""}" ${st}>${crown||""}${head}${big}
     <div class="stats num">${stats.map(([l,v])=>`<div class="stat"><div class="label">${l}</div><div class="v">${v}</div></div>`).join("")}</div>${goal}
     ${!sh.pct&&!sh.lbs?'<div class="hidden-note">They\'re keeping their progress numbers private.</div>':""}
     ${hiddenBits.length?`<div class="small muted">Not shared: ${esc(hiddenBits.join(", "))}.</div>`:""}
   </article>`;
 }
-
-/* which metric both sides can be compared on */
-function compareMetric(d){
-  if(!d||!d.started) return null;
-  if(d.share.pct) return "pct";
-  if(d.share.lbs) return "lbs";
-  return null;
-}
-
-/* who's ahead in one comparison */
-function cmpSummary(p){
-  const d=S.partner[p.id], me=mySeries();
-  const out={d, m:null, mine:null, theirs:null, leader:"", leadMe:false, leadThem:false};
-  if(!d) return out;
-  const m=compareMetric(d); out.m=m;
-  if(m && me){
-    out.mine = m==="pct"? me.pct : me.lost;
-    const last=d.points[d.points.length-1]||{}; out.theirs = last[m]??0;
-    const diff=Math.abs(out.mine-out.theirs), unit=m==="pct"?" pts":" lbs";
-    if(diff<0.05) out.leader="Dead even";
-    else if(out.mine>out.theirs){ out.leader=`You lead by ${n1(diff)}${unit}`; out.leadMe=true; }
-    else { out.leader=`${d.name} leads by ${n1(diff)}${unit}`; out.leadThem=true; }
-  } else if(!d.started) out.leader=`${d.name} hasn't started yet`;
-  else out.leader="No shared number to compare";
-  return out;
-}
 const CHEV='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
 
+/* ---------- comparisons page ---------- */
 function renderPairings(){
-  const inc=S.pairings.filter(p=>p.status==="pending"&&p.direction==="incoming");
-  const out=S.pairings.filter(p=>p.status==="pending"&&p.direction==="outgoing");
-  const act=S.pairings.filter(p=>p.status==="accepted");
-  const nb=$("navBadge"); nb.hidden=!inc.length; nb.textContent=inc.length; nb.setAttribute("aria-label", inc.length+" new request"+(inc.length===1?"":"s"));
+  const me=S.user.id;
+  const inc=S.groups.filter(g=>g.my_status==="pending");
+  const act=activeGroups();
+  const waiting=S.groups.filter(g=>g.my_status==="accepted" && isCreator(g) && !act.includes(g));
+  const nb=$("navBadge"); nb.hidden=!inc.length; nb.textContent=inc.length; nb.setAttribute("aria-label", inc.length+" new invite"+(inc.length===1?"":"s"));
 
-  $("incoming").innerHTML = inc.length ? `<div class="form" style="margin-bottom:14px">${inc.map(p=>`
-    <div class="req" data-id="${p.id}">
-      <div class="req-top"><div><strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> wants to compare with you.</div><span class="pill">New request</span></div>
-      <details><summary>Choose what they can see if you accept</summary>${shareHTML("in-"+p.id, DEFAULT_SHARE, "What they can see about you")}</details>
-      <div class="actions"><button class="btn sm" data-act="accept" data-id="${p.id}">Accept</button>
-        <button class="btn ghost sm" data-act="decline" data-id="${p.id}">Decline</button></div>
-    </div>`).join("")}</div>` : "";
+  $("incoming").innerHTML = inc.length ? `<div class="form" style="margin-bottom:14px">${inc.map(g=>{
+    const inviter=g.invited_by_name||"Someone";
+    const mem=g.members.filter(m=>m.status==="accepted").map(m=>m.name);
+    const what = g.name ? `join <strong>${esc(g.name)}</strong>` : (mem.length>1 ? "join their group" : "compare with them");
+    return `<div class="req" data-id="${g.id}">
+      <div class="req-top"><div><strong>${esc(inviter)}</strong> wants you to ${what}.${mem.length>1?`<div class="small muted">In the group: ${esc(mem.join(", "))}</div>`:""}</div><span class="pill">New invite</span></div>
+      <details><summary>Choose what the group can see if you accept</summary>${shareHTML("in-"+g.id, DEFAULT_SHARE, "What the group can see about you")}</details>
+      <div class="actions"><button class="btn sm" data-act="accept" data-id="${g.id}">Accept</button>
+        <button class="btn ghost sm" data-act="decline" data-id="${g.id}">Decline</button></div>
+    </div>`;}).join("")}</div>` : "";
 
-  $("outgoing").innerHTML = out.length ? `<div class="form" style="margin-top:14px"><div class="label">Waiting on</div>${out.map(p=>`
-    <div class="req-top req"><div><strong>${esc(p.partner_name)}</strong> <span class="muted">@${esc(p.partner_username)}</span> hasn't accepted yet.</div>
-      <button class="btn ghost sm" data-act="cancel" data-id="${p.id}">Cancel request</button></div>`).join("")}</div>` : "";
+  $("outgoing").innerHTML = waiting.length ? `<div class="form" style="margin-top:14px"><div class="label">Waiting on</div>${waiting.map(g=>{
+    const pend=others(g).filter(m=>m.status==="pending");
+    return pend.map(m=>`<div class="req-top req"><div><strong>${esc(m.name)}</strong> <span class="muted">@${esc(m.username)}</span> hasn't accepted yet${g.name?` (${esc(g.name)})`:""}.</div>
+      <button class="btn ghost sm" data-act="cancel" data-id="${g.id}" data-uid="${m.user_id}">Cancel invite</button></div>`).join("");
+  }).join("")}</div>` : "";
 
   if(!act.length){
-    $("active").innerHTML = (inc.length||out.length) ? "" : `<div class="empty">No comparisons yet. Tap "Challenge someone" and enter their username.</div>`;
-    if(!act.length && !inc.length && !out.length) openReq(true);
+    $("active").innerHTML = (inc.length||waiting.length) ? "" : `<div class="empty">No comparisons yet. Tap "Challenge someone" and enter their username.</div>`;
+    if(!inc.length && !waiting.length) openReq(true);
   } else {
-    $("active").innerHTML = act.map(p=>{
-      const c=cmpSummary(p), d=c.d, name=d?d.name:p.partner_name;
-      const unit=c.m==="lbs"?" lb":"%";
-      const nums = c.m && c.mine!=null
-        ? `<div class="cr-nums"><span class="y">You <b>${n1(c.mine)}${unit}</b></span><span class="t">${esc(name)} <b>${n1(c.theirs)}${unit}</b></span></div>` : `<div></div>`;
-      return `<a class="cmprow" href="#vs-${p.id}" aria-label="Open your comparison with ${esc(name)}">
-        <div class="avatar">${esc((name||"?")[0])}</div>
-        <div style="min-width:0"><div class="cr-name">You${trophiesHTML(tCount(p.id,S.user.id))} <em>vs</em> ${esc(name)}${trophiesHTML(tCount(p.id,p.partner_id))}</div><div class="cr-sub${c.leadMe?" me":""}">${d?esc(c.leader):"Couldn't load their progress"}</div></div>
+    $("active").innerHTML = act.map(g=>{
+      const st=standings(g), unit=st.m==="lbs"?" lb":"%", o=others(g).filter(m=>m.status==="accepted");
+      const mine=st.rows.find(r=>r.self);
+      let title, nums;
+      if(!g.name && o.length===1){
+        const them=o[0], tr=st.rows.find(r=>r.uid===them.user_id);
+        title=`You${trophiesHTML(tCount(g.id,me))} <em>vs</em> ${esc(them.name)}${trophiesHTML(tCount(g.id,them.user_id))}`;
+        nums = mine&&mine.v!=null&&tr&&tr.v!=null ? `<div class="cr-nums"><span class="y">You <b>${n1(mine.v)}${unit}</b></span><span class="t">${esc(them.name)} <b>${n1(tr.v)}${unit}</b></span></div>` : `<div></div>`;
+      } else {
+        title=`${groupLabel(g,true)}${trophiesHTML(tCount(g.id,me))}`;
+        nums = mine&&mine.v!=null ? `<div class="cr-nums"><span class="y">You <b>${n1(mine.v)}${unit}</b></span><span class="t">${mine.rank?ORD(mine.rank)+" of "+(o.length+1):(o.length+1)+" people"}</span></div>` : `<div class="cr-nums"><span class="t">${o.length+1} people</span></div>`;
+      }
+      const loaded=!!S.prog[g.id];
+      const av = (!g.name && o.length===1) ? esc((o[0].name||"?")[0]) : `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.2 3.2 0 0 1 0 6.3"/><path d="M17.5 14.2a5 5 0 0 1 4 5.8"/></svg>`;
+      return `<a class="cmprow" href="#vs-${g.id}" aria-label="Open ${esc(groupLabel(g,false))}">
+        <div class="avatar">${av}</div>
+        <div style="min-width:0"><div class="cr-name">${title}</div><div class="cr-sub${st.leadUid===me?" me":""}">${loaded?esc(st.leader):"Couldn't load the group's progress"}</div></div>
         ${nums}${CHEV}</a>`;
     }).join("");
   }
@@ -725,52 +822,91 @@ function renderPairings(){
   if(S.view==="detail") renderDetail(S.cmpId);
 }
 
+/* ---------- one group's page ---------- */
 function renderDetail(id){
-  const box=$("pgDetail"), p=S.pairings.find(x=>x.id===id&&x.status==="accepted");
-  if(!p){ location.hash="#comparisons"; return; }
-  const c=cmpSummary(p), d=c.d, me=mySeries(), back=`<a class="backlink" href="#comparisons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>All comparisons</a>`;
-  if(!d){ box.innerHTML=`${back}<div class="card"><div class="empty">Couldn't load ${esc(p.partner_name)}'s progress. Try Refresh on the comparisons page.</div></div>`; return; }
-  const m=c.m;
-  let leader=c.leader; if(m==="lbs" && c.mine!=null) leader+=" (by pounds, since they don't share percent)";
-  const endBtn = S.confirmEnd===p.id
-    ? `<span class="actions"><button class="btn danger sm" data-act="endYes" data-id="${p.id}">Yes, end it</button><button class="btn ghost sm" data-act="endNo">Keep</button></span>`
-    : `<button class="btn ghost sm" data-act="end" data-id="${p.id}">End comparison</button>`;
+  const box=$("pgDetail"), g=activeGroups().find(x=>x.id===id);
+  if(!g){ location.hash="#comparisons"; return; }
+  const me=mySeries(), uid=S.user.id, back=`<a class="backlink" href="#comparisons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>All comparisons</a>`;
+  if(!S.prog[g.id]){ box.innerHTML=`${back}<div class="card"><div class="empty">Couldn't load this group's progress. Try Refresh on the comparisons page.</div></div>`; return; }
+  const st=standings(g), m=st.m, big=others(g).length>1, creator=isCreator(g);
+  let leader=st.leader; if(m==="lbs" && st.ranked.length>1) leader+=" (by pounds, since they don't share percent)";
+  const rankTxt=r=> big && r.rank ? ORD(r.rank) : "";
+  const cards=st.rows.map(r=>{
+    const leading = st.leadUid===r.uid;
+    if(big) return tileHTML(g, r, leading);
+    if(r.self) return `<article class="card player${leading?" is-leading":""}" style="--c:var(--plum);--cs:var(--plum-soft)">${reignHTML(g.id,uid,"You")}
+        <div class="p-head"><div class="avatar">${esc(S.profile.display_name[0])}</div><div><h2>You${trophiesHTML(tCount(g.id,uid))}</h2><div class="sub">What you see of yourself</div></div>${leading?'<span class="crown">Leading</span>':rankTxt(r)?`<span class="rank">${rankTxt(r)}</span>`:""}</div>
+        ${me?`<div class="big num"><span class="pct">${n1(me.pct)}%</span><span class="lbs">${me.lost>=0?n1(me.lost)+" lbs lost":n1(-me.lost)+" lbs gained"}</span></div>`:'<div class="hidden-note">Set your starting weight first.</div>'}
+      </article>`;
+    return partnerCard(r.d, leading, tCount(g.id,r.uid), reignHTML(g.id,r.uid,r.name), colorFor(g,r.uid), rankTxt(r));
+  }).join("");
+  const charted=(S.prog[g.id]||[]).filter(d=>d.started && d.share.trend && d.share[m]);
+  const legend=[`<span><i style="background:var(--plum)"></i>You</span>`, ...charted.map(d=>`<span><i style="background:${colorFor(g,d.user_id)}"></i>${esc(d.name)}</span>`)].join("");
+  const shareWho = big ? "the group" : esc(others(g)[0].name);
+  const endBtn = S.confirmEnd===g.id
+    ? `<span class="actions"><span class="small muted">${creator?(big?"This ends it for everyone.":""):""}</span><button class="btn danger sm" data-act="endYes" data-id="${g.id}">${creator?"Yes, end it":"Yes, leave"}</button><button class="btn ghost sm" data-act="endNo">Keep</button></span>`
+    : `<button class="btn ghost sm" data-act="end" data-id="${g.id}">${creator?(big?"End group":"End comparison"):(big?"Leave group":"End comparison")}</button>`;
+  const since = g.my_joined_at ? fmtDate(String(g.my_joined_at).slice(0,10)) : fmtDate(String(g.created_at).slice(0,10));
   box.innerHTML=`<div style="display:grid;gap:14px">${back}
-    <section class="card cmp" data-id="${p.id}">
-      <div class="cmp-head"><h3>You <em>vs</em> ${esc(d.name)}</h3><span class="leaderline">${esc(leader)}</span></div>
-      <div class="grid2">
-        <article class="card player${c.leadMe?" is-leading":""}" style="--c:var(--plum);--cs:var(--plum-soft)">${reignHTML(p.id,S.user.id,"You")}
-          <div class="p-head"><div class="avatar">${esc(S.profile.display_name[0])}</div><div><h2>You${trophiesHTML(tCount(p.id,S.user.id))}</h2><div class="sub">What you see of yourself</div></div>${c.leadMe?'<span class="crown">Leading</span>':""}</div>
-          ${me?`<div class="big num"><span class="pct">${n1(me.pct)}%</span><span class="lbs">${me.lost>=0?n1(me.lost)+" lbs lost":n1(-me.lost)+" lbs gained"}</span></div>`:'<div class="hidden-note">Set your starting weight first.</div>'}
-        </article>
-        ${partnerCard(d, c.leadThem, tCount(p.id,p.partner_id), reignHTML(p.id,p.partner_id,d.name))}
-      </div>
-      ${m && d.share.trend ? `<div><div class="chart-head"><span class="label">${m==="pct"?"Percent lost":"Pounds lost"} over time</span>
-        <div class="legend"><span><i style="background:var(--plum)"></i>You</span><span><i style="background:var(--orchid)"></i>${esc(d.name)}</span></div></div>
-        <div class="chartbox" data-chart="${p.id}"></div></div>` : ""}
-      ${weeklyHTML(p,d)}
-      ${manageHTML(p,d)}
-      ${p.my_share && p.my_share.edit ? `<div class="small muted">${esc(d.name)} can add and remove your weigh-ins. Entries they make show "logged by ${esc(d.name)}" in your history.</div>` : ""}
-      <details${S.openShare===p.id?" open":""} data-sharebox><summary>What ${esc(d.name)} can see about you</summary>
-        <div class="form">${shareHTML("sh-"+p.id, p.my_share, "Shared with "+d.name)}
-        <div class="actions"><button class="btn sm" data-act="saveShare" data-id="${p.id}">Save sharing</button></div>
-        <div class="note" id="shNote-${p.id}"></div></div>
+    <section class="card cmp" data-id="${g.id}">
+      <div class="cmp-head"><h3>${groupLabel(g,true)}${creator?` <button class="linkbtn" data-act="rename" data-id="${g.id}">${g.name?"Rename":"Name this group"}</button>`:""}</h3><span class="leaderline">${esc(leader)}</span></div>
+      ${S.renaming===g.id?`<form class="form rename" data-rename="${g.id}" novalidate><div class="row"><label class="field"><span>Group name</span><input type="text" name="n" maxlength="40" value="${esc(g.name||"")}" placeholder="e.g. Office Crew"></label></div>
+        <div class="actions"><button class="btn sm" type="submit">Save name</button><button class="btn ghost sm" type="button" data-act="renameNo">Cancel</button></div><div class="note" id="rnNote-${g.id}"></div></form>`:""}
+      <div class="${big?"ptiles":"grid2"}">${cards}</div>
+      ${charted.length ? `<div><div class="chart-head"><span class="label">${m==="pct"?"Percent lost":"Pounds lost"} over time</span>
+        <div class="legend">${legend}</div></div>
+        <div class="chartbox" data-chart="${g.id}"></div></div>` : ""}
+      ${weeklyHTML(g)}
+      ${membersHTML(g)}
+      ${others(g).filter(o=>o.status==="accepted").map(o=>{ const d=(S.prog[g.id]||[]).find(x=>x.user_id===o.user_id); return d?manageHTML(g,d):""; }).join("")}
+      ${g.my_share && g.my_share.edit ? `<div class="small muted">${big?"Everyone in this group":esc(others(g)[0].name)} can add and remove your weigh-ins. Entries they make show "logged by" with their name in your history.</div>` : ""}
+      <details${S.openShare===g.id?" open":""} data-sharebox><summary>What ${shareWho} can see about you</summary>
+        <div class="form">${shareHTML("sh-"+g.id, g.my_share, big?"Shared with everyone in this group":"Shared with "+others(g)[0].name, big)}
+        <div class="actions"><button class="btn sm" data-act="saveShare" data-id="${g.id}">Save sharing</button></div>
+        <div class="note" id="shNote-${g.id}"></div></div>
       </details>
-      <div class="detail-foot"><span class="small muted">Comparing since ${p.accepted_at?fmtDate(String(p.accepted_at).slice(0,10)):"recently"}</span>${endBtn}</div>
+      <div class="detail-foot"><span class="small muted">${big?"In this group":"Comparing"} since ${since}</span>${endBtn}</div>
     </section></div>`;
   box.querySelectorAll("fieldset.share").forEach(syncShareWarn);
-  const cb=box.querySelector(`[data-chart="${p.id}"]`);
+  const cb=box.querySelector(`[data-chart="${g.id}"]`);
   if(cb){
     const series=[];
     if(me) series.push({name:"You", color:"var(--plum)", pts: me.pts.map(x=>({date:x.date, v: m==="pct"? (me.sw-x.weight)/me.sw*100 : me.sw-x.weight}))});
-    series.push({name:d.name, color:"var(--orchid)", pts: d.points.filter(x=>x[m]!=null).map(x=>({date:x.date, v:+x[m]}))});
-    drawChart(cb, series, m==="pct"?"%":" lb", `${m==="pct"?"Percent":"Pounds"} lost over time: you and ${d.name}`);
+    charted.forEach(d=>series.push({name:d.name, color:colorFor(g,d.user_id), pts: d.points.filter(x=>x[m]!=null).map(x=>({date:x.date, v:+x[m]}))}));
+    drawChart(cb, series, m==="pct"?"%":" lb", `${m==="pct"?"Percent":"Pounds"} lost over time: ${groupLabel(g,false)}`);
   }
+}
+
+/* members list; the creator can add, remove and cancel invites */
+function membersHTML(g){
+  const creator=isCreator(g), ms=g.members;
+  if(!creator && ms.length<=2) return "";
+  const rows=ms.map(m=>{
+    const you=m.user_id===S.user.id;
+    let act="";
+    if(creator && !you){
+      act = S.confirmRemove===g.id+":"+m.user_id
+        ? `<span class="actions"><button class="btn danger sm" data-act="rmYes" data-id="${g.id}" data-uid="${m.user_id}">${m.status==="pending"?"Cancel invite":"Remove"}</button><button class="btn ghost sm" data-act="rmNo">Keep</button></span>`
+        : `<button class="linkbtn" data-act="rm" data-id="${g.id}" data-uid="${m.user_id}">${m.status==="pending"?"Cancel invite":"Remove"}</button>`;
+    }
+    const tag = m.creator ? '<span class="pill">Started the group</span>' : m.status==="pending" ? '<span class="pill">Invited</span>' : "";
+    return `<li><span><strong>${you?"You":esc(m.name)}</strong> <span class="muted small">@${esc(m.username)}</span> ${tag}</span>${act}</li>`;
+  }).join("");
+  const add = creator ? (S.addOpen===g.id
+    ? `<form class="form addmem" data-addmem="${g.id}" novalidate>
+        <div class="field sugwrap"><label for="add-${g.id}"><span class="small muted" style="font-weight:600">Their username or name</span></label>
+          <input type="text" id="add-${g.id}" name="u" data-suggest autocomplete="off" maxlength="40" placeholder="Start typing (3+ letters)" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addSug-${g.id}" required>
+          <ul id="addSug-${g.id}" class="sug" role="listbox" hidden></ul></div>
+        <div class="actions"><button class="btn sm" type="submit">Send invite</button><button class="btn ghost sm" type="button" data-act="addNo">Cancel</button></div>
+        <div class="note" id="addNote-${g.id}" aria-live="polite"></div></form>`
+    : `<div><button class="btn sm" type="button" data-act="add" data-id="${g.id}"${ms.length>=12?" disabled":""}>+ Add someone</button>${ms.length>=12?' <span class="small muted">Groups can have up to 12 people.</span>':""}</div>`) : "";
+  return `<div class="members"><div class="wk-top"><span class="label">People (${ms.length})</span>${creator?"":`<span class="small muted">Only ${esc(nameOf(g.created_by))} can add people.</span>`}</div>
+    <ul class="mem-list">${rows}</ul>${add}</div>`;
 }
 
 /* ---------- weekly trophies ---------- */
 const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const tCount=(pid,uid)=>((S.trophies&&S.trophies[pid]&&S.trophies[pid].weeks)||[]).filter(w=>w.winner===uid).length;
+const tCount=(gid,uid)=>((S.trophies&&S.trophies[gid]&&S.trophies[gid].weeks)||[]).filter(w=>w.winner===uid).length;
 function trophiesHTML(n){
   if(!n) return "";
   const lbl=`${n} weekly ${n===1?"win":"wins"}`;
@@ -778,28 +914,30 @@ function trophiesHTML(n){
               : `<span class="trophies" title="${lbl}" aria-label="${lbl}"><i aria-hidden="true">🏆</i><b>×${n}</b></span>`;
 }
 // last week's winner wears the crown until the next week is decided
-function reignHTML(pid, uid, name){
-  const W=(S.trophies&&S.trophies[pid]&&S.trophies[pid].weeks)||[], w=W[W.length-1];
+function reignHTML(gid, uid, name){
+  const W=(S.trophies&&S.trophies[gid]&&S.trophies[gid].weeks)||[], w=W[W.length-1];
   if(!w || w.winner!==uid) return "";
   const lbl=`${name==="You"?"You":name} won the week ending ${fmtDate(w.ends)}`;
   return `<span class="reign" role="img" title="${esc(lbl)}" aria-label="${esc(lbl)}">👑</span>`;
 }
 function nextWeekEnd(wd){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+((wd-d.getDay()+7)%7)); return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}); }
-function weeklyHTML(p,d){
-  const T=(S.trophies&&S.trophies[p.id])||{week_end:6,weeks:[]};
-  const rows=T.weeks.slice().reverse().map(w=>{
-    const who = w.winner===S.user.id ? "You" : w.winner===p.partner_id ? d.name : "Tie";
-    return `<li class="${w.winner===S.user.id?"mine":""}"><span>Week ending ${fmtDate(w.ends)}</span><strong>${w.winner?"🏆 "+esc(who):"Tie, no trophy"}</strong></li>`;
-  }).join("");
-  return `<div class="wk"><div class="wk-top"><span class="label">Weekly weigh-offs</span>
-      <label class="small muted">Week ends on <select data-weekend="${p.id}" aria-label="Day the week ends">${DAYS.map((n,i)=>`<option value="${i}"${i===T.week_end?" selected":""}>${n}</option>`).join("")}</select></label></div>
-    <div class="small muted">Whoever is further ahead overall (percent of starting weight lost) when the week ends wins a trophy. Both of you need a weigh-in that week. This week ends ${nextWeekEnd(T.week_end)}.</div>
+function weeklyHTML(g){
+  const T=(S.trophies&&S.trophies[g.id])||{week_end:g.week_end,weeks:[]}, big=others(g).length>1;
+  const rows=T.weeks.slice().reverse().map(w=>`<li class="${w.winner===S.user.id?"mine":""}"><span>Week ending ${fmtDate(w.ends)}</span><strong>${w.winner?"🏆 "+esc(nameOf(w.winner)):"Tie, no trophy"}</strong></li>`).join("");
+  const pick = isCreator(g)
+    ? `<label class="small muted">Week ends on <select data-weekend="${g.id}" aria-label="Day the week ends">${DAYS.map((n,i)=>`<option value="${i}"${i===T.week_end?" selected":""}>${n}</option>`).join("")}</select></label>`
+    : `<span class="small muted">Week ends on ${DAYS[T.week_end]}</span>`;
+  const rule = big
+    ? "Whoever is furthest ahead overall (percent of starting weight lost) when the week ends wins a trophy. You need a weigh-in that week to count, and at least two people need one."
+    : "Whoever is further ahead overall (percent of starting weight lost) when the week ends wins a trophy. Both of you need a weigh-in that week.";
+  return `<div class="wk"><div class="wk-top"><span class="label">Weekly weigh-offs</span>${pick}</div>
+    <div class="small muted">${rule} This week ends ${nextWeekEnd(T.week_end)}.</div>
     ${rows?`<ul class="wk-list">${rows}</ul>`:`<div class="empty">No finished weeks yet. The first trophy comes after your first full week together.</div>`}</div>`;
 }
 document.addEventListener("change", async e=>{
   const sel=e.target.closest("select[data-weekend]"); if(!sel) return;
   sel.disabled=true;
-  const {error}=await sb.rpc("set_week_end",{p_id:sel.dataset.weekend, d:+sel.value});
+  const {error}=await sb.rpc("set_group_week_end",{g_id:sel.dataset.weekend, d:+sel.value});
   if(error){ sel.disabled=false; $("status").textContent="Couldn't change the week: "+errMsg(error); return; }
   await refresh();
 });
@@ -808,14 +946,14 @@ document.addEventListener("change", async e=>{
 function celebrate(){
   if(S.celebrated) return;
   const queue=[];
-  for(const p of S.pairings.filter(x=>x.status==="accepted")){
-    const T=S.trophies&&S.trophies[p.id]; if(!T||!T.weeks.length) continue;
+  for(const g of activeGroups()){
+    const T=S.trophies&&S.trophies[g.id]; if(!T||!T.weeks.length) continue;
     const w=T.weeks[T.weeks.length-1]; if(!w.winner) continue;
-    const key=`wo-fw-${S.user.id}-${p.id}-${w.ends}`;
+    const key=`wo-fw-${S.user.id}-${g.id}-${w.ends}`;
     try{ if(localStorage.getItem(key)) continue; localStorage.setItem(key,"1"); }catch(e){}
-    const name=(S.partner[p.id]&&S.partner[p.id].name)||p.partner_name;
-    queue.push(w.winner===S.user.id ? {title:"You won the week!", sub:`Week ending ${fmtDate(w.ends)} against ${name}. That's ${tCount(p.id,S.user.id)} 🏆 so far.`}
-                                    : {title:`${name} won the week`, sub:`Week ending ${fmtDate(w.ends)}. Next week's trophy is up for grabs.`});
+    const big=others(g).length>1, where = big ? `in ${groupLabel(g,false)}` : `against ${others(g)[0].name}`;
+    queue.push(w.winner===S.user.id ? {title:"You won the week!", sub:`Week ending ${fmtDate(w.ends)} ${where}. That's ${tCount(g.id,S.user.id)} 🏆 so far.`}
+                                    : {title:`${nameOf(w.winner)} won the week`, sub:`Week ending ${fmtDate(w.ends)}${big?" "+where:""}. Next week's trophy is up for grabs.`});
   }
   S.celebrated=true;
   const next=()=>{ const q=queue.shift(); if(q) fireworks(q.title, q.sub, next); };
@@ -859,7 +997,7 @@ function achievementList(){
   const weeks=[...new Set(S.weighins.map(w=>wkOf(w.date)))].sort((a,b)=>a-b);
   let best=0, run=0; weeks.forEach((w,i)=>{ run = i && w===weeks[i-1]+1 ? run+1 : 1; best=Math.max(best,run); });
   const wins=Object.keys(S.trophies||{}).reduce((n,id)=>n+tCount(id,S.user.id),0);
-  const comps=S.pairings.filter(x=>x.status==="accepted").length;
+  const comps=activeGroups().length;
   const goalNeed = p.goal_weight && s && +p.goal_weight < s.sw ? s.sw-p.goal_weight : null;
   const prog=(v,n,u)=>`${Math.min(n,Math.max(0,Math.floor(v*10)/10))} of ${n}${u}`;
   return [
@@ -875,7 +1013,7 @@ function achievementList(){
     {id:"streak12", i:"🗓️", t:"Habit formed", d:`Weigh in 12 weeks in a row (best: ${best})`, ok:best>=12},
     {id:"half", i:"⛰️", t:"Halfway there", d:goalNeed?prog(lost/goalNeed*100,50,"% of your goal"):"Set a goal weight first", ok:!!goalNeed && lost>=goalNeed/2},
     {id:"goal", i:"🏁", t:"Goal reached", d:goalNeed?"Hit your goal weight":"Set a goal weight first", ok:!!goalNeed && lost>=goalNeed},
-    {id:"rival", i:"🤝", t:"Game on", d:"Start a comparison", ok:comps>0},
+    {id:"rival", i:"🤝", t:"Game on", d:"Join a comparison or group", ok:comps>0},
     {id:"win1", i:"🏆", t:"Weekly winner", d:"Win a weekly weigh-off", ok:wins>=1},
     {id:"win5", i:"👑", t:"Champion", d:`Win 5 weekly weigh-offs (${Math.min(wins,5)} of 5)`, ok:wins>=5},
   ];
@@ -896,25 +1034,25 @@ function achToast(list){
   document.body.appendChild(el); setTimeout(()=>el.remove(), 4500);
 }
 
-/* logging for a partner who granted edit */
-function manageHTML(p, d){
-  if(!(p.their_share && p.their_share.edit) || !d.started) return "";
-  const list=S.pw[p.id]||[];
+/* logging for a group member who granted edit */
+function manageHTML(g, d){
+  if(!(d.share && d.share.edit) || !d.started) return "";
+  const key=g.id+":"+d.user_id, list=((S.pw[g.id]||{})[d.user_id])||[];
   const rows=list.map(w=>{
-    const by = w.entered_by===S.user.id ? "you" : (w.entered_by===p.partner_id ? esc(d.name) : "someone else");
+    const by = w.entered_by===S.user.id ? "you" : (w.entered_by===d.user_id ? esc(d.name) : esc((S.names||{})[w.entered_by]||"someone else"));
     const del = S.confirmPDel===w.id
       ? `<span class="actions"><button class="btn danger sm" data-act="pdelYes" data-id="${w.id}">Delete</button><button class="btn ghost sm" data-act="pdelNo">Keep</button></span>`
       : `<button class="linkbtn" data-act="pdel" data-id="${w.id}" aria-label="Remove ${esc(d.name)}'s weigh-in on ${fmtDate(w.date)}">Remove</button>`;
     return `<tr><td>${fmtDate(w.date)}</td><td class="r">${n1(+w.weight)}</td><td class="muted">${by}</td><td class="r">${del}</td></tr>`;
   }).join("");
-  return `<details class="req" data-manage="${p.id}"${S.openManage===p.id?" open":""}><summary>Log or remove ${esc(d.name)}'s weigh-ins</summary>
-    <form class="form" data-plog="${p.id}" data-start="${esc(d.start_date)}" novalidate>
+  return `<details class="req" data-manage="${key}"${S.openManage===key?" open":""}><summary>Log or remove ${esc(d.name)}'s weigh-ins</summary>
+    <form class="form" data-plog="${key}" data-start="${esc(d.start_date)}" novalidate>
       <div class="row">
         <label class="field"><span>Date</span><input type="date" name="d" value="${todayStr()}" required></label>
         <label class="field"><span>${esc(d.name)}'s weight (lbs)</span><input type="number" name="w" step="0.1" min="50" max="700" inputmode="decimal" required></label>
       </div>
       <div class="actions"><button class="btn sm" type="submit">Add for ${esc(d.name)}</button></div>
-      <div class="note" id="pNote-${p.id}"></div>
+      <div class="note" id="pNote-${key}"></div>
     </form>
     <div class="tablebox"><table><thead><tr><th>Date</th><th class="r">Weight</th><th>Logged by</th><th></th></tr></thead>
       <tbody>${rows || `<tr><td colspan="4" class="empty">No weigh-ins yet.</td></tr>`}</tbody></table></div>
@@ -954,6 +1092,9 @@ function drawChart(box, series, unit, label){
     g+=`<text x="${X(t)}" y="${H-10}" text-anchor="${i===0?"start":i===nT-1?"end":"middle"}">${fmtShort(ds)}</text>`;
   }
   const usedY=[];
+  // with lots of lines, only label you and whoever is highest at the end
+  const topV=Math.max(...series.map(s=>s.pts[s.pts.length-1].v));
+  const labelIt=s=> series.length<=3 || s.name==="You" || s.pts[s.pts.length-1].v===topV;
   series.forEach(s=>{
     const pts=s.pts.map(x=>[X(new Date(x.date+"T12:00:00").getTime()), Y(x.v)]);
     const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join("");
@@ -961,8 +1102,13 @@ function drawChart(box, series, unit, label){
     g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
     pts.forEach((p,i)=>{ const last=i===pts.length-1; g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${last?6:3.5}" fill="${last?s.color:"var(--surface)"}" stroke="${s.color}" stroke-width="2"/>`; });
     const lp=pts[pts.length-1], lv=s.pts[s.pts.length-1].v;
-    let ly=lp[1]-11; while(usedY.some(u=>Math.abs(u-ly)<14)) ly = ly>T+14 ? ly-14 : ly+28; usedY.push(ly);
-    g+=`<text x="${Math.min(lp[0]-8,W-R-4)}" y="${ly}" text-anchor="end" style="fill:${s.color};font-weight:700;font-size:12px">${n1(lv)}${unit}</text>`;
+    if(!labelIt(s)) return;
+    // try spots above, then below, the point until one is clear (bounded, so it can't loop forever)
+    let ly=lp[1]-11; const clear=y=>!usedY.some(u=>Math.abs(u-y)<14);
+    if(!clear(ly)){ for(let k=1;k<=24;k++){ const up=lp[1]-11-14*k, dn=lp[1]+18+14*(k-1);
+      if(up>=T+10 && clear(up)){ ly=up; break; } if(dn<=H-B-2 && clear(dn)){ ly=dn; break; } } }
+    usedY.push(ly);
+    if(labelIt(s)) g+=`<text x="${Math.min(lp[0]-8,W-R-4)}" y="${ly}" text-anchor="end" style="fill:${s.color};font-weight:700;font-size:12px">${n1(lv)}${unit}</text>`;
   });
   box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" role="img" aria-label="${esc(label)}">${g}</svg>`;
 }
@@ -1059,49 +1205,54 @@ $("logForm").addEventListener("submit", async e=>{
   const s=mySeries(); note("lNote", s?`Logged ${n1(w)} lbs. That's ${n1(s.pct)}% lost so far.`:`Logged ${n1(w)} lbs.`, "ok");
 });
 
-/* ---------- username suggestions ---------- */
-const sug={list:[], idx:-1, timer:null, seq:0};
-function closeSug(){ $("qSug").hidden=true; $("qUser").setAttribute("aria-expanded","false"); sug.idx=-1; }
+/* ---------- username suggestions (challenge box and "Add someone") ---------- */
+const sug={list:[], idx:-1, timer:null, seq:0, inp:null};
+const sugUl=inp=>$(inp.getAttribute("aria-controls"));
+function closeSug(inp){ inp=inp||sug.inp; if(!inp) return; const ul=sugUl(inp); if(ul) ul.hidden=true; inp.setAttribute("aria-expanded","false"); sug.idx=-1; }
 function drawSug(){
-  const ul=$("qSug");
-  if(!sug.list.length){ closeSug(); return; }
-  ul.innerHTML=sug.list.map((u,i)=>`<li role="option" id="sug-${i}" data-u="${esc(u.username)}" aria-selected="${i===sug.idx}"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)}</span></li>`).join("");
-  ul.hidden=false; $("qUser").setAttribute("aria-expanded","true");
-  $("qUser").setAttribute("aria-activedescendant", sug.idx>=0?"sug-"+sug.idx:"");
+  const inp=sug.inp, ul=inp&&sugUl(inp); if(!ul) return;
+  if(!sug.list.length){ closeSug(inp); return; }
+  const pre=ul.id;
+  ul.innerHTML=sug.list.map((u,i)=>`<li role="option" id="${pre}-${i}" data-u="${esc(u.username)}" aria-selected="${i===sug.idx}"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)}</span></li>`).join("");
+  ul.hidden=false; inp.setAttribute("aria-expanded","true");
+  inp.setAttribute("aria-activedescendant", sug.idx>=0?pre+"-"+sug.idx:"");
 }
-function pickSug(u){ $("qUser").value=u; closeSug(); note("qNote",""); }
-$("qUser").addEventListener("input", ()=>{
-  clearTimeout(sug.timer);
-  const q=$("qUser").value.trim();
-  if(q.length<3){ sug.list=[]; closeSug(); return; }
+function pickSug(u){ if(!sug.inp) return; sug.inp.value=u; closeSug(); }
+document.addEventListener("input", e=>{
+  const inp=e.target.closest && e.target.closest("input[data-suggest]"); if(!inp) return;
+  sug.inp=inp; clearTimeout(sug.timer);
+  const q=inp.value.trim();
+  if(q.length<3){ sug.list=[]; closeSug(inp); return; }
   sug.timer=setTimeout(async ()=>{
     const my=++sug.seq;
     const {data,error}=await sb.rpc("search_users",{p_q:q});
-    if(my!==sug.seq) return;
+    if(my!==sug.seq || sug.inp!==inp) return;
     sug.list=error?[]:(data||[]); sug.idx=-1; drawSug();
   },250);
 });
-$("qUser").addEventListener("keydown", e=>{
-  if($("qSug").hidden) return;
+document.addEventListener("keydown", e=>{
+  const inp=e.target.closest && e.target.closest("input[data-suggest]"); if(!inp || inp!==sug.inp) return;
+  const ul=sugUl(inp); if(!ul || ul.hidden) return;
   if(e.key==="ArrowDown"){ e.preventDefault(); sug.idx=Math.min(sug.list.length-1,sug.idx+1); drawSug(); }
   else if(e.key==="ArrowUp"){ e.preventDefault(); sug.idx=Math.max(0,sug.idx-1); drawSug(); }
   else if(e.key==="Enter" && sug.idx>=0){ e.preventDefault(); pickSug(sug.list[sug.idx].username); }
-  else if(e.key==="Escape"){ closeSug(); }
+  else if(e.key==="Escape"){ closeSug(inp); }
 });
-$("qSug").addEventListener("mousedown", e=>{ const li=e.target.closest("li[data-u]"); if(li){ e.preventDefault(); pickSug(li.dataset.u); } });
-$("qUser").addEventListener("blur", ()=>setTimeout(closeSug,100));
+document.addEventListener("mousedown", e=>{ const li=e.target.closest && e.target.closest("ul.sug li[data-u]"); if(li){ e.preventDefault(); pickSug(li.dataset.u); } });
+document.addEventListener("focusout", e=>{ const inp=e.target.closest && e.target.closest("input[data-suggest]"); if(inp) setTimeout(()=>closeSug(inp),100); });
+const noUserMsg=m=>/no user/i.test(m) ? "No user with that username. Start typing and pick them from the suggestions." : m;
 
-/* ---------- comparison requests ---------- */
+/* ---------- challenge someone: starts a new group ---------- */
 $("reqForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  const u=$("qUser").value.trim().toLowerCase();
+  const u=$("qUser").value.trim().toLowerCase(), name=$("qName").value.trim();
   if(!u) return note("qNote","Enter their username.","err");
   const share=readShare(document.querySelector('[data-share="q"]'));
-  const {error}=await sb.rpc("request_pairing",{p_username:u, p_share:share});
-  if(error) return note("qNote", /no user/i.test(errMsg(error)) ? "No user with that username. Start typing and pick them from the suggestions." : errMsg(error), "err");
-  $("qUser").value=""; closeSug(); note("qNote","");
+  const {error}=await sb.rpc("create_group",{p_username:u, p_share:share, p_name:name||null});
+  if(error) return note("qNote", noUserMsg(errMsg(error)), "err");
+  $("qUser").value=""; $("qName").value=""; closeSug($("qUser")); note("qNote","");
   await loadPairings(); openReq(false); renderPairings();
-  $("status").textContent="Request sent. They'll see it next time they open the Weigh-Off.";
+  $("status").textContent="Invite sent. They'll see it next time they open the Weigh-Off.";
 });
 
 /* ---------- clicks ---------- */
@@ -1122,21 +1273,37 @@ document.addEventListener("click", async e=>{
     }
     if(act==="end"){ S.confirmEnd=id; renderPairings(); return; }
     if(act==="endNo"){ S.confirmEnd=null; renderPairings(); return; }
-    if(act==="endYes"||act==="cancel"||act==="decline"){
+    if(act==="endYes"){
+      b.disabled=true; const g=S.groups.find(x=>x.id===id), mine=g&&isCreator(g), big=g&&others(g).length>1;
+      const {error}=await sb.rpc("leave_group",{g_id:id}); if(error) throw error;
+      S.confirmEnd=null; await loadPairings(); renderPairings(); location.hash="#comparisons";
+      $("status").textContent = big ? (mine?"Group ended.":"You left the group.") : "Comparison ended."; return;
+    }
+    if(act==="cancel"||act==="rmYes"){
       b.disabled=true;
-      const {error}= act==="decline" ? await sb.rpc("respond_pairing",{p_id:id,p_accept:false,p_share:{}}) : await sb.rpc("end_pairing",{p_id:id});
-      if(error) throw error; const ended=act==="endYes"; S.confirmEnd=null; await loadPairings(); renderPairings();
-      if(ended){ location.hash="#comparisons"; $("status").textContent="Comparison ended."; } return;
+      const {error}=await sb.rpc("remove_from_group",{g_id:id, p_user:b.dataset.uid}); if(error) throw error;
+      S.confirmRemove=null; await loadPairings(); renderPairings(); return;
+    }
+    if(act==="rm"){ S.confirmRemove=id+":"+b.dataset.uid; renderPairings(); return; }
+    if(act==="rmNo"){ S.confirmRemove=null; renderPairings(); return; }
+    if(act==="add"){ S.addOpen=id; renderPairings(); const i=$("add-"+id); if(i) i.focus(); return; }
+    if(act==="addNo"){ S.addOpen=null; renderPairings(); return; }
+    if(act==="rename"){ S.renaming=id; renderPairings(); const f=document.querySelector(`[data-rename="${id}"] input`); if(f) f.focus(); return; }
+    if(act==="renameNo"){ S.renaming=null; renderPairings(); return; }
+    if(act==="decline"){
+      b.disabled=true;
+      const {error}=await sb.rpc("respond_group",{g_id:id,p_accept:false,p_share:{}}); if(error) throw error;
+      await loadPairings(); renderPairings(); return;
     }
     if(act==="accept"){
       b.disabled=true;
       const share=readShare(document.querySelector(`[data-share="in-${id}"]`));
-      const {error}=await sb.rpc("respond_pairing",{p_id:id,p_accept:true,p_share:share});
-      if(error) throw error; await loadPairings(); renderPairings(); location.hash="#vs-"+id; return;
+      const {error}=await sb.rpc("respond_group",{g_id:id,p_accept:true,p_share:share});
+      if(error) throw error; await loadPairings(); renderPairings(); renderAchievements(); location.hash="#vs-"+id; return;
     }
     if(act==="saveShare"){
       const share=readShare(document.querySelector(`[data-share="sh-${id}"]`));
-      const {error}=await sb.rpc("update_share",{p_id:id,p_share:share});
+      const {error}=await sb.rpc("update_group_share",{g_id:id,p_share:share});
       S.openShare=id; if(error) throw error; await loadPairings(); renderPairings();
       note("shNote-"+id,"Saved.","ok"); return;
     }
@@ -1144,18 +1311,43 @@ document.addEventListener("click", async e=>{
 });
 document.addEventListener("toggle", e=>{ if(e.target.matches && e.target.matches("[data-sharebox]")) S.openShare = e.target.open ? S.cmpId : null; }, true);
 
+/* log a weigh-in for a group member who allows it */
 document.addEventListener("submit", async e=>{
   const f=e.target; if(!f.dataset.plog) return;
   e.preventDefault();
-  const pid=f.dataset.plog, p=S.pairings.find(x=>x.id===pid); if(!p) return;
-  const w=parseFloat(f.elements.w.value), d=f.elements.d.value, nid="pNote-"+pid;
+  const key=f.dataset.plog, [gid,uid]=key.split(":"), name=(S.names||{})[uid]||"them";
+  const w=parseFloat(f.elements.w.value), d=f.elements.d.value, nid="pNote-"+key;
   if(!(w>=50&&w<=700)) return note(nid,"Enter a weight between 50 and 700 lbs.","err");
   if(!d) return note(nid,"Pick a date.","err");
-  if(f.dataset.start && d<f.dataset.start) return note(nid,`That date is before ${p.partner_name}'s start date.`,"err");
-  const {error}=await sb.from("weighins").insert({user_id:p.partner_id, date:d, weight:Math.round(w*10)/10});
+  if(f.dataset.start && d<f.dataset.start) return note(nid,`That date is before ${name}'s start date.`,"err");
+  const {error}=await sb.from("weighins").insert({user_id:uid, date:d, weight:Math.round(w*10)/10});
   if(error) return note(nid,"Couldn't save: "+errMsg(error),"err");
-  S.openManage=pid; await loadPairings(); renderPairings();
-  note(nid,`Logged ${n1(w)} lbs for ${p.partner_name}.`,"ok");
+  S.openManage=key; await loadPairings(); renderPairings();
+  note(nid,`Logged ${n1(w)} lbs for ${name}.`,"ok");
+});
+
+/* creator: add someone to a group */
+document.addEventListener("submit", async e=>{
+  const f=e.target; if(!f.dataset.addmem) return;
+  e.preventDefault();
+  const gid=f.dataset.addmem, u=f.elements.u.value.trim().toLowerCase(), nid="addNote-"+gid;
+  if(!u) return note(nid,"Enter their username.","err");
+  const btn=f.querySelector('button[type="submit"]'); btn.disabled=true;
+  const {error}=await sb.rpc("invite_to_group",{g_id:gid, p_username:u});
+  btn.disabled=false;
+  if(error) return note(nid, noUserMsg(errMsg(error)), "err");
+  S.addOpen=null; await loadPairings(); renderPairings();
+  $("status").textContent="Invite sent. They'll see it next time they open the Weigh-Off.";
+});
+
+/* creator: rename a group */
+document.addEventListener("submit", async e=>{
+  const f=e.target; if(!f.dataset.rename) return;
+  e.preventDefault();
+  const gid=f.dataset.rename, nm=f.elements.n.value.trim();
+  const {error}=await sb.rpc("rename_group",{g_id:gid, p_name:nm||null});
+  if(error) return note("rnNote-"+gid, errMsg(error), "err");
+  S.renaming=null; await loadPairings(); renderPairings();
 });
 
 document.addEventListener("submit", async e=>{
@@ -1241,4 +1433,4 @@ sb.auth.onAuthStateChange((event, session)=>{
 </script>
 </body>
 </html>
-<!-- weigh-off v2: trophies, crown, fireworks, achievements -->
+<!-- weigh-off v3: groups -->
