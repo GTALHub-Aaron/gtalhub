@@ -323,18 +323,58 @@ const BANNERS = {
      <g id="mmS">${draw("M9 -2 C20 -12 33 -17 52 -10", "#ff3d8b", 3, 0)}${draw("M14 5 Q28 1 36 -6 T55 -3", "#00ccff", 2.4, .5)}${draw("M24 -5 C27 -20 38 -27 44 -40", "#ffd60a", 2, 1)}${pop(52, -10, "#fff", 0)}${pop(44, -40, "#ffd60a", 1)}</g>`);
   },
 
+  // Rooftop Stuntman: a stuntman fired from a rooftop cannon, flipping through a drone ring onto the bullseye
+  stunt: () => {
+    const B = [[78, 92, 40], [136, 68, 42], [196, 98, 50], [290, 80, 58], [360, 86, 40]];
+    const wins = (x, y, w) => Array.from({ length: 6 }, (_, r) => Array.from({ length: Math.floor(w / 12) }, (_, c) => ((r * 3 + c * 5 + x) % 4 ? `<rect x="${x + 4 + c * 12}" y="${y + 7 + r * 9}" width="5" height="5" fill="#ffd36b" opacity=".85"/>` : "")).join("")).join("");
+    const arc = "M60 44 Q180 -10 320 74";
+    const T = "keyTimes=\"0;.5;1\" dur=\"3.2s\" repeatCount=\"indefinite\"";
+    return SVG(`
+    <rect width="400" height="130" fill="url(#rsSky)"/>
+    <circle cx="330" cy="104" r="20" fill="#ffd88a" opacity=".9"/>
+    <rect y="118" width="400" height="12" fill="#2c2d63"/>
+    <g transform="translate(40 18) scale(.8)">
+    ${[[0, 96, 30], [40, 84, 26], [100, 100, 34], [170, 88, 30], [240, 94, 40], [330, 98, 30]].map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="40" fill="#3a2560"/>`).join("")}
+    ${B.map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="${130 - y}" fill="#2c2d63"/><rect x="${x - 1}" y="${y - 2}" width="${w + 2}" height="3" fill="#8f86c9"/>${wins(x, y, w)}`).join("")}
+    <rect x="6" y="58" width="52" height="72" fill="#342e68"/><rect x="5" y="56" width="54" height="3" fill="#8f86c9"/>${wins(6, 58, 52)}
+    <rect x="10" y="66" width="44" height="7" fill="#e3261c"/><text x="32" y="71.6" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="4.6" font-weight="700" fill="#fff">STUNT SHOW</text>
+    <rect x="12" y="52" width="40" height="4" fill="#ffc93c"/>
+    <g transform="translate(34 46)"><g><animateTransform attributeName="transform" type="translate" values="-3 1;0 0;0 0" keyTimes="0;.06;1" dur="3.2s" repeatCount="indefinite"/>
+      <g transform="rotate(-24)"><rect x="-6" y="-5" width="30" height="10" rx="2.5" fill="#fff" stroke="#1b1840" stroke-width="1.5"/><rect x="2" y="-5" width="3" height="10" fill="#e3261c"/><rect x="20" y="-6" width="3" height="12" fill="#e3261c"/></g>
+      <path d="M-9 8 L-2 -1 L6 -1 L10 8Z" fill="#2d5be0"/><circle cx="-1" cy="8" r="4" fill="#ffc93c" stroke="#1b1840" stroke-width="1.2"/></g></g>
+    <circle cx="60" cy="38" r="2" fill="#ffd36b" opacity="0"><animate attributeName="r" values="2;12;2" keyTimes="0;.08;1" dur="3.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0;0" keyTimes="0;.12;1" dur="3.2s" repeatCount="indefinite"/></circle>
+    <path d="${arc}" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="1 5" stroke-linecap="round"/>
+    <g transform="translate(186 24)"><line x1="-9" y1="-21" x2="9" y2="-21" stroke="#2a2d3a" stroke-width="2.5"/>
+      ${[-9, 9].map(x => `<ellipse cx="${x}" cy="-23" rx="6" ry="1.2" fill="#d8dcea" opacity=".8"><animate attributeName="rx" values="6;2;6" dur=".12s" repeatCount="indefinite"/></ellipse>`).join("")}
+      <rect x="-5" y="-23" width="10" height="5" rx="2" fill="#3a3f52"/><circle cy="-17" r="1.2" fill="#ff3b30"><animate attributeName="opacity" values="1;.2;1" dur=".8s" repeatCount="indefinite"/></circle>
+      <path d="M0 -17 L-3 -12 M0 -17 L3 -12" stroke="#fff" stroke-opacity=".6"/>
+      <ellipse rx="4.5" ry="12" fill="none" stroke="#1b1840" stroke-width="3.5"/><ellipse rx="4.5" ry="12" fill="none" stroke="#ff7a1a" stroke-width="2.2"><animate attributeName="stroke" values="#ff7a1a;#ff7a1a;#7dffa1;#7dffa1;#ff7a1a" keyTimes="0;.26;.28;.9;1" dur="3.2s" repeatCount="indefinite"/></ellipse></g>
+    <ellipse cx="320" cy="79" rx="13" ry="3" fill="#e3261c"/><ellipse cx="320" cy="79" rx="9" ry="2" fill="#fff"/><ellipse cx="320" cy="79" rx="4.5" ry="1" fill="#e3261c"/>
+    <g><animateMotion path="${arc}" keyPoints="0;1;1" ${T} calcMode="spline" keySplines=".25 .1 .5 1;0 0 1 1"/>
+      <g><animateTransform attributeName="transform" type="rotate" values="50;410;360" ${T}/>
+        <path d="M-2 -3 L2 -3 L-1 7 L-6 6Z" fill="#b81a12"/>
+        <path d="M-1.5 3 L-2 9 M1.5 3 L2 9" stroke="#1b1840" stroke-width="3.2" stroke-linecap="round"/><path d="M-1.5 3 L-2 9 M1.5 3 L2 9" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <rect x="-3" y="-3.5" width="6" height="7.5" rx="1.5" fill="#fff" stroke="#1b1840" stroke-width="1"/><path d="M-1 0.6 l1 -2.4 l1 2.4z" fill="#2d5be0"/>
+        <path d="M-2.5 -2 L-4.5 -7 M2.5 -2 L4.5 -7" stroke="#1b1840" stroke-width="3" stroke-linecap="round"/><path d="M-2.5 -2 L-4.5 -7 M2.5 -2 L4.5 -7" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cy="-6.5" r="3.4" fill="#fff" stroke="#1b1840" stroke-width="1.1"/><rect x="-1" y="-9.8" width="2" height="3.4" fill="#e3261c"/><rect x="-.5" y="-6.4" width="4" height="1.8" fill="#1b1840"/></g></g>
+    ${[["#e3261c", -14, -16], ["#fff", -6, -22], ["#2d5be0", 4, -20], ["#ffc93c", 12, -15], ["#7dffa1", 16, -8], ["#e3261c", -18, -6]].map(([c, dx, dy]) => `<rect x="319" y="70" width="3" height="2" fill="${c}" opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;.5;.55;.85;1" dur="3.2s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;${dx * .3} ${dy * .3};${dx} ${dy + 14};${dx} ${dy + 14}" keyTimes="0;.5;.55;.85;1" dur="3.2s" repeatCount="indefinite"/></rect>`).join("")}
+    <text x="320" y="60" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" font-weight="700" fill="#ffc93c" opacity="0">+250<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.52;.56;.82;.9" dur="3.2s" repeatCount="indefinite"/></text></g>`,
+    `<linearGradient id="rsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16124a"/><stop offset=".55" stop-color="#5b2d7a"/><stop offset=".9" stop-color="#e0624a"/><stop offset="1" stop-color="#ffb35c"/></linearGradient>`);
+  },
+
   // anything new without its own scene yet
   other: () => SVG(`<rect width="400" height="130" fill="#0d0d14"/><rect width="400" height="130" fill="url(#gnGrid)"/><circle cx="200" cy="72" r="34" fill="#00ff88" opacity=".08"/><path d="M182 72 h36 M200 54 v36" stroke="#00ff88" stroke-width="3" opacity=".6"/>`, grid("gnGrid", 24, "#00ff88", .08))
 };
 function bannerFor(a) {
   const k = `${a.url} ${a.name}`.toLowerCase();
-  return (/mirror/.test(k) ? BANNERS.mirror : /gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
+  return (/stunt|rooftop/.test(k) ? BANNERS.stunt : /mirror/.test(k) ? BANNERS.mirror : /gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
     : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : /marble/.test(k) ? BANNERS.marble : BANNERS.other)();
 }
 
+// Older tags that now share a category
+const ALIAS = { "Games": "Games & Kids", "Kids": "Games & Kids", "Games/Kids": "Games & Kids" };
 const CATS = [
-  { name: "Games", note: "Things to play." },
-  { name: "Kids", note: "Made for little hands: big buttons, nothing to break." },
+  { name: "Games & Kids", note: "Things to play, including ones made for little hands." },
   { name: "Game Companions", note: "Planners and guides for games we play." },
   { name: "Home & Life", note: "Family, holidays and health." },
   { name: "Work Tools", note: "Floor plans, packing lists and load math for work." }
@@ -368,7 +408,7 @@ async function load(session){
   };
   // Each app's tag is its category. Known categories show in this order; any new tag gets its own section at the end.
   const groups = new Map();
-  for (const a of data) { const c = (a.tag || "Other").trim(); if (!groups.has(c)) groups.set(c, []); groups.get(c).push(a); }
+  for (const a of data) { const t = (a.tag || "Other").trim(), c = ALIAS[t] || t; a.tag = c; if (!groups.has(c)) groups.set(c, []); groups.get(c).push(a); }
   const cats = [...CATS.map(c => c.name).filter(n => groups.has(n)), ...[...groups.keys()].filter(n => !CATS.some(c => c.name === n))];
   const slug = n => "cat-" + n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   $("chips").innerHTML = `<button class="chip" type="button" data-cat="">All<b>${data.length}</b></button>` +
