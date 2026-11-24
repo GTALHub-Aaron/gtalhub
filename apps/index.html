@@ -80,6 +80,19 @@ a.card:hover .banner svg{transform:scale(1.04)}
 .banner .meta{position:absolute;top:14px;left:18px;right:18px;margin:0}
 .banner .tag{background:rgba(10,10,15,.82)}
 .banner .status{background:rgba(10,10,15,.82);padding:4px 9px;border-radius:3px}
+/* categories: a row of filter chips, then one section per category */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 40px}
+.chip{font:700 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 14px;cursor:pointer;min-height:40px;transition:border-color .15s,color .15s}
+.chip b{color:var(--text);font-weight:700;margin-left:6px;opacity:.7}
+.chip:hover{color:var(--text);border-color:rgba(0,255,136,.4)}
+.chip.on{color:#000;background:var(--green);border-color:var(--green)}
+.chip.on b{color:#000}
+.chip:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.cat{margin:0 0 56px;scroll-margin-top:80px}
+.cat-h{display:flex;align-items:baseline;gap:12px;font-size:34px;margin:0 0 6px}
+.cat-h span{font:700 13px var(--mono);color:var(--muted);letter-spacing:.08em}
+.cat-h::after{content:"";flex:1;height:1px;background:var(--line);align-self:center}
+.cat-p{color:var(--muted);font-size:13px;margin:0 0 20px}
 </style>
 </head>
 <body>
@@ -109,7 +122,8 @@ a.card:hover .banner svg{transform:scale(1.04)}
 <div class="wrap">
 <h2>The Lineup</h2>
 <p class="sub">Every app on GTALHub. Each one works on its own link, so you can send someone just the one they need.</p>
-<div class="grid" id="grid"></div>
+<div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+<div id="grid"></div>
 </div>
 </section>
 </main>
@@ -289,14 +303,52 @@ const BANNERS = {
      <clipPath id="gxR1"><rect x="246" y="49" width="90" height="18"/></clipPath><clipPath id="gxR2"><rect x="246" y="87" width="90" height="18"/></clipPath>`);
   },
 
+  // Mirror Magic: a glowing kaleidoscope drawing itself across six mirror lines
+  mirror: () => {
+    const draw = (d, c, w, begin) => `<path d="${d}" pathLength="100" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="100"><animate attributeName="stroke-dashoffset" values="100;0;0;100" keyTimes="0;.42;.86;1" dur="6s" begin="${begin}s" repeatCount="indefinite"/></path>`;
+    const pop = (x, y, c, begin) => `<g transform="translate(${x} ${y})"><path d="M0 -5 L1.4 -1.4 L5 0 L1.4 1.4 L0 5 L-1.4 1.4 L-5 0 L-1.4 -1.4Z" fill="${c}" opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.4;.46;.84;.9" dur="6s" begin="${begin}s" repeatCount="indefinite"/></path></g>`;
+    const copies = [0, 1, 2, 3, 4, 5].map(k => `<use href="#mmS" transform="rotate(${k * 60})"/><use href="#mmS" transform="rotate(${k * 60}) scale(1 -1)"/>`).join("");
+    const spark = [[34, 30], [70, 104], [112, 22], [300, 24], [338, 98], [372, 46], [24, 84], [376, 116]];
+    return SVG(`
+    <rect width="400" height="130" fill="url(#mmBg)"/>
+    ${spark.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="1.6" fill="#fff"><animate attributeName="opacity" values=".15;.9;.15" dur="${2 + (i % 3)}s" begin="${i * .3}s" repeatCount="indefinite"/></circle>`).join("")}
+    <g transform="translate(200 68)">
+      <g stroke="#fff" stroke-opacity=".14" stroke-dasharray="3 4">${[0, 30, 60, 90, 120, 150].map(a => `<line x1="-70" x2="70" transform="rotate(${a})"/>`).join("")}</g>
+      <g filter="url(#mmGlow)"><animateTransform attributeName="transform" type="rotate" from="0" to="60" dur="24s" repeatCount="indefinite"/>${copies}</g>
+      <circle r="6" fill="#ff3d8b" stroke="#fff" stroke-width="2"/>
+    </g>
+    ${[["#ff3d8b", 0], ["#ffd60a", 1], ["#00ccff", 2], ["#70e000", 3], ["#b38cff", 4]].map(([c, i]) => `<circle cx="${30 + i * 15}" cy="116" r="5" fill="${c}" stroke="#0a0a0f" stroke-width="1.5"/>`).join("")}`,
+    `<radialGradient id="mmBg" cx="50%" cy="52%" r="65%"><stop offset="0" stop-color="#2a1342"/><stop offset="1" stop-color="#08060f"/></radialGradient>
+     <filter id="mmGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+     <g id="mmS">${draw("M9 -2 C20 -12 33 -17 52 -10", "#ff3d8b", 3, 0)}${draw("M14 5 Q28 1 36 -6 T55 -3", "#00ccff", 2.4, .5)}${draw("M24 -5 C27 -20 38 -27 44 -40", "#ffd60a", 2, 1)}${pop(52, -10, "#fff", 0)}${pop(44, -40, "#ffd60a", 1)}</g>`);
+  },
+
   // anything new without its own scene yet
   other: () => SVG(`<rect width="400" height="130" fill="#0d0d14"/><rect width="400" height="130" fill="url(#gnGrid)"/><circle cx="200" cy="72" r="34" fill="#00ff88" opacity=".08"/><path d="M182 72 h36 M200 54 v36" stroke="#00ff88" stroke-width="3" opacity=".6"/>`, grid("gnGrid", 24, "#00ff88", .08))
 };
 function bannerFor(a) {
   const k = `${a.url} ${a.name}`.toLowerCase();
-  return (/gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
+  return (/mirror/.test(k) ? BANNERS.mirror : /gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
     : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : /marble/.test(k) ? BANNERS.marble : BANNERS.other)();
 }
+
+const CATS = [
+  { name: "Games", note: "Things to play." },
+  { name: "Kids", note: "Made for little hands: big buttons, nothing to break." },
+  { name: "Game Companions", note: "Planners and guides for games we play." },
+  { name: "Home & Life", note: "Family, holidays and health." },
+  { name: "Work Tools", note: "Floor plans, packing lists and load math for work." }
+];
+// Show one category (or all of them when id is empty) and keep it in the address so a refresh stays put
+function filter(id){
+  const known = [...document.querySelectorAll(".cat")].some(c => c.id === id);
+  if (!known) id = "";
+  document.querySelectorAll(".cat").forEach(c => c.hidden = !!id && c.id !== id);
+  document.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b.dataset.cat === id));
+  if (location.hash.slice(1) !== id) history.replaceState(null, "", id ? "#" + id : location.pathname);
+}
+$("chips").addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) filter(b.dataset.cat); });
+addEventListener("hashchange", () => filter(location.hash.slice(1)));
 
 function show(which){ $("gate").hidden = which !== "gate"; $("list").hidden = which !== "list"; }
 
@@ -307,13 +359,25 @@ async function load(session){
   if(error){ show("gate"); msg("Couldn't load the list: " + error.message, true); return; }
   if(!data.length){ show("gate"); msg("This account isn't on the GTALHub members list.", true); return; }
   const live = s => /live/i.test(s) ? "live" : "soon";
-  $("grid").innerHTML = data.map(a => {
+  const card = a => {
     const u = safeUrl(a.url), full = u.startsWith("/") ? location.origin + u : u;
     return `<a class="card" href="${esc(u)}">
       <div class="banner">${bannerFor(a)}<div class="meta"><span class="tag">${esc(a.tag)}</span><span class="status ${live(a.status)}">${esc(a.status)}</span></div></div>
       <h3>${esc(a.name)}</h3><p>${esc(a.blurb)}</p>
       <span class="go">Launch →</span><span class="url">${esc(full)}</span></a>`;
-  }).join("");
+  };
+  // Each app's tag is its category. Known categories show in this order; any new tag gets its own section at the end.
+  const groups = new Map();
+  for (const a of data) { const c = (a.tag || "Other").trim(); if (!groups.has(c)) groups.set(c, []); groups.get(c).push(a); }
+  const cats = [...CATS.map(c => c.name).filter(n => groups.has(n)), ...[...groups.keys()].filter(n => !CATS.some(c => c.name === n))];
+  const slug = n => "cat-" + n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  $("chips").innerHTML = `<button class="chip" type="button" data-cat="">All<b>${data.length}</b></button>` +
+    cats.map(n => `<button class="chip" type="button" data-cat="${esc(slug(n))}">${esc(n)}<b>${groups.get(n).length}</b></button>`).join("");
+  $("grid").innerHTML = cats.map(n => `<div class="cat" id="${esc(slug(n))}">
+      <h3 class="cat-h">${esc(n)}<span>${groups.get(n).length}</span></h3>
+      ${CATS.find(c => c.name === n) ? `<p class="cat-p">${esc(CATS.find(c => c.name === n).note)}</p>` : ""}
+      <div class="grid">${groups.get(n).map(card).join("")}</div></div>`).join("");
+  filter(location.hash.slice(1));
   show("list");
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) document.querySelectorAll(".banner svg").forEach(s => s.pauseAnimations && s.pauseAnimations());
 }
@@ -326,7 +390,7 @@ $("signin").addEventListener("submit", async e => {
   if(error){ msg(error.message === "Invalid login credentials" ? "That email and password don't match." : error.message, true); return; }
   msg(""); $("pw").value = ""; load(data.session);
 });
-$("out").addEventListener("click", async () => { await sb.auth.signOut(); $("grid").innerHTML = ""; msg(""); load(null); });
+$("out").addEventListener("click", async () => { await sb.auth.signOut(); $("grid").innerHTML = ""; $("chips").innerHTML = ""; msg(""); load(null); });
 
 const { data: { session } } = await sb.auth.getSession();
 load(session);
