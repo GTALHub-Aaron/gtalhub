@@ -137,6 +137,29 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   .tabs{margin:2px 0 8px}.tabs button{min-height:38px;padding:4px}
 }
 .deck{grid-template-columns:auto minmax(0,1.3fr) minmax(0,2fr)}
+
+.wrap{position:relative}
+.tnt{position:absolute;z-index:20;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;transform:translateX(-50%);
+  transition:transform .35s cubic-bezier(.2,1.25,.4,1),opacity .2s;display:flex;flex-direction:column;align-items:center;gap:2px;
+  filter:drop-shadow(0 6px 10px #000a) drop-shadow(0 0 2px #0008)}
+.tnt .lbl{font:400 clamp(13px,1.7vw,17px)/1 Bungee,Impact,sans-serif;color:var(--gold);letter-spacing:1px;text-align:center;white-space:nowrap;-webkit-text-stroke:.5px #1b1840}
+.tnt .lbl i{display:inline-block;font-style:normal;animation:tntHint 1.1s ease-in-out infinite}
+.tnt .plg{display:flex;align-items:stretch;gap:8px;margin-right:-22px}
+.tnt svg{display:block;width:clamp(104px,min(14vw,24vh),160px);height:auto}
+.tnt .gauge{width:14px;margin:10px 0 8px;border-radius:7px;background:#120f36cc;border:2px solid #ffffff66;position:relative;overflow:hidden}
+.tnt .gauge b{position:absolute;left:0;right:0;top:0;height:0;background:linear-gradient(#ffc93c,#e8453c);border-radius:4px}
+.tnt .gauge::after{content:'';position:absolute;left:0;right:0;bottom:6%;height:3px;background:#fff9}
+.tnt.off{transform:translateX(-50%) translateY(calc(100% + 40px));opacity:0;pointer-events:none;transition:transform .4s cubic-bezier(.5,0,.8,.4),opacity .3s .15s}
+.tnt.drag{cursor:grabbing}
+.tnt #tntH{transition:transform .28s cubic-bezier(.3,1.6,.5,1)}
+.tnt.drag #tntH{transition:none}
+.tnt.fire #tntH{transition:transform .06s}
+.tnt.fire .plg{animation:tntShake .25s}
+@keyframes tntShake{0%,100%{transform:none}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-2px)}}
+.tnt.drag .lbl i,.tnt.fire .lbl i{animation:none}
+@keyframes tntHint{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+.tnt.side-mode svg{width:clamp(80px,13vw,120px)}
+@media(prefers-reduced-motion:reduce){.tnt .lbl i{animation:none}.tnt,.tnt.off{transition:opacity .2s}}
 .tricks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .trk,.go{-webkit-user-select:none;-webkit-touch-callout:none}
 .trk{font:400 15px/1.1 Bungee,sans-serif;background:#2e2b6e;color:var(--ink);border:2px solid #fff3;border-radius:12px;min-height:60px;padding:4px;cursor:pointer;touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
@@ -165,6 +188,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   </div>
   <div class="fig" id="fig">
     <canvas id="cv"></canvas>
+    
     <div class="msg" id="msg"><div class="card" id="card"></div></div>
   </div>
   <div class="deck">
@@ -176,11 +200,32 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
       <button class="trk" data-trick="eagle" aria-label="Spread eagle trick, hold"><svg viewBox="0 0 26 26"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="13" cy="5" r="3"/><path d="M13 9v8M13 17l-7 7M13 17l7 7M13 11l-9-4M13 11l9-4"/></g></svg>Eagle</button>
       <button class="trk" data-trick="click" aria-label="Heel click trick, hold"><svg viewBox="0 0 26 26"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="13" cy="5" r="3"/><path d="M13 9v8M13 17l-6 3 5 4M13 17l6 3-5 4M13 11H3M13 11h10"/></g></svg>Heels</button>
     </div>
-    <button class="go" id="go">LAUNCH!</button>
+    <button class="go" id="go">FLIP!</button>
+  </div>
+  <div class="tnt off" id="tnt" role="button" aria-label="TNT plunger: drag the handle down to launch">
+    <div class="lbl">PULL TO LAUNCH <i>&#9660;</i></div>
+    <div class="plg"><svg viewBox="0 0 140 196" aria-hidden="true">
+<g id="tntH">
+<rect x="64" y="22" width="12" height="96" rx="3" fill="#b9bfcc" stroke="#1b1840" stroke-width="3"/>
+<rect x="66.5" y="26" width="3" height="88" fill="#fff" opacity=".55"/>
+<rect x="10" y="10" width="120" height="22" rx="11" fill="#2b2a33" stroke="#1b1840" stroke-width="3"/>
+<rect x="10" y="10" width="30" height="22" rx="11" fill="#ffc93c" stroke="#1b1840" stroke-width="3"/>
+<rect x="100" y="10" width="30" height="22" rx="11" fill="#ffc93c" stroke="#1b1840" stroke-width="3"/>
+<rect x="44" y="14" width="52" height="5" rx="2.5" fill="#fff" opacity=".25"/>
+</g>
+<path d="M22 150c-16 6-18 24-6 34M118 150c16 6 18 24 6 34" fill="none" stroke="#1b1840" stroke-width="6" stroke-linecap="round"/>
+<path d="M22 150c-16 6-18 24-6 34M118 150c16 6 18 24 6 34" fill="none" stroke="#ff8a3d" stroke-width="3" stroke-linecap="round"/>
+<rect x="18" y="104" width="104" height="88" rx="8" fill="#e8453c" stroke="#1b1840" stroke-width="4"/>
+<rect x="18" y="104" width="104" height="14" rx="6" fill="#ff7a6b" stroke="#1b1840" stroke-width="3"/>
+<rect x="58" y="98" width="24" height="10" rx="3" fill="#6b6f7d" stroke="#1b1840" stroke-width="3"/>
+<path d="M30 124v60M110 124v60" stroke="#b02a22" stroke-width="5"/>
+<rect x="34" y="132" width="72" height="40" rx="5" fill="#fff4d6" stroke="#1b1840" stroke-width="3"/>
+<text x="70" y="163" font-family="Bungee,Impact,sans-serif" font-size="27" text-anchor="middle" fill="#e8453c" stroke="#1b1840" stroke-width="1">TNT</text>
+</svg><div class="gauge"><b id="tntG"></b></div></div>
   </div>
 </div>
 <div class="helppop" id="helppop" role="dialog" aria-modal="true" aria-labelledby="helpT"><div class="card"><h2 id="helpT">How to play</h2><ul>
-<li>The cannon sweeps up and down on its own. Hit <b>LAUNCH!</b> at the right moment.</li>
+<li>The cannon sweeps up and down on its own. Drag the <b>TNT plunger</b> handle down at the right moment to launch.</li>
 <li>In the air, hold <b>FLIP!</b> to spin, or hold <b>Hero</b>, <b>Eagle</b> or <b>Heels</b> to strike a pose.</li>
 <li>Hold a pose <i>and</i> FLIP together to spin in that pose for a combo bonus. Let go before you land!</li>
 <li>Bounce on trampolines, fly through drone rings, and dodge birds, blimps and saucers.</li>
@@ -595,8 +640,8 @@ function updateUI(){
   $('score').textContent=S.score;$('fameH').textContent=save.fame.toLocaleString();$('ang').textContent=Math.round(S.angle)+'°';
   $('lives').innerHTML=`<svg width="${S.lives*26||26}" height="22" viewBox="0 0 ${S.lives*26||26} 22">${Array.from({length:S.lives},(_,i)=>`<g transform="translate(${i*26+12},12)"><circle r="10" fill="${OF.helmet}" stroke="#fff6" stroke-width="1"/><rect x="-2.5" y="-10" width="5" height="11" fill="${OF.hstripe}"/><path d="M-10 2h20v3a3 3 0 01-3 3h-14a3 3 0 01-3-3z" fill="${OF.visor}"/></g>`).join('')}</svg>`;
   const go=$('go'),air=S.state==='fly'||S.state==='fall';
-  go.textContent=S.state==='aim'?'LAUNCH!':'FLIP!';
-  go.disabled=S.paused||!(S.state==='aim'||air);
+  go.textContent='FLIP!';
+  go.disabled=S.paused||!air;
   document.querySelectorAll('.trk').forEach(b=>{b.disabled=S.paused||!air;b.classList.toggle('done',man.tricks.includes(b.dataset.trick)&&S.state!=='aim')});
 }
 
@@ -1008,7 +1053,7 @@ function frame(t){
   if($('msg').classList.contains('on'))$('card').querySelectorAll('.of:not(.lock) canvas[data-o],.of:not(.lock) canvas[data-c]').forEach(c=>{if(c.dataset.o){if(outfitById(c.dataset.o).anim)drawThumb(c)}else drawCannonThumb(c)});
   S.ts+=((S.slow?.32:1)-S.ts)*Math.min(1,dt*(S.slow?9:4));
   if(W&&H){step((S.paused&&S.state==='aim')||helpOn?0:dt*S.ts);drawSky();drawCity();drawHazards();drawTrajectory();drawCannon();drawRings(0);drawMan();drawRings(1);drawFx()}
-  requestAnimationFrame(frame);
+  tntVis();requestAnimationFrame(frame);
 }
 
 // ---------- input ----------
@@ -1019,7 +1064,21 @@ function hold(el,down,up){
 }
 function startTrick(id){if((S.state==='fly'||S.state==='fall')&&!S.paused&&S.trick!==id){S.trick=id;man.trickT=0}}
 function endTrick(id){if(S.trick===id){S.trick=null;man.trickT=0}}
-hold($('go'),()=>{if(S.paused)return;if(S.state==='aim')launch();else if(S.state==='fly'||S.state==='fall')S.tuck=true;updateUI()},()=>{S.tuck=false});
+hold($('go'),()=>{if(S.paused)return;if(S.state==='fly'||S.state==='fall')S.tuck=true;updateUI()},()=>{S.tuck=false});
+const tnt=$('tnt'),tntH=$('tntH'),TNT_TRAVEL=72;let tntDrag=null,tntFiring=false;
+function tntSet(d){tntH.style.transform=`translateY(${d}px)`;$('tntG').style.height=Math.min(100,d/(TNT_TRAVEL*.94)*100)+'%'}
+function tntScale(){const r=tnt.querySelector('svg').getBoundingClientRect();return r.width/140}
+tnt.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(tnt.classList.contains('off')||S.state!=='aim'||S.paused)return;try{tnt.setPointerCapture(e.pointerId)}catch(_){}tntDrag={y:e.clientY,s:tntScale()};tnt.classList.add('drag');audio()});
+tnt.addEventListener('pointermove',e=>{if(!tntDrag)return;const d=Math.max(0,Math.min(TNT_TRAVEL,(e.clientY-tntDrag.y)/tntDrag.s));tntSet(d);
+  if(d>=TNT_TRAVEL*.94){tntDrag=null;tnt.classList.remove('drag');tntFiring=true;tnt.classList.add('fire');tntSet(TNT_TRAVEL);launch();setTimeout(()=>tnt.classList.add('off'),180);setTimeout(()=>{tntFiring=false;tnt.classList.remove('fire')},420)}});
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>tnt.addEventListener(ev,()=>{if(!tntDrag)return;tntDrag=null;tnt.classList.remove('drag');tntSet(0)}));
+tnt.addEventListener('contextmenu',e=>e.preventDefault());
+const deckEl=document.querySelector('.deck'),wrapEl=document.querySelector('.wrap'),sideMQ=matchMedia('(orientation:landscape) and (max-height:600px)');
+function placeTnt(){const d=deckEl.getBoundingClientRect(),w=wrapEl.getBoundingClientRect(),side=sideMQ.matches;tnt.classList.toggle('side-mode',side);
+  tnt.style.left=(d.left-w.left+d.width/2)+'px';tnt.style.bottom=(w.bottom-d.bottom+6)+'px'}
+addEventListener('resize',placeTnt);placeTnt();
+function tntVis(){const show=S.state==='aim'&&!S.paused&&!helpOn&&!$('msg').classList.contains('on');
+  if(show&&tnt.classList.contains('off')&&!tntFiring){placeTnt();tnt.classList.remove('off');tntSet(0)}else if(!show&&!tnt.classList.contains('off')&&!tntFiring){tnt.classList.add('off')}}
 document.querySelectorAll('.trk').forEach(b=>hold(b,()=>startTrick(b.dataset.trick),()=>endTrick(b.dataset.trick)));
 cv.addEventListener('pointerdown',()=>{if(S.state==='fly'||S.state==='fall')S.tuck=true});
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>cv.addEventListener(ev,()=>{S.tuck=false}));
