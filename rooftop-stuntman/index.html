@@ -52,6 +52,13 @@ h1 span{color:var(--red)}
 .btn{font:400 19px Bungee,sans-serif;background:var(--red);color:#fff;border:0;border-radius:12px;padding:11px 20px;cursor:pointer;box-shadow:0 5px 0 #6d0a05;min-height:48px}
 .btn.alt{background:#2e2b6e;box-shadow:0 5px 0 #0e0c2e}
 .tabs{display:flex;gap:6px;margin:4px 0 12px}
+.ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.25em;margin-right:.4em;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.1}
+.tabs .ic{width:28px;height:28px;margin:0}
+.hq{display:inline-flex;align-items:center;justify-content:center}
+.hq .ic{width:1.3em;height:1.3em}
+
 .tabs button{flex:1;font:400 17px Bungee,sans-serif;border:3px solid var(--navy);background:transparent;color:var(--navy);border-radius:10px;padding:8px;min-height:44px;cursor:pointer}
 .tabs button.on{background:var(--navy);color:var(--ink)}
 .fame{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600;margin-bottom:6px}
@@ -142,7 +149,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   .card li{padding:2px 0}
   .stages{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
   .st .sw{height:44px!important}
-  .tabs{margin:2px 0 8px}.tabs button{min-height:38px;padding:4px}
+  .tabs{margin:2px 0 8px}.tabs button{min-height:38px;padding:4px;flex-direction:row;gap:6px}.tabs .ic{width:20px;height:20px}
 }
 .deck{grid-template-columns:auto minmax(0,1.3fr) minmax(0,2fr)}
 
@@ -192,7 +199,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
     <div class="stat"><b id="score">0</b><small>Score</small></div>
     <div class="stat"><b id="fameH">0</b><small>Fame</small></div>
     <div class="stat lives"><div id="lives"></div><small>Helmets</small></div>
-    <div class="hudbtns"><button class="hq" id="hq">Stunt HQ</button><button class="qbtn" id="qbtn" aria-label="How to play">?</button></div>
+    <div class="hudbtns"><button class="hq" id="hq"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10v10h5v-6h3v6h5V10" fill="currentColor"/></svg>Stunt HQ</button><button class="qbtn" id="qbtn" aria-label="How to play">?</button></div>
   </div>
   <div class="fig" id="fig">
     <canvas id="cv"></canvas>
@@ -239,7 +246,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 <li>Bounce on trampolines, fly through drone rings, and dodge birds, blimps and saucers.</li>
 <li>Fame unlocks stuntmen, stats unlock cannon skins, and there's a new Daily Challenge every day.</li>
 <li>Keys: <kbd>Space</kbd> launch / flip, <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> tricks.</li></ul>
-<div class="row"><button class="btn" id="helpOk">Got it</button></div></div></div>
+<div class="row"><button class="btn" id="helpOk"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9.5 18 20 6.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Got it</button></div></div></div>
 <script>
 {
 const cv=document.getElementById('cv'),fig=document.getElementById('fig'),ctx=cv.getContext('2d');
@@ -582,9 +589,24 @@ function miss(why){
   },700);
 }
 let msgAction=null;
+
+const IC={
+ play:'<path d="M7 4.5v15l13-7.5z" fill="currentColor"/>',
+ again:'<path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M20.5 3v5.5H15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
+ next:'<path d="M4 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>',
+ home:'<path d="M3 11.5 12 4l9 7.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10v10h5v-6h3v6h5V10" fill="currentColor"/>',
+ trophy:'<path d="M7 3h10v6a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 5H3.5v1.5A3.5 3.5 0 0 0 7 10M17 5h3.5v1.5A3.5 3.5 0 0 1 17 10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 14v4M8 21h8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+ check:'<path d="M4 12.5 9.5 18 20 6.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="m12 12.2 1.3 2.6 2.8.4-2 2 .5 2.8-2.6-1.4-2.6 1.4.5-2.8-2-2 2.8-.4z" fill="currentColor"/>',
+ city:'<path d="M2 21h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M4 21V9h5v12M10 21V4h6v17M17 21v-9h4v9" fill="currentColor"/>',
+ helmet:'<path d="M3 15a9 9 0 0 1 18 0v2H3z" fill="currentColor"/><path d="M11 6h2v9h-2z" fill="#fff" opacity=".85"/><path d="M2.5 17.5h19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+ flip:'<path d="M12 4a8 8 0 1 1-7.4 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M2.5 4.5 4.6 9.3l4.9-1.6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/>',
+ cannon:'<path d="m4 15 13-8 2.5 4L6.5 19z" fill="currentColor"/><circle cx="8" cy="18" r="3.6" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M19.5 6.5l1.5-1.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>'};
+function ic(k){return IC[k]?`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`:''}
+const BTNIC={'Start show':'play','Resume':'play','New show':'again','Play again':'again','Try again':'again','Play daily!':'cal','Stunt HQ':'home','Next jump':'next','See results':'trophy','Got it':'check'};
 function showMsg(t,body,btns,wide,top){
   $('card').className='card'+(wide?' wide':'');
-  const row=`<div class="row">${btns.map((b,i)=>`<button class="btn${b[2]?' alt':''}" data-b="${i}">${b[0]}</button>`).join('')}</div>`;
+  const row=`<div class="row">${btns.map((b,i)=>`<button class="btn${b[2]?' alt':''}" data-b="${i}">${ic(BTNIC[b[0]])}${b[0]}</button>`).join('')}</div>`;
   $('card').innerHTML=top?`<div class="cardtop"><h2>${t}</h2>${row}</div>${body}`:`<h2>${t}</h2>${body}${row}`;
   $('card').querySelectorAll('[data-b]').forEach(el=>el.onclick=()=>btns[+el.dataset.b][1]());
   $('msg').classList.add('on');msgAction=btns[0]?btns[0][1]:null;
@@ -602,7 +624,7 @@ function openHQ(tab){
   if(hqTab==='daily')btns.push(['Play daily!',()=>startShow(true),resume?1:0]);
   else btns.push([resume?'New show':'Start show',()=>startShow(false),resume?1:0]);
   const dailyNew=save.daily.key!==today().key;
-  const tabs=[['stages','Stages'],['daily','Daily'+(dailyNew?'<i class="dot"></i>':'')],['outfits','Stuntmen'],['cannons','Cannons']];
+  const tabs=[['stages',ic('city')+'Stages'],['daily',ic('cal')+'<span>Daily'+(dailyNew?'<i class="dot"></i>':'')+'</span>'],['outfits',ic('helmet')+'Stuntmen'],['cannons',ic('cannon')+'Cannons']];
   const body=`<div class="fame"><span>Total fame</span><b>${save.fame.toLocaleString()}</b></div>
   <div class="tabs">${tabs.map(t=>`<button data-t="${t[0]}" class="${hqTab===t[0]?'on':''}">${t[1]}</button>`).join('')}</div>
   <div id="tabBody">${hqTab==='stages'?stagesHtml():hqTab==='daily'?dailyHtml():hqTab==='outfits'?outfitsHtml():cannonsHtml()}</div>`;
@@ -654,7 +676,7 @@ function updateUI(){
   $('score').textContent=S.score;$('fameH').textContent=save.fame.toLocaleString();$('ang').textContent=Math.round(S.angle)+'°';
   $('lives').innerHTML=`<svg width="${S.lives*26||26}" height="22" viewBox="0 0 ${S.lives*26||26} 22">${Array.from({length:S.lives},(_,i)=>`<g transform="translate(${i*26+12},12)"><circle r="10" fill="${OF.helmet}" stroke="#fff6" stroke-width="1"/><rect x="-2.5" y="-10" width="5" height="11" fill="${OF.hstripe}"/><path d="M-10 2h20v3a3 3 0 01-3 3h-14a3 3 0 01-3-3z" fill="${OF.visor}"/></g>`).join('')}</svg>`;
   const go=$('go'),air=S.state==='fly'||S.state==='fall';
-  go.textContent='FLIP!';
+  if(!go.dataset.i){go.dataset.i=1;go.innerHTML=ic('flip')+'FLIP!'}
   go.disabled=S.paused||!air;
   document.querySelectorAll('.trk').forEach(b=>{b.disabled=S.paused||!air;b.classList.toggle('done',man.tricks.includes(b.dataset.trick)&&S.state!=='aim')});
 }
