@@ -23,6 +23,7 @@
 :root{color-scheme:dark;--bg:#14123a;--deck:#1d1b4d;--ink:#fff6ea;--mute:#b8b3e0;--red:#e3261c;--redd:#9e130c;--blue:#2d5be0;--gold:#ffc93c;--navy:#1b1840}
 *{box-sizing:border-box;min-width:0}
 html,body{overscroll-behavior:none}
+body,button,canvas,.deck,.hud{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 html.fit,html.fit body{height:100%;overflow:hidden}
 .wrap{overflow:clip}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 Rubik,system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
@@ -303,22 +304,22 @@ const OUTFITS=[
 ];
 const CANNONS=[
  {id:'match',name:'Matching Paint',desc:'Painted to match your stuntman'},
- {id:'o_classic',outfit:'classic',name:'Daredevil Blaster',car:'#e3261c',wheel:'#ffffff',hub:'#2d5be0'},
- {id:'o_gold',outfit:'gold',name:'Golden Boomer',car:'#1b1840',wheel:'#ffd84a',hub:'#1b1840'},
- {id:'o_fire',outfit:'fire',name:'Fire Hose',car:'#c8261d',wheel:'#2a2a2a',hub:'#ffe14d'},
- {id:'o_police',outfit:'police',name:'Patrol Cannon',car:'#1f4fb8',wheel:'#14142a',hub:'#ffffff'},
- {id:'o_rocket',outfit:'rocket',name:'Rocket Launcher',car:'#6b7080',wheel:'#c9ced8',hub:'#ff7a1a'},
- {id:'o_builder',outfit:'builder',name:'Wrecking Cannon',car:'#ff8a1a',wheel:'#2a2a2a',hub:'#ffd21a'},
- {id:'o_ninja',outfit:'ninja',name:'Shadow Cannon',car:'#23232e',wheel:'#d6202a',hub:'#23232e'},
- {id:'o_robot',outfit:'robot',name:'Robo Cannon',car:'#6b7080',wheel:'#c9ced8',hub:'#34f5ff'},
- {id:'o_rainbow',outfit:'rainbow',name:'Rainbow Cannon',car:'#7b4dff',wheel:'#ffe14d',hub:'#ff5fa2'},
- {id:'o_shark',outfit:'shark',name:'Jaws Cannon',car:'#4d5a6e',wheel:'#cfd6df',hub:'#4d5a6e'},
- {id:'o_lava',outfit:'lava',name:'Volcano Cannon',car:'#2b1a14',wheel:'#ff5a1a',hub:'#ffc93c'},
- {id:'o_superstar',outfit:'superstar',name:'Star Cannon',car:'#ff5fb8',wheel:'#ffd700',hub:'#ffffff'},
- {id:'o_galaxy',outfit:'galaxy',name:'Cosmic Cannon',car:'#2a1660',wheel:'#7fe8ff',hub:'#e9b8ff'},
- {id:'o_moonwalker',outfit:'moonwalker',name:'Moon Cannon',car:'#9aa0ad',wheel:'#f4f4f0',hub:'#ff6a1a'},
- {id:'o_dino',outfit:'dino',name:'Dino Cannon',car:'#2a6b30',wheel:'#ffcf3a',hub:'#ff8a2a'},
- {id:'o_pirate',outfit:'pirate',name:'Pirate Cannon',car:'#7a4a26',wheel:'#a06a3a',hub:'#d4a514'},
+ {id:'o_classic',outfit:'classic',ostat:'cleans',need:3,label:'clean landings',name:'Daredevil Blaster',car:'#e3261c',wheel:'#ffffff',hub:'#2d5be0'},
+ {id:'o_gold',outfit:'gold',ostat:'bulls',need:2,label:'bullseyes',name:'Golden Boomer',car:'#1b1840',wheel:'#ffd84a',hub:'#1b1840'},
+ {id:'o_fire',outfit:'fire',ostat:'rings',need:5,label:'drone rings',name:'Fire Hose',car:'#c8261d',wheel:'#2a2a2a',hub:'#ffe14d'},
+ {id:'o_police',outfit:'police',ostat:'cleans',need:5,label:'clean landings',name:'Patrol Cannon',car:'#1f4fb8',wheel:'#14142a',hub:'#ffffff'},
+ {id:'o_rocket',outfit:'rocket',ostat:'tricks',need:6,label:'named tricks',name:'Rocket Launcher',car:'#6b7080',wheel:'#c9ced8',hub:'#ff7a1a'},
+ {id:'o_builder',outfit:'builder',ostat:'bounces',need:3,label:'trampoline bounces',name:'Wrecking Cannon',car:'#ff8a1a',wheel:'#2a2a2a',hub:'#ffd21a'},
+ {id:'o_ninja',outfit:'ninja',ostat:'tricks',need:10,label:'named tricks',name:'Shadow Cannon',car:'#23232e',wheel:'#d6202a',hub:'#23232e'},
+ {id:'o_robot',outfit:'robot',ostat:'rings',need:8,label:'drone rings',name:'Robo Cannon',car:'#6b7080',wheel:'#c9ced8',hub:'#34f5ff'},
+ {id:'o_rainbow',outfit:'rainbow',ostat:'bounces',need:5,label:'trampoline bounces',name:'Rainbow Cannon',car:'#7b4dff',wheel:'#ffe14d',hub:'#ff5fa2'},
+ {id:'o_shark',outfit:'shark',ostat:'bulls',need:3,label:'bullseyes',name:'Jaws Cannon',car:'#4d5a6e',wheel:'#cfd6df',hub:'#4d5a6e'},
+ {id:'o_lava',outfit:'lava',ostat:'cleans',need:8,label:'clean landings',name:'Volcano Cannon',car:'#2b1a14',wheel:'#ff5a1a',hub:'#ffc93c'},
+ {id:'o_superstar',outfit:'superstar',ostat:'tricks',need:12,label:'named tricks',name:'Star Cannon',car:'#ff5fb8',wheel:'#ffd700',hub:'#ffffff'},
+ {id:'o_galaxy',outfit:'galaxy',ostat:'rings',need:12,label:'drone rings',name:'Cosmic Cannon',car:'#2a1660',wheel:'#7fe8ff',hub:'#e9b8ff'},
+ {id:'o_moonwalker',outfit:'moonwalker',ostat:'bulls',need:2,label:'bullseyes',name:'Moon Cannon',car:'#9aa0ad',wheel:'#f4f4f0',hub:'#ff6a1a'},
+ {id:'o_dino',outfit:'dino',ostat:'bounces',need:4,label:'trampoline bounces',name:'Dino Cannon',car:'#2a6b30',wheel:'#ffcf3a',hub:'#ff8a2a'},
+ {id:'o_pirate',outfit:'pirate',ostat:'rings',need:6,label:'drone rings',name:'Pirate Cannon',car:'#7a4a26',wheel:'#a06a3a',hub:'#d4a514'},
  {id:'fire',name:'Fire Engine',stat:'bulls',need:5,label:'bullseyes',car:'#a81515',wheel:'#2a2a2a',hub:'#d9dde6'},
  {id:'candy',name:'Candy Cane',stat:'rings',need:20,label:'drone rings',car:'#e3261c',wheel:'#ffffff',hub:'#e3261c'},
  {id:'shark',name:'Shark Bite',stat:'bounces',need:8,label:'trampoline bounces',car:'#3d4b5e',wheel:'#cfd6df',hub:'#3d4b5e'},
@@ -332,16 +333,18 @@ const TRICKS={hero:{name:'Superhero',combo:'Superhero Corkscrew',pts:60},eagle:{
 const save={fame:0,unlocked:['downtown'],best:{},outfit:'classic',stage:'downtown',cannon:'match',stats:{},daily:{key:'',best:0}};
 try{Object.assign(save,JSON.parse(localStorage.getItem('stunt-save')||'{}'))}catch(e){}
 try{const old=+localStorage.getItem('stunt-best');if(old&&!save.best.downtown)save.best.downtown=old}catch(e){}
-save.stats=Object.assign({bulls:0,rings:0,bounces:0,tricks:0,cleans:0,maxFlips:0},save.stats||{});
+save.stats=Object.assign({bulls:0,rings:0,bounces:0,tricks:0,cleans:0,maxFlips:0},save.stats||{});save.ostats=save.ostats||{};
+const ost=id=>save.ostats[id]||(save.ostats[id]={bulls:0,rings:0,bounces:0,tricks:0,cleans:0});
 function persist(){try{localStorage.setItem('stunt-save',JSON.stringify(save))}catch(e){}}
 const stageById=id=>STAGES.find(s=>s.id===id)||STAGES[0];
 const outfitById=id=>OUTFITS.find(o=>o.id===id)||OUTFITS[0];
 const cannonById=id=>CANNONS.find(o=>o.id===id)||CANNONS[0];
 const outfitOpen=o=>o.stage?save.unlocked.includes(o.stage):save.fame>=o.cost;
-const cannonOpen=c=>c.outfit?outfitOpen(outfitById(c.outfit)):(!c.stat||(save.stats[c.stat]||0)>=c.need);
+const cannonOpen=c=>c.outfit?outfitOpen(outfitById(c.outfit))&&(ost(c.outfit)[c.ostat]||0)>=c.need:(!c.stat||(save.stats[c.stat]||0)>=c.need);
 const openOutfits=()=>OUTFITS.filter(outfitOpen).map(o=>o.id);
 const openCannons=()=>CANNONS.filter(cannonOpen).map(o=>o.id);
 let ST=stageById(save.stage),OF=outfitById(save.outfit),CN=cannonById(save.cannon);
+if(!cannonOpen(CN)){save.cannon='match';CN=cannonById('match')}
 
 // ---------- daily ----------
 function today(){const d=new Date();return{key:`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`,num:Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5)}}
@@ -538,7 +541,7 @@ function land(b){
 function bounce(b,fromSlide){
   const t=b.tramp;t.t=0;man.y=b.h+18+HALF+1;man.b=null;
   man.vy=fromSlide?ST.V*.55:Math.max(Math.abs(man.vy)*.85,ST.V*.6);man.vx=Math.max(man.vx*.9,ST.V*.22);
-  man.bounces++;save.stats.bounces++;S.state='fly';man.fspin=0;
+  man.bounces++;save.stats.bounces++;ost(OF.id).bounces++;S.state='fly';man.fspin=0;
   floatText(man.x,b.h+120,'BOING! +50','#7dffa1');boing();if(Math.random()<.7)say('bounce',.05);
   for(let i=0;i<12;i++)parts.push({x:t.x+rnd(-30,30),y:b.h+20,vx:rnd(-120,120),vy:rnd(80,260),life:rnd(.4,.8),max:.8,col:'#ffffff',r:rnd(3,6),g:500});
   updateUI();
@@ -582,7 +585,7 @@ function finishLanding(){
     if(man.rings===rings.length&&rings.length>1){rows.push(['All the rings!',150]);total+=150}}
   if(man.quality==='clean'){rows.push(['Stuck the landing',50]);total+=50}
   S.score+=total;man.cheer=1;S.state='done';S.jumps++;
-  const st=save.stats;if(onPad)st.bulls++;st.rings+=man.rings;st.tricks+=man.tricks.length+man.combos.length;if(man.quality==='clean')st.cleans++;st.maxFlips=Math.max(st.maxFlips,flips);
+  const st=save.stats,os=ost(OF.id);if(onPad){st.bulls++;os.bulls++}st.rings+=man.rings;os.rings+=man.rings;st.tricks+=man.tricks.length+man.combos.length;os.tricks+=man.tricks.length+man.combos.length;if(man.quality==='clean'){st.cleans++;os.cleans++}st.maxFlips=Math.max(st.maxFlips,flips);
   const news=bank(total);
   const big=man.quality==='clean'||onPad||flips>1||man.tricks.length>1;
   if(big||news.length)confetti(man.x,man.y+20);
@@ -707,8 +710,9 @@ function outfitsHtml(){
 function cannonsHtml(){
   return `<div class="outfits">${CANNONS.map(c=>{
     const open=cannonOpen(c),on=save.cannon===c.id,have=c.stat?Math.min(save.stats[c.stat]||0,c.need):0,oo=c.outfit&&outfitById(c.outfit);
-    const st=on?'Using':open?'Tap to use':oo?'Unlock '+oo.name:`${have} / ${c.need} ${c.label}`;
-    const bar=!open?(oo?(oo.stage?'':`<span class="bar"><i style="width:${Math.min(100,save.fame/oo.cost*100)}%"></i></span>`):`<span class="bar"><i style="width:${have/c.need*100}%"></i></span>`):'';
+    const ooOpen=oo&&outfitOpen(oo),oh=oo?Math.min(ost(oo.id)[c.ostat]||0,c.need):0;
+    const st=on?'Using':open?'Tap to use':oo?(ooOpen?`${oh} / ${c.need} ${c.label} as ${oo.name}`:'Unlock '+oo.name+' first'):`${have} / ${c.need} ${c.label}`;
+    const bar=!open?(oo?(ooOpen?`<span class="bar"><i style="width:${oh/c.need*100}%"></i></span>`:''):`<span class="bar"><i style="width:${have/c.need*100}%"></i></span>`):'';
     return `<button class="of${open?'':' lock'}${on?' on':''}" data-cannon="${c.id}" ${open?'':'aria-disabled="true"'}><canvas class="cn" data-c="${c.id}" width="192" height="144"></canvas><b>${c.name}</b><small>${st}</small>${bar}</button>`}).join('')}</div>`;
 }
 
