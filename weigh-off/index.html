@@ -445,6 +445,11 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SB_URL = "https://hjwuluhdiczmssldyeus.supabase.co";
 const SB_KEY = "sb_publishable_zAZpo7UDyx1eHD_HpayR-g_RRjdgtO9";
+// read the email link's purpose before the library reads and clears the address bar
+const LINK = (()=>{ const h=new URLSearchParams(location.hash.slice(1)), q=new URLSearchParams(location.search);
+  return { recovery: h.get("type")==="recovery" || q.get("type")==="recovery",
+           error: h.get("error_code")||q.get("error_code")||h.get("error")||q.get("error")||"",
+           errorText: h.get("error_description")||q.get("error_description")||"" }; })();
 const sb = createClient(SB_URL, SB_KEY);
 
 const $ = id => document.getElementById(id);
@@ -504,10 +509,11 @@ function setMode(mode){
 }
 darkMQ.addEventListener("change", ()=>{ if(!userMode) setMode(null); });
 
-const S = { user:null, profile:null, weighins:[], groups:[], prog:{}, trophies:{}, pw:{}, editing:false, confirmDel:null, confirmEnd:null, authTab:"in" };
+const S = { recovering:LINK.recovery, user:null, profile:null, weighins:[], groups:[], prog:{}, trophies:{}, pw:{}, editing:false, confirmDel:null, confirmEnd:null, authTab:"in" };
 
 /* ---------- views ---------- */
 function show(view){
+  if(S.recovering && view!=="vReset" && S.user) view="vReset";
   ["vLoading","vAuth","vReset","vSetup","vApp"].forEach(v => $(v).hidden = v!==view);
   $("who").hidden = !(view==="vApp" || view==="vSetup");
   $("themeWrap").hidden = view!=="vApp";
@@ -1153,11 +1159,16 @@ $("authForm").addEventListener("submit", async e=>{
     } else {
       const {data,error}=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin+location.pathname}});
       if(error) throw error;
+      if(data.user && Array.isArray(data.user.identities) && data.user.identities.length===0){
+        setAuthTab("in");
+        note("aNote","There's already an account with that email. Sign in, or click Forgot password to set a new password.","err");
+        return;
+      }
       if(!data.session) note("aNote","Check your email for a confirmation link, then come back here and sign in.","ok");
     }
   }catch(err){
     const m=errMsg(err);
-    note("aNote", /invalid login/i.test(m) ? "That email and password don't match. If you just signed up, confirm your email first." : m, "err");
+    note("aNote", /invalid login/i.test(m) ? "That email and password don't match. If you just signed up, confirm your email first. Forgot it? Click Forgot password below." : m, "err");
   }finally{ btn.disabled=false; }
 });
 $("aForgot").addEventListener("click", async ()=>{
@@ -1171,7 +1182,10 @@ $("resetForm").addEventListener("submit", async e=>{
   const pass=$("rPass").value; if(pass.length<8) return note("rNote","Use 8 or more characters.","err");
   const {error}=await sb.auth.updateUser({password:pass});
   if(error) return note("rNote",errMsg(error),"err");
-  note("rNote","Password saved.","ok"); history.replaceState(null,"",location.pathname); refresh();
+  S.recovering=false; $("rPass").value="";
+  note("rNote","Password saved.","ok"); history.replaceState(null,"",location.pathname);
+  $("status").textContent="Your new password is saved. Use it next time you sign in.";
+  refresh();
 });
 $("btnSignOut").addEventListener("click", async ()=>{ await sb.auth.signOut(); });
 
@@ -1424,10 +1438,19 @@ setMode(userMode);
 try{ if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))){ const t=localStorage.getItem("wo-theme"); if(t) applyTheme(t); } }catch(e){}
 $("lDate").value=todayStr();
 sb.auth.onAuthStateChange((event, session)=>{
-  if(event==="PASSWORD_RECOVERY"){ S.user=session.user; show("vReset"); return; }
+  if(event==="PASSWORD_RECOVERY") S.recovering=true;
+  if(S.recovering && session){ S.user=session.user; show("vReset"); return; }
   const was=S.user && S.user.id;
   S.user=session?session.user:null;
-  if(!S.user){ S.profile=null; show("vAuth"); setAuthTab(S.authTab); return; }
+  if(!S.user){
+    S.profile=null; S.recovering=false; show("vAuth"); setAuthTab(S.authTab);
+    if(LINK.error){
+      const expired=/expired|invalid|access_denied/i.test(LINK.error+" "+LINK.errorText);
+      note("aNote", expired ? "That email link has expired or was already used. Enter your email and click Forgot password to get a new one." : "That email link didn't work: "+(LINK.errorText||LINK.error), "err");
+      LINK.error=""; history.replaceState(null,"",location.pathname);
+    }
+    return;
+  }
   if(was!==S.user.id || event==="SIGNED_IN" || event==="INITIAL_SESSION") setTimeout(()=>refresh(),0);
 });
 </script>
