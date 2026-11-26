@@ -837,7 +837,7 @@ function step(dt){
         if((px-r.x)*(man.x-r.x)<=0&&px!==man.x&&Math.abs(man.y-ry)<r.r*.78){r.got=true;r.t=0;man.rings++;
           ding(880+man.rings*140);floatText(r.x,ry+r.r+30,'RING +75','#7dffa1');
           for(let i=0;i<24;i++){const a=rnd(0,TAU);parts.push({x:r.x,y:ry+Math.sin(a)*r.r,vx:rnd(-160,160),vy:rnd(-60,200),life:rnd(.5,1),max:1,col:i%2?'#ffc93c':'#7dffa1',r:rnd(3,6),g:300,sq:1,rot:rnd(0,6)})}}}
-      for(const z of hazards){if(z.hit)continue;const p=hzPos(z);if(hitHazard(z,p)){bonk(z,p);break}}
+      for(const z of hazards){if(z.hit||z.type==='bird'||z.type==='gull'||z.type==='parrot')continue;const p=hzPos(z);if(hitHazard(z,p)){bonk(z,p);break}}
       if(S.state==='fly'&&man.vy<0&&man.bounces+man.sky<5)for(const o of bouncers){const top=bobY(o)+o.top;if(Math.abs(man.x-o.x)<o.hw&&py-HALF>=top-6&&man.y-HALF<top){skyBounce(o,top);break}}
       let done=false;
       for(const b of city){
@@ -1042,6 +1042,7 @@ function drawHazards(){
     ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
     if(z.type==='bird'||z.type==='gull'||z.type==='parrot'){
       const gull=z.type==='gull',par=z.type==='parrot';
+      ctx.scale(.55,.55);
       [[0,0],[-34,14],[-34,-14]].forEach((o,i)=>{ctx.save();ctx.translate(o[0]*p.face,-o[1]);ctx.scale(p.face,1);
         const fl=Math.sin(perfNow/(z.hit?50:110)+i*1.7)*10;
         ctx.lineCap='round';ctx.lineJoin='round';
