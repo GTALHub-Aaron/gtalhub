@@ -675,9 +675,10 @@ function finishLanding(){
   showVictory(total,onPad?'BULLSEYE!':man.quality==='clean'?'NAILED IT!':'NICE!');ding(660);setTimeout(()=>ding(990),120);crowd(big);
   updateUI();
   const lastDaily=S.daily&&S.jumps>=DAILY_JUMPS;
-  setTimeout(()=>showMsg(man.quality==='clean'?(onPad?'Bullseye!':'Nailed it!'):'Sloppy… but alive!',
+  const fin=()=>showMsg(man.quality==='clean'?(onPad?'Bullseye!':'Nailed it!'):'Sloppy… but alive!',
     `<ul>${rows.map(r=>`<li><span>${r[0]}</span><b>+${r[1]}</b></li>`).join('')}<li><span><b>Jump total</b></span><b>${total}</b></li></ul>${goalLine()}${newsHtml(news)}`,
-    [[lastDaily?'See results':'Next jump',()=>{if(lastDaily)endDaily(true);else{S.level++;makeCity();resetMan();hideMsg()}}]]),2150);
+    [[lastDaily?'See results':'Next jump',()=>{if(lastDaily)endDaily(true);else{S.level++;makeCity();resetMan();hideMsg()}}]]);
+  if(VIC)VIC.done=fin;else setTimeout(fin,900);
 }
 function bank(pts){
   const before=openOutfits(),beforeC=openCannons(),news=[];
@@ -1306,10 +1307,12 @@ function drawChamp(c,o,t){
   glove(c,o,arms[0][4],arms[0][5],'point',-.08);glove(c,o,arms[1][4],arms[1][5],'thumb',.1);
   drawHead(c,o,0,-22);
 }
-function showVictory(total,title){VIC={start:perfNow,total,title}}
+function showVictory(total,title){VIC={start:perfNow,total,title,D:10,closeAt:0,done:null}}
+function closeVictory(){if(!VIC||VIC.closeAt)return false;VIC.closeAt=perfNow;return true}
 function drawVictory(){
-  if(!VIC)return;const t=(perfNow-VIC.start)/1000,D=2.1;if(t>D){VIC=null;return}
-  const inT=Math.min(1,t/.32),outT=Math.max(0,(t-(D-.28))/.28),ease=1-Math.pow(1-inT,3),pop=inT<1?1+Math.sin(inT*Math.PI)*.08:1;
+  if(!VIC)return;const t=(perfNow-VIC.start)/1000;if(!VIC.closeAt&&t>VIC.D)VIC.closeAt=perfNow;
+  const ct=VIC.closeAt?(perfNow-VIC.closeAt)/1000:0;if(ct>.28){const cb=VIC.done;VIC=null;if(cb)cb();return}
+  const inT=Math.min(1,t/.32),outT=Math.min(1,ct/.28),ease=1-Math.pow(1-inT,3),pop=inT<1?1+Math.sin(inT*Math.PI)*.08:1;
   const w=Math.min(W*.7,640),h=Math.min(w*.52,H*.62),cx=W/2,cy=H*.46+(1-ease)*H*.7+outT*H*.7;
   ctx.save();ctx.globalAlpha=1-outT;ctx.translate(cx,cy);ctx.scale(pop,pop);
   const r=h*.1;ctx.fillStyle='#e8453c';ctx.beginPath();ctx.roundRect(-w/2-8,-h/2-8,w+16,h+16,r+6);ctx.fill();
@@ -1327,8 +1330,11 @@ function drawVictory(){
   ctx.font=`400 ${fs}px Bungee,Impact,sans-serif`;ctx.strokeStyle='#ffffff';ctx.lineWidth=fs*.16;ctx.strokeText(num,0,0);ctx.fillStyle='#c8261d';ctx.fillText(num,0,0);
   const f2=fs*.42;ctx.font=`400 ${f2}px Bungee,Impact,sans-serif`;ctx.lineWidth=f2*.18;ctx.strokeText('POINTS',0,fs*.72);ctx.fillText('POINTS',0,fs*.72);
   if(VIC.title){const f3=fs*.3;ctx.font=`400 ${f3}px Bungee,Impact,sans-serif`;ctx.lineWidth=f3*.2;ctx.strokeStyle=NAVY;ctx.strokeText(VIC.title,0,-fs*.72);ctx.fillStyle='#ffc93c';ctx.fillText(VIC.title,0,-fs*.72)}
-  ctx.restore();ctx.textBaseline='alphabetic';ctx.restore();
+  ctx.restore();
+  if(t>1.2){const a=Math.min(1,(t-1.2)/.4)*(.65+.35*Math.sin(t*4));ctx.globalAlpha=(1-outT)*a;const f4=Math.max(12,h*.065);ctx.font=`400 ${f4}px Bungee,Impact,sans-serif`;ctx.fillStyle=NAVY;ctx.fillText('TAP TO CONTINUE',-w*.2,h/2-f4*1.1)}
+  ctx.textBaseline='alphabetic';ctx.restore();
 }
+document.querySelector('.fig').addEventListener('pointerdown',e=>{if(closeVictory()){e.preventDefault();e.stopPropagation()}},true);
 
 function drawMan(){
   if(S.state==='aim')return;
@@ -1443,6 +1449,7 @@ $('hq').onclick=()=>{if(S.state==='aim'||!S.inShow||$('msg').classList.contains(
 const KEYT={'1':'hero','2':'eagle','3':'click',z:'hero',x:'eagle',c:'click'};
 addEventListener('keydown',e=>{
   if(e.repeat)return;
+  if(VIC&&(e.key===' '||e.key==='Enter'||e.key==='Escape')){e.preventDefault();closeVictory();return}
   if($('helppop').classList.contains('on')){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();closeHelp()}return}
   const k=e.key.toLowerCase();
   if(KEYT[k]){startTrick(KEYT[k]);return}
