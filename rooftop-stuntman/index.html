@@ -92,6 +92,7 @@ h1 span{color:var(--red)}
 .helppop.on{display:grid}
 .helppop .card{max-width:520px;text-align:left}
 .helppop h2{text-align:center}
+.helppop .ver{font-size:12.5px;color:#5a5680;text-align:center;margin:10px 0 0}
 .helppop ul{font-size:15px}
 .helppop li{display:block!important;border-bottom:1px dashed #1b184033}
 .helppop kbd{background:#2e2b6e;border-radius:5px;padding:1px 6px;font:600 13px Rubik,sans-serif;color:var(--ink)}
@@ -258,7 +259,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 <li>Collect stickers for cool moves. More stickers unlock pets that fly along with you. Tap the sun, moon and clouds for surprises!</li>
 <li>Fame unlocks stuntmen, stats unlock cannon skins, and there's a new Daily Challenge every day.</li>
 <li>Keys: <kbd>Space</kbd> launch / flip, <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> tricks.</li></ul>
-<div class="row"><button class="btn" id="helpOk"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9.5 18 20 6.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Got it</button></div></div></div>
+<div class="row"><button class="btn alt" id="helpRefresh"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M19.8 3.5v4.6h-4.6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Update game</span></button><button class="btn" id="helpOk"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9.5 18 20 6.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Got it</button></div><p class="ver">Game version: Nov 26, 2026 (stickers &amp; pets). Update game loads the newest version and keeps your progress.</p></div></div>
 <script>
 {
 const cv=document.getElementById('cv'),fig=document.getElementById('fig'),ctx=cv.getContext('2d');
@@ -1787,6 +1788,11 @@ cv.addEventListener('pointerdown',e=>{if(S.state==='fly'||S.state==='fall')S.tuc
 let helpWasPaused=false,helpOn=false;
 function openHelp(){if($('helppop').classList.contains('on'))return;helpWasPaused=S.paused;S.paused=true;helpOn=true;S.tuck=false;$('helppop').classList.add('on');$('helpOk').focus({preventScroll:true})}
 function closeHelp(){helpOn=false;$('helppop').classList.remove('on');S.paused=helpWasPaused;updateUI()}
+async function refreshGame(){const b=$('helpRefresh');b.disabled=true;b.querySelector('span').textContent='Updating...';
+  try{const k=await caches.keys();await Promise.all(k.filter(x=>x.startsWith('rooftop-stuntman-')).map(x=>caches.delete(x)))}catch(e){}
+  try{const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)await r.update()}catch(e){}
+  location.replace(location.pathname+'?r='+Date.now())}
+$('helpRefresh').onclick=refreshGame;
 $('qbtn').onclick=openHelp;$('helpOk').onclick=closeHelp;$('helppop').onclick=e=>{if(e.target.id==='helppop')closeHelp()};
 $('hq').onclick=()=>{if(S.state==='aim'||!S.inShow||$('msg').classList.contains('on'))openHQ()};
 const KEYT={'1':'hero','2':'eagle','3':'click',z:'hero',x:'eagle',c:'click'};

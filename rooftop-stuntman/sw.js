@@ -2,7 +2,7 @@
    First visit with internet: saves the app, its icons and its font on the device.
    After that the app opens without internet. When online, it still fetches the newest page first,
    so updates show up on the next launch. Bump VERSION whenever these files change. */
-const VERSION = 'rooftop-stuntman-v17';
+const VERSION = 'rooftop-stuntman-v18';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;600;800&display=swap';
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
@@ -19,7 +19,7 @@ async function cacheFont(cache) {
 }
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(async c => { await c.addAll(CORE); await cacheFont(c); }).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(async c => { await c.addAll(CORE.map(u => new Request(u, { cache: 'reload' }))); await cacheFont(c); }).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -49,7 +49,7 @@ self.addEventListener('fetch', e => {
   // The app page: newest version when online (gives up after 8 s), saved copy when offline
   if (req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html')) {
     e.respondWith(caches.open(VERSION).then(c =>
-      Promise.race([fetch(req, { cache: 'no-cache' }), timeout(8000)])
+      Promise.race([fetch(url.href, { cache: 'no-store', credentials: 'same-origin' }), timeout(8000)])
         .then(r => { if (r.ok) c.put('./index.html', r.clone()); return r; })
         .catch(async () => (await c.match('./index.html')) || (await c.match('./')) || Response.error())));
     return;
