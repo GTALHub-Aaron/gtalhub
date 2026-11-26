@@ -274,7 +274,7 @@ const STAGES=[
  {id:'neon',bouncer:'blimp',name:'Neon Nights',desc:'Taller towers, skinnier roofs.',goal:1800,G:640,V:1080,fric:1,hz:'blimp',
   sky:['#05030f','#140a33','#2f0f55','#5a1866'],moon:'#f3e9ff',stars:1,far:'#1d0f3a',
   bld:[[24,18,50],[32,20,62],[18,22,52],[36,16,60]],win:['#ff3fd0','#34f5ff','#fff45c'],off:'#100c24',ledge:'#ff3fd0',street:'#120a24',line:'#34f5ff',hMin:480,hMax:1180,wMin:105,wMax:180},
- {id:'frost',bouncer:'santa',name:'Frostbite City',desc:'Icy roofs. Expect to slide.',goal:2200,G:640,V:1080,fric:.42,snow:true,hz:'bird',
+ {id:'frost',bouncer:'santa',name:'Frostbite City',desc:'Icy roofs. Expect to slide.',goal:2200,G:640,V:1080,fric:.52,snow:true,hz:'bird',
   sky:['#1c3561','#3e6aa3','#9cc4e8','#e6f2ff'],sun:'#fff7dc',stars:.2,far:'#6584b3',
   bld:[[70,90,132],[60,78,118],[84,100,142],[58,70,108]],win:['#fff1b8'],off:'#3a4a6e',ledge:'#ffffff',street:'#d9e6f5',line:'#9cb3d1',hMin:380,hMax:1080,wMin:130,wMax:230},
  {id:'harbor',bouncer:'beachball',name:'Windy Harbor',desc:'Gusts push you around. Watch the flag.',goal:2500,G:640,V:1080,fric:1,wind:true,water:true,hz:'gull',
@@ -434,14 +434,17 @@ const SPLATS=['stars','bump','pancake','chicks'];
 const HARMLESS={bird:1,gull:1,parrot:1,ptero:1};
 const HZBOX={blimp:[105,44],saucer:[66,30],balloon:[34,50],plane:[44,16],ptero:[58,24]};
 const BOB={hotair:[58,62],blimp:[72,40],santa:[58,34],beachball:[40,44],bubble:[42,48],gumdrop:[46,36],ball:[40,44],dino:[52,20],jelly:[46,38]};
+// extra bounce zones beside the main one: [x offset, half width, top] (Santa's reindeer)
+const BZX={santa:[[133,63,10]]};
+const bZones=o=>[[0,o.hw,o.top],...(BZX[o.type]||[])];
 function makeBouncers(){
-  bouncers=[];if(pad.a==null||!ST.bouncer)return;const count=S.level>=4?2:1,[hw,top]=BOB[ST.bouncer];
+  bouncers=[];if(pad.a==null||!ST.bouncer)return;const count=S.level>=4?2:1,[hw,top]=BOB[ST.bouncer],ext=Math.max(hw,...(BZX[ST.bouncer]||[]).map(z=>z[0]+z[1]));
   const xs=CANX+Math.cos(pad.a*Math.PI/180)*BARREL,x0=xs+260,x1=pad.cx-220;if(x1<=x0)return;
   for(let tries=0;tries<40&&bouncers.length<count;tries++){
-    const x=grnd(x0,x1),y=trajY(pad.a,x)-grnd(190,290);
-    if(y<underAt(x,hw+40)+top+150)continue;
-    if(rings.some(r=>Math.abs(r.x-x)<170)||hazards.some(z=>Math.abs(z.x-x)<300)||bouncers.some(o=>Math.abs(o.x-x)<380))continue;
-    let ok=true;for(let px=xs;px<pad.cx;px+=10)if(Math.abs(px-x)<hw+60&&trajY(pad.a,px)-(y+top+14)<90){ok=false;break}
+    const x=grnd(x0,Math.max(x0,x1-(ext-hw))),y=trajY(pad.a,x)-grnd(190,290);
+    if(y<underAt(x+(ext-hw)/2,(hw+ext)/2+40)+top+150)continue;
+    if(rings.some(r=>Math.abs(r.x-x)<170)||hazards.some(z=>Math.abs(z.x-x)<300)||bouncers.some(o=>Math.abs(o.x-x)<380+(ext-hw)))continue;
+    let ok=true;for(let px=xs;px<pad.cx;px+=10)if(px>x-hw-60&&px<x+ext+60&&trajY(pad.a,px)-(y+top+14)<90){ok=false;break}
     if(!ok)continue;bouncers.push({type:ST.bouncer,x,y,hw,top,t:9,ph:GR()*TAU});
   }
 }
@@ -631,8 +634,8 @@ function land(b){
   dust(man.x,b.h,14);
   if(r>=2.15){thump('rough',1,.5);floatText(man.x,b.h+90,'HEAD FIRST!','#ff6a5c');toRag('You landed on your head. The crowd winced.',260,.4);return}
   const posing=!!S.trick;
-  if(r<.75&&!posing){thump('good',.9,.5);man.quality='clean';man.vx*=ST.fric<1?.55:.38}
-  else{thump('rough',.8,.5);if(Math.random()<.75)say('rough',.03);man.quality='sloppy';man.vx*=ST.fric<1?.4:.22;if(posing)floatText(man.x,b.h+120,'STILL POSING!','#ffd36b')}
+  if(r<.75&&!posing){thump('good',.9,.5);man.quality='clean';man.vx*=ST.fric<1?.48:.33}
+  else{thump('rough',.8,.5);if(Math.random()<.75)say('rough',.03);man.quality='sloppy';man.vx*=ST.fric<1?.34:.19;if(posing)floatText(man.x,b.h+120,'STILL POSING!','#ffd36b')}
   man.rot=0;man.vy=0;S.state='slide';S.trick=null;updateUI();
 }
 function bounce(b,fromSlide){
@@ -864,7 +867,7 @@ function step(dt){
           ding(880+man.rings*140);floatText(r.x,ry+r.r+30,'RING +75','#7dffa1');
           for(let i=0;i<24;i++){const a=rnd(0,TAU);parts.push({x:r.x,y:ry+Math.sin(a)*r.r,vx:rnd(-160,160),vy:rnd(-60,200),life:rnd(.5,1),max:1,col:i%2?'#ffc93c':'#7dffa1',r:rnd(3,6),g:300,sq:1,rot:rnd(0,6)})}}}
       for(const z of hazards){if(z.hit||HARMLESS[z.type])continue;const p=hzPos(z);if(hitHazard(z,p)){bonk(z,p);break}}
-      if(S.state==='fly'&&man.vy<0&&man.bounces+man.sky<5)for(const o of bouncers){const top=bobY(o)+o.top;if(Math.abs(man.x-o.x)<o.hw&&py-HALF>=top-6&&man.y-HALF<top){skyBounce(o,top);break}}
+      if(S.state==='fly'&&man.vy<0&&man.bounces+man.sky<5)for(const o of bouncers){let hit=false;for(const [dx,hw,tp] of bZones(o)){const top=bobY(o)+tp;if(Math.abs(man.x-o.x-dx)<hw&&py-HALF>=top-6&&man.y-HALF<top){skyBounce(o,top);hit=true;break}}if(hit)break}
       let done=false;
       for(const b of city){
         if(man.x>b.x&&man.x<b.x+b.w){
@@ -899,7 +902,7 @@ function step(dt){
     if(man.rest>.7&&S.state==='rag'){S.state='done';miss(man.ragWhy)}
   }
   if(S.state==='slide'){
-    const b=man.b,fr=(man.quality==='clean'?1500:2200)*ST.fric;
+    const b=man.b,fr=(man.quality==='clean'?2000:2800)*ST.fric;
     man.vx=Math.max(0,man.vx-fr*dt);man.x+=man.vx*dt;
     if(Math.random()<.5&&man.vx>40)dust(man.x,b.h,1);
     if(b.tramp&&man.bounces<4&&man.quality!=='wall'&&Math.abs(man.x-b.tramp.x)<b.tramp.w/2&&man.vx>30)bounce(b,true);
@@ -1562,7 +1565,7 @@ function drawFireworks(dt){
 }
 
 // --- tap the sky ---
-const SKYFX={sun:-9,moon:-9,earth:-9,cloud:[-9,-9,-9,-9,-9]},SKYP=[];
+const SKYFX={sun:-1e9,moon:-1e9,earth:-1e9,cloud:[-1e9,-1e9,-1e9,-1e9,-1e9]},SKYP=[];
 const CHIME=[523,587,659,784,880,1047,1175,1319];
 function chime(i){if(!audio())return;const f=CHIME[i%CHIME.length];tone('triangle',f,f,.45,.16);setTimeout(()=>tone('sine',f*2,f*2,.3,.05),20)}
 function skySpark(x,y,n,cols){for(let i=0;i<n;i++){const a=rnd(0,TAU),v=rnd(60,200);SKYP.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,life:rnd(.6,1.1),max:1.1,col:cols[i%cols.length],r:rnd(4,8),rot:rnd(0,6)})}}
