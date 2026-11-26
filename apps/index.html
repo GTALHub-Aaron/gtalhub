@@ -362,12 +362,32 @@ const BANNERS = {
     `<linearGradient id="rsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16124a"/><stop offset=".55" stop-color="#5b2d7a"/><stop offset=".9" stop-color="#e0624a"/><stop offset="1" stop-color="#ffb35c"/></linearGradient>`);
   },
 
+  // Rocket Builder: a little rocket lifts off its pad past drifting clouds
+  rocket: () => SVG(`
+    <rect width="400" height="130" fill="url(#rkSky)"/>
+    ${[[30,18],[78,40],[130,12],[205,26],[286,14],[352,44],[380,16],[168,52]].map(([x,y],i) => `<circle cx="${x}" cy="${y}" r="1.3" fill="#fff"><animate attributeName="opacity" values=".15;1;.15" dur="${2 + i % 3}s" repeatCount="indefinite"/></circle>`).join("")}
+    <circle cx="250" cy="30" r="14" fill="#f4efdc"/><circle cx="245" cy="26" r="3.5" fill="#d8d0b4"/><circle cx="255" cy="35" r="2.5" fill="#d8d0b4"/>
+    <g><animateTransform attributeName="transform" type="translate" from="0 0" to="-400 0" dur="22s" repeatCount="indefinite"/>${[0, 400].map(o => [[40, 62, .9], [250, 48, .7], [150, 80, .6]].map(([x, y, s]) => `<g transform="translate(${x + o} ${y}) scale(${s})" fill="#fff" fill-opacity=".9"><circle r="10"/><circle cx="12" cy="-5" r="13"/><circle cx="26" r="10"/><rect width="26" height="10"/></g>`).join("")).join("")}</g>
+    <path d="M0 108 Q60 92 120 104 T240 100 T400 104 V130 H0z" fill="#5cbf4f"/><rect y="112" width="400" height="18" fill="#3d9a3a"/>
+    <path d="M44 112 l12-30 12 30z M300 112 l10-24 10 24z M330 112 l13-34 13 34z" fill="#2f9e57"/>
+    <rect x="170" y="108" width="60" height="6" fill="#b9bfcc"/><g fill="#ffd23f">${[0, 1, 2, 3, 4].map(i => `<rect x="${172 + i * 12}" y="108" width="6" height="2"/>`).join("")}</g>
+    <path d="M168 108 V58 M162 108 V58" stroke="#e8413b" stroke-width="2.5"/><path d="M162 104 L168 98 M162 94 L168 88 M162 84 L168 78 M162 74 L168 68" stroke="#e8413b" stroke-width="1.2"/>
+    ${[0, 1, 2].map(i => `<circle cx="200" cy="110" r="5" fill="#eef" opacity="0"><animate attributeName="r" values="4;16" dur="2s" begin="${i * .6}s" repeatCount="indefinite"/><animate attributeName="cx" values="200;${i % 2 ? 178 : 222}" dur="2s" begin="${i * .6}s" repeatCount="indefinite"/><animate attributeName="opacity" values=".8;0" dur="2s" begin="${i * .6}s" repeatCount="indefinite"/></circle>`).join("")}
+    <g><animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 -150" keyTimes="0;.35;1" keySplines="0 0 1 1;.5 0 1 1" calcMode="spline" dur="4.5s" repeatCount="indefinite"/>
+      <path d="M194 105 Q200 128 206 105z" fill="#ff8a1f"><animate attributeName="d" values="M194 105 Q200 124 206 105z;M193 105 Q200 132 207 105z;M194 105 Q200 124 206 105z" dur=".18s" repeatCount="indefinite"/></path>
+      <path d="M196 105 Q200 116 204 105z" fill="#ffe066"/>
+      <path d="M192 102 L188 108 L194 104z M208 102 L212 108 L206 104z" fill="#e8413b"/>
+      <rect x="193" y="99" width="14" height="6" fill="#8d94a8"/>
+      <rect x="191" y="66" width="18" height="34" rx="2" fill="#f3f5f8"/><rect x="191" y="72" width="18" height="4" fill="#e8413b"/><rect x="191" y="90" width="18" height="3" fill="#e8413b"/>
+      <circle cx="200" cy="83" r="3.6" fill="#2f7cf6" stroke="#c9ced9" stroke-width="1.4"/>
+      <path d="M191 66 Q191 54 200 46 Q209 54 209 66z" fill="#e8413b"/>
+    </g>`, `<linearGradient id="rkSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d3d8f"/><stop offset=".55" stop-color="#4a9ff0"/><stop offset="1" stop-color="#8fd3ff"/></linearGradient>`),
   // anything new without its own scene yet
   other: () => SVG(`<rect width="400" height="130" fill="#0d0d14"/><rect width="400" height="130" fill="url(#gnGrid)"/><circle cx="200" cy="72" r="34" fill="#00ff88" opacity=".08"/><path d="M182 72 h36 M200 54 v36" stroke="#00ff88" stroke-width="3" opacity=".6"/>`, grid("gnGrid", 24, "#00ff88", .08))
 };
 function bannerFor(a) {
   const k = `${a.url} ${a.name}`.toLowerCase();
-  return (/stunt|rooftop/.test(k) ? BANNERS.stunt : /mirror/.test(k) ? BANNERS.mirror : /gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
+  return (/rocket/.test(k) ? BANNERS.rocket : /stunt|rooftop/.test(k) ? BANNERS.stunt : /mirror/.test(k) ? BANNERS.mirror : /gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
     : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : /marble/.test(k) ? BANNERS.marble : BANNERS.other)();
 }
 
