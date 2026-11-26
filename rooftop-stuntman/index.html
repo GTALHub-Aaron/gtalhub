@@ -378,6 +378,11 @@ function makeCity(){
   city=[];let x=grnd(360,460);const n=6+Math.min(S.level,3);
   for(let i=0;i<n;i++){
     const w=grnd(ST.wMin,ST.wMax),h=grnd(ST.hMin,Math.min(ST.hMax-230+S.level*40,ST.hMax));
+    if(i>0&&GR()<.4){
+      // two-tier roof: a wide lower deck with a taller section behind it that stops you sliding off
+      const wl=Math.max(150,w*.62+40),wu=grnd(80,120),hu=h+grnd(80,140),col=`rgb(${ST.bld[i%4]})`,sd=GR()*1e4;
+      const lo={x,w:wl,h,col,seed:sd,tower:false,ant:false,tramp:null},up={x:x+wl,w:wu,h:hu,col,seed:sd+7,tower:GR()<.5,ant:GR()<.4,tramp:null,lowerL:lo};
+      lo.wallR=up;city.push(lo,up);x+=wl+wu+grnd(50,170-Math.min(S.level*8,60));continue}
     city.push({x,w,h,col:`rgb(${ST.bld[i%4]})`,seed:GR()*1e4,tower:GR()<.35,ant:GR()<.3,tramp:null});
     x+=w+grnd(50,170-Math.min(S.level*8,60));
   }
@@ -646,6 +651,10 @@ function bounce(b,fromSlide){
   for(let i=0;i<12;i++)parts.push({x:t.x+rnd(-30,30),y:b.h+20,vx:rnd(-120,120),vy:rnd(80,260),life:rnd(.4,.8),max:.8,col:'#ffffff',r:rnd(3,6),g:500});
   updateUI();
 }
+function tierBump(b){
+  man.x=b.x-8;man.vx=0;man.vy=Math.min(man.vy,0);man.rot=0;man.fspin=0;S.tuck=false;S.trick=null;
+  if(S.state!=='fall'){S.state='fall';thump('rough',.5,.4);dust(man.x,man.y,6);floatText(man.x,man.y+60,'BUMP!','#ffd36b');updateUI()}
+}
 function splat(b,fromLeft){
   S.state='splat';man.x=fromLeft?b.x-7:b.x+b.w+7;man.splatDir=fromLeft?1:-1;man.splatT=0;man.vx=0;man.vy=0;man.rot=0;S.tuck=false;S.trick=null;
   sticker('splat');man.quality='wall';dust(man.x,man.y,10);thump('wall',1,.8);ouch();floatText(man.x,man.y+70,'SPLAT!','#ff6a5c');updateUI();
@@ -874,7 +883,8 @@ function step(dt){
           const top=b.h,t=b.tramp;
           if(t&&S.state==='fly'&&man.bounces<4&&Math.abs(man.x-t.x)<t.w/2&&py-HALF>=top+17&&man.y-HALF<top+18&&man.vy<0){bounce(b,false);done=true;break}
           if(py-HALF>=top-1&&man.y-HALF<top&&man.vy<0){land(b);done=true;break}
-          if(man.y-HALF<top-4){if(S.state==='fall'){man.x=px<=b.x+b.w/2?b.x-7:b.x+b.w+7;man.vx=0;continue}splat(b,px<=b.x+b.w/2);done=true;break}
+          if(man.y-HALF<top-4){if(b.lowerL&&px<=b.x+b.w/2&&man.y-HALF>=b.lowerL.h-2){tierBump(b);continue}
+            if(S.state==='fall'){man.x=px<=b.x+b.w/2?b.x-7:b.x+b.w+7;man.vx=0;continue}splat(b,px<=b.x+b.w/2);done=true;break}
         }
       }
       if(done&&S.state!=='fly')break;
@@ -906,6 +916,7 @@ function step(dt){
     man.vx=Math.max(0,man.vx-fr*dt);man.x+=man.vx*dt;
     if(Math.random()<.5&&man.vx>40)dust(man.x,b.h,1);
     if(b.tramp&&man.bounces<4&&man.quality!=='wall'&&Math.abs(man.x-b.tramp.x)<b.tramp.w/2&&man.vx>30)bounce(b,true);
+    else if(b.wallR&&man.x>b.x+b.w-14){man.x=b.x+b.w-14;if(man.vx>60){thump('rough',.35,.3);floatText(man.x,b.h+90,'NICE STOP!','#7dffa1')}man.vx=0;finishLanding()}
     else if(man.x>b.x+b.w-4){S.state='fall';man.x=b.x+b.w+3;man.vx=Math.max(man.vx,60);man.vy=0;man.fspin=1.2;man.b=null;man.quality='edge';floatText(man.x,b.h+80,'WHOA!','#ff6a5c');updateUI()}
     else if(man.vx<=0)finishLanding();
   }
@@ -967,8 +978,8 @@ function drawBuilding(b){
   const sc=cam.sc,x=sx(b.x),w=b.w*sc,top=sy(b.h),bot=Math.min(H,sy(0));if(x>W||x+w<0||top>H)return false;
   if(ST.style&&b!==LTOWER){drawStyled(b,sc,x,w,top,bot);return true}
   ctx.fillStyle=b.col;ctx.fillRect(x,top,w,bot-top);
-  ctx.fillStyle='#ffffff14';ctx.fillRect(x,top,w*.12,bot-top);
-  ctx.fillStyle='#0000002e';ctx.fillRect(x+w*.82,top,w*.18,bot-top);
+  if(!b.lowerL){ctx.fillStyle='#ffffff14';ctx.fillRect(x,top,w*.12,bot-top)}
+  if(!b.wallR){ctx.fillStyle='#0000002e';ctx.fillRect(x+w*.82,top,w*.18,bot-top)}
   const cols=Math.floor((b.w-20)/26),rows=Math.floor((b.h-30)/30),ox=(b.w-cols*26)/2+5,wl=ST.win.length;
   for(let r=0;r<rows;r++){const wy=sy(b.h-18-r*30);if(wy<-20)continue;if(wy>H)break;
     for(let c=0;c<cols;c++){const v=hash(b.seed+r*13+c*7);ctx.fillStyle=v>.45?ST.win[Math.floor(hash(b.seed+r*5+c*3)*wl)]:ST.off;ctx.fillRect(sx(b.x+ox+c*26),wy,14*sc,16*sc)}}
