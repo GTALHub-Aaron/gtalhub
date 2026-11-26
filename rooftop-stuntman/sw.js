@@ -2,7 +2,7 @@
    First visit with internet: saves the app, its icons and its font on the device.
    After that the app opens without internet. When online, it still fetches the newest page first,
    so updates show up on the next launch. Bump VERSION whenever these files change. */
-const VERSION = 'rooftop-stuntman-v16';
+const VERSION = 'rooftop-stuntman-v17';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;600;800&display=swap';
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
@@ -25,7 +25,10 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
     .then(keys => Promise.all(keys.filter(k => k.startsWith('rooftop-stuntman-') && k !== VERSION).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
+    .then(() => self.clients.claim())
+    // Reload any open copy of the game so it switches to the newest version right away
+    .then(() => self.clients.matchAll({ type: 'window' }))
+    .then(list => Promise.all(list.map(c => c.navigate(c.url).catch(() => {})))));
 });
 
 const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
@@ -43,10 +46,10 @@ self.addEventListener('fetch', e => {
   }
   if (url.origin !== location.origin) return;
 
-  // The app page: newest version when online (gives up after 4 s), saved copy when offline
+  // The app page: newest version when online (gives up after 8 s), saved copy when offline
   if (req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html')) {
     e.respondWith(caches.open(VERSION).then(c =>
-      Promise.race([fetch(req, { cache: 'no-cache' }), timeout(4000)])
+      Promise.race([fetch(req, { cache: 'no-cache' }), timeout(8000)])
         .then(r => { if (r.ok) c.put('./index.html', r.clone()); return r; })
         .catch(async () => (await c.match('./index.html')) || (await c.match('./')) || Response.error())));
     return;
