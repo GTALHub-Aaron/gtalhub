@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Flurry | The Print Shop | GTALHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Nunito+Sans:wght@400;600;700&family=Fredoka:wght@600&family=Pacifico&family=Mountains+of+Christmas:wght@700&family=Lilita+One&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0c1110);--ink:light-dark(#15211d,#e9efec);--mut:light-dark(#5a6a64,#9aaca5);--line:light-dark(#e0e6e3,#25312d);--card:light-dark(#f5f8f7,#131b19);--pine:#0f3b2e;--pine2:#092a20;--berry:#c8102e;--berry-ink:light-dark(#a50d26,#ff7584);--chip:light-dark(#ffffff,#1b2522)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Nunito Sans",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--berry);color:#fff;padding:20px max(4vw,16px) 18px}
+header .in{max-width:1240px;margin:auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 18px}
+.back{color:#fff;font:700 14px "Nunito Sans",sans-serif;text-decoration:none;width:100%;opacity:.9}
+.back:hover{text-decoration:underline;opacity:1}
+h1{font:700 clamp(30px,4vw,40px)/1.05 Sora,sans-serif;margin:0}
+header p{margin:0;max-width:66ch;opacity:.95}
+main{max-width:1240px;margin:auto;padding:16px max(3vw,12px) 48px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tab{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:700 15px/1 "Nunito Sans",sans-serif;cursor:pointer}
+.tab[aria-selected=true]{background:var(--pine);border-color:var(--pine);color:#fff}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media(max-width:760px){.stage{grid-template-columns:minmax(0,1fr)}}
+.pane{position:relative;aspect-ratio:1/1;max-height:82vh;border-radius:16px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#18533f 0%,var(--pine) 55%,var(--pine2) 100%)}
+.pane canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#c2{cursor:crosshair}
+.bar{position:absolute;top:10px;left:10px;right:10px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.bar>*{pointer-events:auto}
+.bar .sp{flex:0 0 8px;pointer-events:none}
+.chip{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid rgba(255,255,255,.25);background:rgba(4,28,21,.6);color:#fff;font:700 14px/1 "Nunito Sans",sans-serif;cursor:pointer;backdrop-filter:blur(6px)}
+.chip[aria-pressed=true]{background:#fff;color:var(--pine);border-color:#fff}
+.chip:hover{border-color:rgba(255,255,255,.6)}
+.chip.rand{background:var(--berry);border-color:var(--berry)}
+.chip.rand:hover{background:#e0213f}
+.hint{position:absolute;left:14px;bottom:10px;max-width:58%;margin:0;color:rgba(255,255,255,.82);font-size:13px;line-height:1.35;pointer-events:none}
+#p3 .hint{max-width:none;right:14px}
+.tag{position:absolute;top:12px;left:14px;margin:0;color:#fff;font:700 15px/1.2 Sora,sans-serif;pointer-events:none}
+.tag small{display:block;font:600 13px/1.4 "Nunito Sans",sans-serif;color:#ffd0d6}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+@media(max-width:980px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.controls{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 12px}
+.card h2{font:700 17px/1.2 Sora,sans-serif;margin:0 0 8px}
+.lbl{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+.rng{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 8px;margin:6px 0;font-size:14px;font-weight:600}
+.rng input{grid-column:1/-1;width:100%;height:30px;accent-color:var(--berry)}
+output{font-variant-numeric:tabular-nums;color:var(--mut);white-space:nowrap;font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{flex:1 1 auto;min-height:40px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:600 14px/1 "Nunito Sans",sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--berry);border-color:var(--berry);color:#fff}
+.chk{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px;font-weight:600;cursor:pointer}
+.chk input{width:20px;height:20px;accent-color:var(--berry)}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:700 15px/1 "Nunito Sans",sans-serif;cursor:pointer}
+.btn.primary{width:100%;background:var(--berry);border-color:var(--berry);color:#fff;margin-top:12px}
+input[type=text]{width:100%;font:16px "Nunito Sans",sans-serif;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid #ffb3bd;outline-offset:2px}
+dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:12px 0 0;font-size:14px}
+dt{color:var(--mut)}dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.status{min-height:1.4em;margin:8px 0 0;font-size:14px}
+.warn{color:var(--berry-ink);font-weight:700}
+.note{font-size:13px;color:var(--mut);margin:10px 0 0}
+</style>
+</head>
+<body>
+<header><div class="in"><a class="back" href="/print-shop/">← The Print Shop</a><h1>Flurry</h1><p>Snowflake ornaments for your 3D printer. Generate one, draw one, or fold and cut one, then download a print-ready STL.</p></div></header>
+<main>
+  <nav class="tabs" role="tablist" aria-label="Design mode">
+    <button class="tab" role="tab" data-mode="crystal">Crystal generator</button>
+    <button class="tab" role="tab" data-mode="draw">Draw your own</button>
+    <button class="tab" role="tab" data-mode="paper">Paper fold &amp; cut</button>
+    <button class="tab" role="tab" data-mode="type">Type your own</button>
+  </nav>
+  <section class="stage">
+    <div class="pane" id="p2">
+      <canvas id="c2" aria-label="Snowflake design area"></canvas>
+      <div class="bar" data-show="crystal">
+        <button class="chip rand" data-act="random">Random</button>
+        <button class="chip" data-act="variation">New variation</button>
+      </div>
+      <div class="bar" data-show="draw">
+        <button class="chip rand" data-act="random">Random</button>
+        <span class="sp"></span>
+        <button class="chip" data-act="pen">Pen</button>
+        <button class="chip" data-act="erase">Eraser</button>
+        <span class="sp"></span>
+        <button class="chip" data-act="undo">Undo</button>
+        <button class="chip" data-act="clear">Clear</button>
+        <button class="chip" data-act="fit" hidden>Fit view</button>
+      </div>
+      <div class="bar" data-show="type">
+        <button class="chip rand" data-act="random">Random</button>
+        <span class="sp"></span>
+        <button class="chip" data-act="tsmaller" aria-label="Smaller text">A−</button>
+        <button class="chip" data-act="tbigger" aria-label="Bigger text">A+</button>
+      </div>
+      <div class="bar" data-show="paper">
+        <button class="chip rand" data-act="random">Random</button>
+        <span class="sp"></span>
+        <button class="chip" data-act="free">Freehand cut</button>
+        <button class="chip" data-act="straight">Straight cut</button>
+        <span class="sp"></span>
+        <button class="chip" data-act="undo">Undo</button>
+        <button class="chip" data-act="clear">Clear</button>
+        <button class="chip" data-act="unfold" id="unfoldBtn">Unfold</button>
+        <button class="chip" data-act="fit" hidden>Fit view</button>
+      </div>
+      <p class="hint" id="hint"></p>
+    </div>
+    <div class="pane" id="p3">
+      <canvas id="c3" aria-label="3D preview"></canvas>
+      <p class="tag" id="dims"></p>
+      <p class="hint">Drag to turn, scroll to zoom. Double-click to reset the view.</p>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="card">
+      <h2>Snowflake</h2>
+      <div data-show="crystal">
+        <span class="lbl">Style</span>
+        <div class="seg" data-key="cr.preset">
+          <button data-v="stellar">Stellar</button><button data-v="fern">Fern</button><button data-v="plate">Star plate</button><button data-v="needle">Needle</button><button data-v="open">Open center</button>
+        </div>
+        <div data-ranges="cr"></div>
+        <span class="lbl">Center</span>
+        <div class="seg" data-key="cr.hubStyle"><button data-v="solid">Solid</button><button data-v="ring">Ring</button><button data-v="open">Open</button><button data-v="none">None</button></div>
+        <span class="lbl">Arm tips</span>
+        <div class="seg" data-key="cr.tip"><button data-v="plate">Plate</button><button data-v="round">Round</button><button data-v="arrow">Arrow</button><button data-v="none">Plain</button></div>
+        <div data-tipopts>
+          <div data-ranges="tip"></div>
+          <label class="chk"><input type="checkbox" data-key="cr.tipHole"> Hole in each tip</label>
+          <p class="note" id="tipNote" hidden>The tips are too small for a hole. Make them bigger or widen the arms.</p>
+        </div>
+      </div>
+      <div data-show="draw">
+        <span class="lbl">Symmetry (points)</span>
+        <div class="seg" data-key="points" data-num><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button><button data-v="7">7</button><button data-v="8">8</button><button data-v="10">10</button><button data-v="12">12</button></div>
+        <div data-ranges="dr"></div>
+        <span class="lbl">Start from</span>
+        <div class="seg" data-key="dr.base"><button data-v="blank">Blank</button><button data-v="hub">Small center</button><button data-v="crystal">Current crystal</button></div>
+        <label class="chk"><input type="checkbox" data-key="dr.mirror"> Mirror each stroke, like a real flake</label>
+        <label class="chk"><input type="checkbox" data-key="dr.straighten"> Snap nearly straight strokes to clean lines</label>
+      </div>
+      <div data-show="type">
+        <label class="lbl" for="tyText">Your text</label>
+        <input type="text" id="tyText" data-key="ty.text" maxlength="24" autocomplete="off" spellcheck="false">
+        <div data-ranges="tysize"></div>
+        <span class="lbl">Layout</span>
+        <div class="seg" data-key="ty.layout"><button data-v="arms">Along the arms</button><button data-v="ring">Around a ring</button><button data-v="plate">Name plate</button></div>
+        <span class="lbl">Font</span>
+        <div class="seg" data-key="ty.font"><button data-v="rounded">Rounded</button><button data-v="script">Script</button><button data-v="festive">Festive</button><button data-v="chunky">Chunky</button></div>
+        <span class="lbl">Points</span>
+        <div class="seg" data-key="points" data-num><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button><button data-v="7">7</button><button data-v="8">8</button><button data-v="10">10</button><button data-v="12">12</button></div>
+        <div id="tyCenter"><span class="lbl">Center</span>
+        <div class="seg" data-key="ty.center"><button data-v="none">None</button><button data-v="poly">Polygon</button><button data-v="circle">Circle</button><button data-v="star">Star</button><button data-v="flake">Snowflake</button></div>
+        <div data-ranges="tyhub" id="tyHubOpts"></div></div>
+        <label class="chk" id="tyUpright"><input type="checkbox" data-key="ty.upright"> Keep words upright (read left to right)</label>
+        <span class="lbl">Join letters by</span>
+        <div class="seg" data-key="ty.join"><button data-v="touch">Touching</button><button data-v="bar">A bar</button></div>
+        <div data-ranges="ty"></div>
+        <p class="note" id="spNote" hidden>Above 0%, the letters no longer touch, so thin links are added between them to keep each word in one piece. Set 0% or lower for touching letters with no links.</p>
+        <div data-ranges="tybar" id="tyBarOpts"></div>
+        <p class="note" id="tyNote"></p>
+      </div>
+      <div data-show="paper">
+        <span class="lbl">Folds (points)</span>
+        <div class="seg" data-key="points" data-num><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button><button data-v="7">7</button><button data-v="8">8</button><button data-v="10">10</button><button data-v="12">12</button></div>
+        <span class="lbl">Paper shape</span>
+        <div class="seg" data-key="pp.sheet"><button data-v="hex">Hexagon</button><button data-v="circle">Circle</button></div>
+        <div data-ranges="pp"></div>
+        <p class="note">The paper is folded into a wedge. A cut that crosses a folded edge opens up on both sides when unfolded, just like the real craft.</p>
+        <button class="btn" data-act="sample">Load example cuts</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ornament</h2>
+      <span class="lbl">Points</span>
+      <div class="seg" data-key="points" data-num><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button><button data-v="7">7</button><button data-v="8">8</button><button data-v="10">10</button><button data-v="12">12</button></div>
+      <span class="lbl">Hang it by</span>
+      <div class="seg" data-key="orient"><button data-v="point">A point</button><button data-v="flat">Between points</button></div>
+      <div data-ranges="orn"></div>
+      <label class="chk"><input type="checkbox" data-key="loop"> Add a hanging loop</label>
+      <div data-ranges="loop"></div>
+      <label class="chk"><input type="checkbox" data-key="dropLoose"> Remove loose pieces that would fall off</label>
+    </div>
+
+    <div class="card">
+      <h2>Print file</h2>
+      <label class="lbl" for="fname">File name</label>
+      <input type="text" id="fname" data-key="name" autocomplete="off" spellcheck="false">
+      <dl>
+        <dt>Size</dt><dd id="sSize">–</dd>
+        <dt>Triangles</dt><dd id="sTris">–</dd>
+        <dt>File size</dt><dd id="sBytes">–</dd>
+        <dt>Pieces</dt><dd id="sPieces">–</dd>
+      </dl>
+      <button class="btn primary" id="dlBtn">Download STL</button>
+      <p class="status" id="status"></p>
+      <p class="note">Drop the STL straight into your slicer. It prints flat with no supports. Around 3 mm thick in white or translucent PLA makes a sturdy ornament, and a 0.4 mm nozzle handles lines down to about 1 mm.</p>
+    </div>
+  </section>
+</main>
+<script>
+{
+const TAU = Math.PI * 2;
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* marching squares on an alpha grid -> closed loops (flat [x,y,...] arrays in grid units) */
+function contours(al,W,H,thr){
+  const N=W*H*2,nxt=new Int32Array(N).fill(-1),PX=new Float32Array(N),PY=new Float32Array(N),starts=[];
+  const cx=[0,0,0,0],ct=[0,0,0,0];
+  for(let y=0;y<H-1;y++){for(let x=0;x<W-1;x++){
+    const i=y*W+x,a=al[i],b=al[i+1],c=al[i+1+W],d=al[i+W];
+    const A=a>=thr,B=b>=thr,C=c>=thr,D=d>=thr;
+    if(A===B&&B===C&&C===D)continue;
+    let n=0;
+    if(A!==B){const id=2*i;PX[id]=x+(thr-a)/(b-a);PY[id]=y;cx[n]=id;ct[n++]=B?1:0}
+    if(B!==C){const id=2*(i+1)+1;PX[id]=x+1;PY[id]=y+(thr-b)/(c-b);cx[n]=id;ct[n++]=C?1:0}
+    if(C!==D){const id=2*(i+W);PX[id]=x+(thr-d)/(c-d);PY[id]=y+1;cx[n]=id;ct[n++]=D?1:0}
+    if(D!==A){const id=2*i+1;PX[id]=x;PY[id]=y+(thr-a)/(d-a);cx[n]=id;ct[n++]=A?1:0}
+    if(n===2){const s=ct[0]?0:1;nxt[cx[s]]=cx[1-s];starts.push(cx[s])}
+    else{const ci=(a+b+c+d)/4>=thr;for(let j=0;j<4;j++)if(ct[j]){const p=ci?(j+3)%4:(j+1)%4;nxt[cx[j]]=cx[p];starts.push(cx[j])}}
+  }}
+  const seen=new Uint8Array(N),loops=[];
+  for(const s of starts){if(seen[s])continue;const pts=[];let id=s,g=0;
+    while(id>=0&&!seen[id]&&g++<4e6){seen[id]=1;pts.push(PX[id],PY[id]);id=nxt[id]}
+    if(pts.length>=6)loops.push(pts)}
+  return loops;
+}
+function rdp(P,eps){
+  const n=P.length;if(n<3)return P.slice();const keep=new Uint8Array(n);keep[0]=keep[n-1]=1;const st=[[0,n-1]];
+  while(st.length){const[i,j]=st.pop();const x1=P[i][0],y1=P[i][1],dx=P[j][0]-x1,dy=P[j][1]-y1,L=Math.hypot(dx,dy);let md=0,mi=-1;
+    for(let k=i+1;k<j;k++){const d=L>1e-9?Math.abs(dy*(P[k][0]-x1)-dx*(P[k][1]-y1))/L:Math.hypot(P[k][0]-x1,P[k][1]-y1);if(d>md){md=d;mi=k}}
+    if(md>eps){keep[mi]=1;st.push([i,mi],[mi,j])}}
+  return P.filter((_,k)=>keep[k]);
+}
+function rdpClosed(P,eps){
+  if(P.length<4)return P.slice();let far=0,fd=-1;
+  for(let k=1;k<P.length;k++){const d=(P[k][0]-P[0][0])**2+(P[k][1]-P[0][1])**2;if(d>fd){fd=d;far=k}}
+  const a=rdp(P.slice(0,far+1),eps),b=rdp(P.slice(far).concat([P[0]]),eps);
+  return a.concat(b.slice(1,-1));
+}
+function area(P){let s=0;for(let i=0,j=P.length-1;i<P.length;j=i++)s+=(P[j][0]-P[i][0])*(P[j][1]+P[i][1]);return s/2}
+function pip(x,y,P){let o=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const a=P[i],b=P[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])o=!o}return o}
+function bbox(P){let a=1e9,b=1e9,c=-1e9,d=-1e9;for(const[x,y]of P){if(x<a)a=x;if(y<b)b=y;if(x>c)c=x;if(y>d)d=y}return[a,b,c,d]}
+function classify(loops,dropLoose){
+  const L=loops.map(P=>({P,a:area(P)})).filter(o=>Math.abs(o.a)>0.05);
+  if(!L.length)return{pieces:[],total:0};
+  let big=L[0];for(const o of L)if(Math.abs(o.a)>Math.abs(big.a))big=o;
+  const sg=Math.sign(big.a);
+  let outers=L.filter(o=>Math.sign(o.a)===sg&&Math.abs(o.a)>=1.0).map(o=>({outer:o.P,A:Math.abs(o.a),bb:bbox(o.P),holes:[]}));
+  const holes=L.filter(o=>Math.sign(o.a)!==sg&&Math.abs(o.a)>=0.35);
+  for(const h of holes){const[x,y]=h.P[0];let best=null;
+    for(const o of outers){const b=o.bb;if(x<b[0]||x>b[2]||y<b[1]||y>b[3])continue;if(pip(x,y,o.outer)&&(!best||o.A<best.A))best=o}
+    if(best)best.holes.push(h.P)}
+  const total=outers.length;
+  if(dropLoose&&outers.length>1){outers.sort((p,q)=>q.A-p.A);outers=[outers[0]]}
+  return{pieces:outers,total};
+}
+function resample(P,step,closed){
+  const out=[P[0].slice()],Q=closed?P.concat([P[0]]):P;let acc=0;
+  for(let i=1;i<Q.length;i++){let x0=Q[i-1][0],y0=Q[i-1][1];const x1=Q[i][0],y1=Q[i][1];let seg=Math.hypot(x1-x0,y1-y0);
+    while(acc+seg>=step&&seg>0){const t=(step-acc)/seg;x0+=(x1-x0)*t;y0+=(y1-y0)*t;out.push([x0,y0]);seg=Math.hypot(x1-x0,y1-y0);acc=0}
+    acc+=seg}
+  if(!closed){const e=Q[Q.length-1];const l=out[out.length-1];if(Math.hypot(e[0]-l[0],e[1]-l[1])>step*0.3)out.push(e.slice())}
+  return out;
+}
+function smoothPts(A,iters,closed){
+  const n=A.length;if(n<3)return A;
+  for(let it=0;it<iters;it++){const B=A.map(p=>p.slice());
+    for(let i=0;i<n;i++){if(!closed&&(i===0||i===n-1))continue;const a=A[(i-1+n)%n],c=A[(i+1)%n];B[i][0]=(a[0]+2*A[i][0]+c[0])/4;B[i][1]=(a[1]+2*A[i][1]+c[1])/4}
+    A=B}
+  return A;
+}
+function cleanStroke(raw,closed,strength,straighten){
+  if(raw.length<2)return[raw[0].slice()];
+  let P=resample(raw,0.008,closed);
+  if(P.length<2)return[raw[0].slice(),raw[raw.length-1].slice()];
+  if(!closed&&straighten){
+    const a=P[0],b=P[P.length-1],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);
+    if(L>0.03){let md=0;for(const p of P){const d=Math.abs(dy*(p[0]-a[0])-dx*(p[1]-a[1]))/L;if(d>md)md=d}
+      if(md/L<0.06){let ang=Math.atan2(dy,dx);const sn=Math.round(ang/(Math.PI/12))*(Math.PI/12);if(Math.abs(sn-ang)<0.07)ang=sn;
+        return[a.slice(),[a[0]+L*Math.cos(ang),a[1]+L*Math.sin(ang)]]}}
+  }
+  P=smoothPts(P,Math.min(Math.round(strength*strength*0.6+strength),Math.round(P.length*1.2)),closed);
+  return closed?rdpClosed(P,0.0012):rdp(P,0.0012);
+}
+/* binary STL */
+function toSTL(pos,index){
+  const nt=index?index.length/3:pos.length/9,buf=new ArrayBuffer(84+50*nt),dv=new DataView(buf);
+  const hdr='Flurry snowflake ornament';for(let i=0;i<hdr.length;i++)dv.setUint8(i,hdr.charCodeAt(i));
+  dv.setUint32(80,nt,true);let o=84;const v=(t,k)=>{const i=index?index[t*3+k]:t*3+k;return[pos[i*3],pos[i*3+1],pos[i*3+2]]};
+  for(let t=0;t<nt;t++){const a=v(t,0),b=v(t,1),c=v(t,2);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],wx=c[0]-a[0],wy=c[1]-a[1],wz=c[2]-a[2];
+    let nx=uy*wz-uz*wy,ny=uz*wx-ux*wz,nz=ux*wy-uy*wx;const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;
+    for(const f of[nx,ny,nz,...a,...b,...c]){dv.setFloat32(o,f,true);o+=4}
+    dv.setUint16(o,0,true);o+=2}
+  return new Uint8Array(buf);
+}
+
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const FS=720;
+const circ=(cx,cy,r,n)=>Array.from({length:n+1},(_,i)=>[cx+r*Math.cos(TAU*i/n),cy+r*Math.sin(TAU*i/n)]);
+const SAMPLE_STROKES=[
+  {w:2.4,pts:[[0.06,0],[0.88,0]]},
+  {w:1.8,pts:[[0.36,0],[0.5,0.165]]},
+  {w:1.8,pts:[[0.6,0],[0.69,0.105]]},
+  {w:1.6,pts:circ(0.925,0,0.05,24)},
+  {w:1.4,pts:[[0.2,0.02],[0.25,0.09],[0.25,0.16],[0.2,0.24]]}];
+const SAMPLE_CUTS=[
+  [[0.44,0.11],[0.54,0.05],[0.64,0.12],[0.54,0.19]],
+  circ(0.286,0.165,0.06,22).slice(0,-1),
+  [[1.2,0.12],[0.84,0.27],[1.05,0.7]],
+  circ(0.2,0,0.04,18).slice(0,-1),
+  [[0.72,0.2],[0.8,0.235],[0.9,0.62],[0.62,0.62]]];
+const PRESETS={
+  stellar:{branches:3,blen:80,bang:60,sub:1,armW:2.4,brW:1.6,hub:16,hubStyle:'solid',tip:'plate'},
+  fern:{branches:6,blen:55,bang:60,sub:2,armW:2,brW:1.3,hub:13,hubStyle:'ring',tip:'round'},
+  plate:{branches:2,blen:45,bang:60,sub:0,armW:2.6,brW:1.8,hub:34,hubStyle:'ring',tip:'plate'},
+  needle:{branches:1,blen:40,bang:42,sub:0,armW:2.8,brW:1.8,hub:10,hubStyle:'solid',tip:'arrow'},
+  open:{branches:2,blen:95,bang:60,sub:1,armW:2.2,brW:1.6,hub:26,hubStyle:'open',tip:'round'}};
+const DEF={mode:'crystal',points:6,dia:75,thick:3,loop:true,loopHole:5,loopBand:2.4,orient:'point',dropLoose:true,name:'snowflake-ornament',
+  cr:Object.assign({preset:'stellar',seed:7,tipSize:100,tipHole:false},PRESETS.stellar),
+  dr:{tool:'pen',width:2.2,smooth:6,straighten:true,mirror:true,base:'hub',strokes:null},
+  pp:{tool:'free',sheet:'hex',smooth:5,cuts:null,unfold:false},
+  ty:{text:'JOY',layout:'arms',font:'rounded',size:11,bar:1.6,join:'touch',spacing:-6,center:'none',weight:0,upright:true,hubSize:20}};
+const RANGES={
+  cr:[['branches','Side branches',0,6,1,''],['blen','Branch length',20,120,1,'%'],['bang','Branch angle',30,80,1,'°'],['sub','Twigs per branch',0,3,1,''],['armW','Arm width',1,4,0.1,' mm'],['brW','Branch width',1,3,0.1,' mm'],['hub','Center size',0,40,1,'%']],
+  tip:[['tipSize','Tip size',100,250,5,'%']],
+  tysize:[['size','Text size',4,30,0.5,' mm'],['weight','Letter weight',-0.6,1.2,0.05,' mm']],
+  ty:[['spacing','Letter spacing',-35,80,1,'%']],
+  tyhub:[['hubSize','Center size',5,45,1,'%']],
+  tybar:[['bar','Bar thickness',0.8,3,0.1,' mm']],
+  dr:[['width','Line width',1,5,0.1,' mm'],['smooth','Smoothing',0,10,1,'']],
+  pp:[['smooth','Freehand smoothing',0,10,1,'']],
+  orn:[['dia','Diameter',40,120,1,' mm'],['thick','Thickness',1.5,6,0.1,' mm']],
+  loop:[['loopHole','Loop hole',3,10,0.5,' mm'],['loopBand','Loop band',1.5,5,0.1,' mm']]};
+
+let S=JSON.parse(JSON.stringify(DEF));
+try{const j=JSON.parse(localStorage.getItem('flurry-v1')||'null');if(j)for(const k in DEF){if(!(k in j))continue;if(DEF[k]&&typeof DEF[k]==='object')Object.assign(S[k],j[k]);else S[k]=j[k]}}catch(e){}
+if(!Array.isArray(S.dr.strokes))S.dr.strokes=JSON.parse(JSON.stringify(SAMPLE_STROKES));
+if(!Array.isArray(S.pp.cuts))S.pp.cuts=JSON.parse(JSON.stringify(SAMPLE_CUTS));
+S.pp.unfold=false;
+if(S.ty.spacing===-12&&!S.ty.v2){S.ty.spacing=-6}S.ty.v2=1;if(S.ty.center==='shape')S.ty.center='poly';
+
+const G={view:{draw:{z:1,x:0,y:0},paper:{z:1,x:0,y:0}},pan:null,space:false,fc:document.createElement('canvas'),live:null,poly:null,hover:null,hist:{draw:[],paper:[]},geom:null};
+G.fc.width=G.fc.height=FS;G.fctx=G.fc.getContext('2d',{willReadFrequently:true});
+G.dc=$('#c2');G.dctx=G.dc.getContext('2d');G.pc=document.createElement('canvas');
+
+const getK=p=>p.split('.').reduce((o,k)=>o[k],S);
+const setK=(p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((o,k)=>o[k],S)[l]=v};
+const theta=()=>Math.PI/2+(S.orient==='flat'?Math.PI/S.points:0);
+function ngon(n,r){const p=new Path2D();for(let j=0;j<n;j++){const a=TAU*j/n;j?p.lineTo(r*Math.cos(a),r*Math.sin(a)):p.moveTo(r,0)}p.closePath();return p}
+function polyPath(pts,s,close){const p=new Path2D();pts.forEach(([x,y],i)=>i?p.lineTo(x*s,y*s):p.moveTo(x*s,y*s));if(close)p.closePath();return p}
+function sheetPath(R,n){if(S.pp.sheet==='circle'){const p=new Path2D();p.arc(0,0,R,0,TAU);return p}return ngon(n,R)}
+function sectorPath(a,r){const p=new Path2D();p.moveTo(0,0);p.lineTo(r,0);p.lineTo(r*Math.cos(a),r*Math.sin(a));p.closePath();return p}
+function sym(c,n,mirror,fn){for(let k=0;k<n;k++)for(const m of mirror?[1,-1]:[1]){c.save();c.rotate(k*TAU/n);c.scale(1,m);fn();c.restore()}}
+
+/* ---------- design drawing (local frame: one arm along +x, units mm) ---------- */
+function drawCrystal(c,R,n){
+  const p=S.cr,rnd=mulberry(p.seed),hubR=R*p.hub/100,aw=p.armW,bw=p.brW,ang=p.bang*Math.PI/180;
+  let armStart=0;
+  if(hubR>0.6&&p.hubStyle!=='none'){
+    c.fill(ngon(n,hubR));
+    if(p.hubStyle==='ring'){const ir=hubR-Math.max(aw*0.8,1.2);if(ir>0.6){c.globalCompositeOperation='destination-out';c.fill(ngon(n,ir));c.globalCompositeOperation='source-over'}}
+    else if(p.hubStyle==='open'){const ir=hubR*0.55;if(ir>0.8){c.globalCompositeOperation='destination-out';c.fill(ngon(n,ir));c.globalCompositeOperation='source-over';armStart=ir+aw/2}}
+  }
+  const closedTip=p.tip==='plate'||p.tip==='round',tsz=closedTip?(p.tipSize||100)/100:1;
+  const tipR=(p.tip==='plate'?aw*1.5:p.tip==='round'?aw:aw/2)*tsz,armEnd=R-tipR,lim=R*0.95-bw/2;
+  const fit=(x,y,dx,dy,L)=>{for(let g=0;g<30&&Math.hypot(x+dx*L,y+dy*L)>lim;g++)L*=0.9;return L};
+  const br=[],ca=Math.cos(ang),sa=Math.sin(ang);
+  for(let i=0;i<p.branches;i++){
+    const t=0.25+0.62*(i+0.5)/p.branches+(rnd()-0.5)*0.3/p.branches;
+    const x0=Math.max(armStart+aw,t*armEnd);
+    const L=fit(x0,0,ca,sa,(p.blen/100)*R*0.45*(1.08-t*0.7)*(0.8+0.4*rnd()));
+    const subs=[];
+    for(let j=0;j<p.sub;j++){const s=(j+1)/(p.sub+1),bx=x0+L*s*ca,by=L*s*sa,base=L*0.42*(1-s*0.45)*(0.8+0.4*rnd());
+      const a1=ang-Math.PI/3,a2=ang+Math.PI/3;
+      subs.push([bx,by,a1,fit(bx,by,Math.cos(a1),Math.sin(a1),base)],[bx,by,a2,fit(bx,by,Math.cos(a2),Math.sin(a2),base*0.55)])}
+    br.push([x0,L,subs])}
+  sym(c,n,true,()=>{
+    c.lineWidth=aw;c.beginPath();c.moveTo(armStart,0);c.lineTo(Math.max(armEnd,armStart+0.01),0);c.stroke();
+    c.lineWidth=bw;c.beginPath();
+    for(const[x0,L,subs]of br){c.moveTo(x0,0);c.lineTo(x0+L*ca,L*sa);
+      for(const[bx,by,a,l]of subs){c.moveTo(bx,by);c.lineTo(bx+l*Math.cos(a),by+l*Math.sin(a))}}
+    c.stroke();
+    if(p.tip==='plate'){c.save();c.translate(R-tipR,0);c.fill(ngon(6,tipR));c.restore()}
+    else if(p.tip==='round'){c.beginPath();c.arc(R-tipR,0,tipR,0,TAU);c.fill()}
+    else if(p.tip==='arrow'){const l=aw*2.6;c.lineWidth=bw;c.beginPath();c.moveTo(armEnd,0);c.lineTo(armEnd+l*Math.cos(Math.PI*0.8),l*Math.sin(Math.PI*0.8));c.stroke()}
+  });
+  if(closedTip&&p.tipHole){
+    const wall=Math.max(1.0,aw*0.45),hr=(p.tip==='plate'?tipR*Math.cos(Math.PI/6):tipR)-wall;
+    if(hr>=0.6){c.globalCompositeOperation='destination-out';
+      sym(c,n,false,()=>{c.translate(R-tipR,0);if(p.tip==='plate')c.fill(ngon(6,hr/Math.cos(Math.PI/6)));else{c.beginPath();c.arc(0,0,hr,0,TAU);c.fill()}});
+      c.globalCompositeOperation='source-over'}
+  }
+}
+function drawDrawing(c,R,n){
+  const d=S.dr;
+  if(d.base==='hub')c.fill(ngon(n,R*0.13));else if(d.base==='crystal')drawCrystal(c,R,n);
+  const list=G.live&&S.mode==='draw'?d.strokes.concat([{w:d.width,erase:d.tool==='erase',pts:G.live}]):d.strokes;
+  for(const s of list){
+    const p=polyPath(s.pts,R);if(s.pts.length===1)p.lineTo(s.pts[0][0]*R+0.01,s.pts[0][1]*R);
+    c.globalCompositeOperation=s.erase?'destination-out':'source-over';c.lineWidth=s.w;
+    sym(c,n,d.mirror,()=>c.stroke(p))}
+  c.globalCompositeOperation='source-over';
+}
+/* ---------- type your own ---------- */
+const FONTS={rounded:['600','Fredoka'],script:['400','Pacifico'],festive:['700','Mountains of Christmas'],chunky:['400','Lilita One']};
+const fontOf=fs=>{const[w,f]=FONTS[S.ty.font]||FONTS.rounded;return `${w} ${fs}px "${f}", "Nunito Sans", sans-serif`};
+function drawHub(c,shape,r,n,fs){
+  if(shape==='circle'){c.beginPath();c.arc(0,0,r,0,TAU);c.fill();return}
+  if(shape==='star'){const p=new Path2D();for(let j=0;j<2*n;j++){const a=Math.PI*j/n,rr=j%2?r*0.48:r;j?p.lineTo(rr*Math.cos(a),rr*Math.sin(a)):p.moveTo(rr,0)}p.closePath();c.fill(p);return}
+  if(shape==='flake'){const w=Math.max(1.2,fs*0.1);c.save();c.lineWidth=w;c.lineCap='round';
+    sym(c,n,true,()=>{c.beginPath();c.moveTo(0,0);c.lineTo(r,0);c.moveTo(r*0.5,0);c.lineTo(r*0.5+r*0.32*Math.cos(Math.PI/3),r*0.32*Math.sin(Math.PI/3));c.stroke()});
+    c.beginPath();c.arc(0,0,Math.max(w,r*0.16),0,TAU);c.fill();c.restore();return}
+  c.fill(ngon(n,r));
+}
+function flipArm(k,n){if(S.ty.upright===false)return false;const a=theta()+k*TAU/n,ca=Math.cos(a),sa=Math.sin(a);return ca<-1e-3||(Math.abs(ca)<=1e-3&&sa<0)}
+function upText(c,str,x,y){c.save();c.translate(x,y);c.scale(1,-1);c.fillText(str,0,0);c.restore()}
+function ink(c,str,extra,cut){
+  if(extra<-0.01&&!cut){
+    const W=c.canvas.width,H=c.canvas.height;G.layers=G.layers||{};
+    const L=G.layers[W+'x'+H]||(G.layers[W+'x'+H]=Object.assign(document.createElement('canvas'),{width:W,height:H})),lc=L.getContext('2d');
+    lc.setTransform(1,0,0,1,0,0);lc.globalCompositeOperation='source-over';lc.clearRect(0,0,W,H);
+    lc.setTransform(c.getTransform());lc.font=c.font;lc.textAlign=c.textAlign;lc.textBaseline=c.textBaseline;lc.fillStyle=lc.strokeStyle=c.fillStyle;
+    lc.fillText(str,0,0);lc.globalCompositeOperation='destination-out';lc.lineJoin='round';lc.lineWidth=-extra*2;lc.strokeText(str,0,0);
+    c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(L,0,0);c.restore();return}
+  c.fillText(str,0,0);if(Math.abs(extra)<0.01)return;
+  c.save();c.lineJoin='round';c.lineWidth=Math.abs(extra)*2;
+  if(extra<0)c.globalCompositeOperation='source-over';
+  c.strokeText(str,0,0);c.restore();
+}
+function upInk(c,str,x,y,extra,cut){c.save();c.translate(x,y);c.scale(1,-1);ink(c,str,extra,cut);c.restore()}
+function drawType(c,R,n){
+  const t=S.ty,txt=(t.text||'').trim(),useBar=t.join==='bar',bar=useBar?t.bar:0;let fs=t.size;G.tyNote='';
+  if(!txt){c.fill(ngon(n,R*0.16));return}
+  const weld=Math.max(0.3,fs*0.025),wt=t.weight||0,ov=fs*(-(t.spacing??-6))/100+(useBar?0:Math.max(0,-(weld/2+wt))*2.2);
+  c.textBaseline='middle';
+  if(t.layout==='arms'){
+    c.font=fontOf(fs);c.textAlign='left';
+    const chars=[...txt],ws=chars.map(ch=>c.measureText(ch).width),w=c.measureText(txt).width;
+    const clear=(fs*0.78+bar+0.6)/Math.sin(Math.min(TAU/n,Math.PI/2));
+    if(!useBar){
+      const spaced=(t.spacing??-6)>0&&chars.length>1;
+      const ovj=spaced?ov:chars.length>1?joinOverlap(chars,ws,ov,fs,R,weld/2+wt,[txt,t.font,fs,t.spacing,wt,'a'].join('|')):ov;
+      const ink_=chars.map(ch=>{const m=c.measureText(ch);return[-(m.actualBoundingBoxLeft||0),m.actualBoundingBoxRight||m.width]});
+      const linkW=Math.max(1.0,fs*0.11);
+      const hasHub=t.center&&t.center!=='none',hubR=R*(t.hubSize||20)/100,tot=ws.reduce((p,q)=>p+q,0)-ovj*(chars.length-1);
+      const words=(cc,x0)=>{const L=Math.max(R*0.25,R-x0-0.4),sx=Math.min(1,L/tot);
+        cc.lineWidth=weld;cc.lineJoin='round';
+        for(let k=0;k<n;k++){cc.save();cc.rotate(k*TAU/n);cc.translate(x0,0);cc.scale(sx,1);
+          if(flipArm(k,n)){cc.translate(tot/2,0);cc.rotate(Math.PI);cc.translate(-tot/2,0)}
+          if(spaced){let x=0;cc.save();cc.lineWidth=linkW;cc.lineCap='round';cc.beginPath();
+            for(let i=0;i<chars.length-1;i++){const xn=x+ws[i]-ovj,a=ink_[i],b=ink_[i+1];
+              const ia=Math.min((a[1]-a[0])*0.18,fs*0.09),ib=Math.min((b[1]-b[0])*0.18,fs*0.09);
+              cc.moveTo(x+a[1]-ia,0);cc.lineTo(xn+b[0]+ib,0);x=xn}
+            cc.stroke();cc.restore()}
+          let x=0;chars.forEach((ch,i)=>{cc.save();cc.translate(x,0);cc.scale(1,-1);ink(cc,ch,weld/2+wt);cc.restore();x+=ws[i]-ovj});
+          cc.restore()}return sx};
+      let x0=hubR-Math.min(fs*0.12,1.2);
+      if(!hasHub)x0=centerStart(words,R,fs,[txt,t.font,fs,t.spacing,wt,n,R,S.ty.upright,S.orient].join('|'));
+      else if(t.center==='star'||t.center==='flake')x0=hubR-Math.min(fs*0.2,1.6);
+      if(hasHub)drawHub(c,t.center,hubR,n,fs);
+      const sx=words(c,x0);
+      if(sx<0.75)G.tyNote='Long text is squeezed to fit the arms. A shorter word or smaller text will read better.';
+      return}
+    const hubR=R*(t.hubSize||20)/100;if(t.center&&t.center!=='none')drawHub(c,t.center,hubR,n,fs);
+    const x0=Math.max(t.center&&t.center!=='none'?hubR*0.85:0,clear),L=Math.max(R*0.25,R-x0-0.4),sx=Math.min(1,L/w);
+    if(sx<0.75)G.tyNote='Long text is squeezed to fit the arms. A shorter word or smaller text will read better.';
+    const gap=sx<1||chars.length<2?0:Math.min((L-w)/(chars.length-1),fs*0.9);
+    const end=x0+(sx<1?L:w+gap*(chars.length-1));
+    for(let k=0;k<n;k++){c.save();c.rotate(k*TAU/n);
+      if(bar>0){c.lineWidth=bar;c.beginPath();c.moveTo(0,0);c.lineTo(end-Math.min(fs*0.15,1),0);c.stroke()}
+      const fl=flipArm(k,n);if(fl){c.translate((x0+end)/2,0);c.rotate(Math.PI);c.translate(-(x0+end)/2,0)}
+      c.textBaseline='alphabetic';const yb=bar>0?bar*0.3:0;
+      if(gap>0){let x=x0;chars.forEach((ch,i)=>{upInk(c,ch,x,yb,wt);x+=ws[i]+gap})}
+      else{c.save();c.translate(x0,yb);c.scale(sx,1);upInk(c,txt,0,0,wt);c.restore()}
+      c.restore()}
+    return}
+  c.rotate(-theta());
+  if(t.layout==='ring'){
+    const capH=fs*0.72,ringW=Math.max(1.4,bar),ringR=R-capH-Math.max(bar,0.6)-0.3;
+    c.lineWidth=ringW;c.beginPath();c.arc(0,0,ringR,0,TAU);c.stroke();
+    c.save();c.rotate(theta());drawCrystal(c,ringR,n);c.restore();
+    c.textBaseline='alphabetic';c.textAlign='center';
+    let rb=ringR+capH-(useBar?0:Math.min(fs*0.08,0.8));c.font=fontOf(fs);const ovr=useBar?0:ov;let ws=[...txt].map(ch=>c.measureText(ch).width-ovr),W=ws.reduce((a,b)=>a+b,0);
+    const maxSpan=Math.PI*1.5;if(W/rb>maxSpan){const f=maxSpan*rb/W;fs*=f;ws=ws.map(x=>x*f);W*=f;c.font=fontOf(fs);G.tyNote='Text was made smaller to fit around the ring.'}
+    const span=W/rb,start=Math.PI*1.5-span/2;let cum=0;
+    [...txt].forEach((ch,i)=>{const phi=start+(cum+ws[i]/2)/rb;cum+=ws[i];
+      c.save();c.translate(rb*Math.cos(phi),rb*Math.sin(phi));c.rotate(phi+Math.PI/2);c.scale(1,-1);ink(c,ch,(useBar?0:weld/2)+wt);c.restore()});
+    if(bar>0){c.lineWidth=bar;c.beginPath();c.arc(0,0,rb-bar*0.2,start-0.02,start+span+0.02);c.stroke()}
+    return}
+  c.save();c.rotate(theta());drawCrystal(c,R,n);c.restore();
+  const sp=(t.spacing??-6)/100,chs=[...txt];c.font=fontOf(fs);c.textAlign='left';
+  let ws=chs.map(ch=>c.measureText(ch).width),W=ws.reduce((a,b)=>a+b,0)+fs*sp*(chs.length-1);const maxW=2*R*0.86-fs*0.8;
+  if(W>maxW){const f=maxW/W;fs*=f;ws=ws.map(x=>x*f);W=maxW;c.font=fontOf(fs);G.tyNote='Text was made smaller to fit the plate.'}
+  const pw=W+fs*0.9,ph=fs*1.45;
+  c.beginPath();if(c.roundRect)c.roundRect(-pw/2,-ph/2,pw,ph,ph*0.3);else c.rect(-pw/2,-ph/2,pw,ph);c.fill();
+  c.globalCompositeOperation='destination-out';let px=-W/2;
+  chs.forEach((ch,i)=>{upInk(c,ch,px,-fs*0.04,wt,true);px+=ws[i]+fs*sp});c.globalCompositeOperation='source-over';
+}
+function connected(draw,R,N=220,thr=128){
+  const tc=G.tc||(G.tc=document.createElement('canvas'));if(tc.width!==N){tc.width=tc.height=N}
+  const x=tc.getContext('2d',{willReadFrequently:true}),k=N/(2*R*1.08);
+  x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='source-over';x.clearRect(0,0,N,N);x.setTransform(k,0,0,-k,N/2,N/2);
+  x.fillStyle=x.strokeStyle='#fff';x.font=G.fctx.font;x.textBaseline='middle';x.textAlign='left';draw(x);
+  const d=x.getImageData(0,0,N,N).data,lab=new Uint8Array(N*N),st=[];let comp=0;
+  for(let p=0;p<N*N;p++){if(lab[p]||d[p*4+3]<thr)continue;if(++comp>1)return false;st.push(p);lab[p]=1;
+    while(st.length){const q=st.pop(),qx=q%N;for(const r of[q-1,q+1,q-N,q+N]){if(r<0||r>=N*N||(r===q-1&&qx===0)||(r===q+1&&qx===N-1))continue;if(!lab[r]&&d[r*4+3]>=thr){lab[r]=1;st.push(r)}}}}
+  return comp===1;
+}
+function joinOverlap(chars,ws,ov0,fs,R,extra,key){
+  G.joCache=G.joCache||new Map();if(G.joCache.has(key))return G.joCache.get(key);
+  let best=ov0+fs*0.3;const half=ws.reduce((a,b)=>a+b,0)/2+fs*0.6;
+  for(const p of[0,0.03,0.06,0.09,0.12,0.16,0.2,0.25,0.3]){const ov=ov0+fs*p;
+    if(connected(x=>{let px=-half+fs*0.3;chars.forEach((ch,i)=>{x.save();x.translate(px,0);x.scale(1,-1);ink(x,ch,extra);x.restore();px+=ws[i]-ov})},half,420,200)){best=ov+fs*0.04;break}}
+  if(G.joCache.size>60)G.joCache.clear();G.joCache.set(key,best);return best;
+}
+G.csCache=new Map();
+function centerStart(words,R,fs,key){
+  if(G.csCache.has(key))return G.csCache.get(key);
+  const one=x0=>connected(x=>words(x,x0),R);
+  let best=fs*0.02;
+  const fs_=[0.7,0.6,0.5,0.42,0.35,0.28,0.21,0.14,0.08];
+  for(let i=0;i<fs_.length;i++){if(one(fs*fs_[i])){best=fs*(fs_[i+1]??fs_[i]);break}}
+  if(G.csCache.size>40)G.csCache.clear();G.csCache.set(key,best);return best;
+}
+G.fontsReady=new Set();
+function ensureFont(){
+  if(S.mode!=='type'||!document.fonts)return;const key=S.ty.font;if(G.fontsReady.has(key))return;
+  const[w,f]=FONTS[key]||FONTS.rounded;G.fontsReady.add(key);
+  document.fonts.load(`${w} 40px "${f}"`,S.ty.text||'A').then(()=>{G.csCache.clear();G.joCache&&G.joCache.clear();if(S.mode==='type')refresh(true)}).catch(()=>{});
+}
+function drawPaperField(c,R,n){
+  c.fill(sheetPath(R,n));
+  const cuts=S.pp.cuts.map(p=>polyPath(p,R,true)),sec=sectorPath(Math.PI/n,R*3);
+  c.globalCompositeOperation='destination-out';
+  sym(c,n,true,()=>{c.clip(sec);for(const p of cuts)c.fill(p)});
+  c.globalCompositeOperation='source-over';
+}
+function dropIslands(){
+  const c=G.fctx,img=c.getImageData(0,0,FS,FS),d=img.data,N=FS*FS,lab=new Int32Array(N),stack=new Int32Array(N);
+  let n=0,best=0,bestSize=0;
+  for(let p=0;p<N;p++){
+    if(lab[p]||d[p*4+3]<128)continue;
+    n++;let sp=0,size=0;stack[sp++]=p;lab[p]=n;
+    while(sp){const q=stack[--sp];size++;const x=q%FS;
+      if(x>0&&!lab[q-1]&&d[(q-1)*4+3]>=128){lab[q-1]=n;stack[sp++]=q-1}
+      if(x<FS-1&&!lab[q+1]&&d[(q+1)*4+3]>=128){lab[q+1]=n;stack[sp++]=q+1}
+      if(q>=FS&&!lab[q-FS]&&d[(q-FS)*4+3]>=128){lab[q-FS]=n;stack[sp++]=q-FS}
+      if(q<N-FS&&!lab[q+FS]&&d[(q+FS)*4+3]>=128){lab[q+FS]=n;stack[sp++]=q+FS}}
+    if(size>bestSize){bestSize=size;best=n}}
+  G.fallen=Math.max(0,n-1);
+  if(n<=1){G.islands=null;return}
+  if(!G.mc){G.mc=document.createElement('canvas');G.mc.width=G.mc.height=FS}
+  const mctx=G.mc.getContext('2d'),m=mctx.createImageData(FS,FS),md=m.data;
+  for(let p=0;p<N;p++)if(lab[p]&&lab[p]!==best){d[p*4+3]=0;md[p*4+3]=255;md[p*4]=255;md[p*4+1]=84;md[p*4+2]=104}
+  for(let p=0;p<N;p++){const a=d[p*4+3];if(!a||a>=128)continue;const x=p%FS;
+    if((x>0&&md[(p-1)*4+3])||(x<FS-1&&md[(p+1)*4+3])||(p>=FS&&md[(p-FS)*4+3])||(p<N-FS&&md[(p+FS)*4+3])){d[p*4+3]=0;md[p*4+3]=255;md[p*4]=255;md[p*4+1]=84;md[p*4+2]=104}}
+  c.putImageData(img,0,0);mctx.putImageData(m,0,0);G.islands=G.mc;
+}
+function renderField(){
+  const n=S.points,R=S.dia/2,ri=S.loopHole/2,ro=ri+S.loopBand;
+  let ext=R;if(S.mode==='draw')for(const st of S.dr.strokes)for(const[x,y]of st.pts)ext=Math.max(ext,Math.hypot(x,y)*R+st.w/2);
+  const stem=S.mode==='type'&&S.loop?Math.max(2.5,S.ty.size*0.3):0;
+  const E=ext+(S.loop?2*ro+stem:0)+3,k=FS/(2*E),c=G.fctx;
+  G.E=E;G.k=k;
+  c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.clearRect(0,0,FS,FS);
+  c.setTransform(k,0,0,-k,FS/2,FS/2);c.rotate(theta());
+  c.fillStyle=c.strokeStyle='#fff';c.lineCap=c.lineJoin='round';
+  if(S.mode==='crystal')drawCrystal(c,R,n);else if(S.mode==='draw')drawDrawing(c,R,n);else if(S.mode==='type')drawType(c,R,n);else drawPaperField(c,R,n);
+  if(S.mode==='paper'||((S.mode==='draw'||S.mode==='type')&&S.dropLoose))dropIslands();else G.islands=null;
+  G.ring=null;
+  if(S.loop){
+    const col=c.getImageData(FS/2-1,0,3,FS).data;let y=-1;
+    for(let r=0;r<FS&&y<0;r++)for(let j=0;j<3;j++)if(col[(r*3+j)*4+3]>127){y=r;break}
+    if(y>=0){let run=0;while(y+run<FS&&col[((y+run)*3+1)*4+3]>127)run++;
+      const yt=(FS/2-y)/k,ov=Math.max(0.6,Math.min(S.loopBand*0.9,run/k*0.85)),cy=yt+ro-ov+stem;
+      if(stem>0){c.setTransform(k,0,0,-k,FS/2,FS/2);const nw=Math.max(1.6,S.loopBand*0.9);c.fillRect(-nw/2,yt-ov,nw,stem+ov)}
+      c.setTransform(k,0,0,-k,FS/2,FS/2);c.beginPath();c.arc(0,cy,ro,0,TAU);c.moveTo(ri,cy);c.arc(0,cy,ri,0,TAU);c.fill('evenodd');
+      G.ring={cy,ri,ro}}
+  }
+}
+
+/* ---------- 2D display ---------- */
+function sizeDisplay(){const r=G.dc.getBoundingClientRect();G.dpr=Math.min(2,window.devicePixelRatio||1);G.dw=r.width;G.dh=r.height;
+  G.dc.width=Math.max(1,Math.round(r.width*G.dpr));G.dc.height=Math.max(1,Math.round(r.height*G.dpr));G.pc.width=G.dc.width;G.pc.height=G.dc.height}
+const withM=(c,M)=>c.setTransform(new DOMMatrix().scale(G.dpr,G.dpr).multiply(M));
+function renderDisplay(){
+  const c=G.dctx,w=G.dw,h=G.dh,dpr=G.dpr;if(!w)return;
+  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,G.dc.width,G.dc.height);G.inset=null;
+  if(S.mode==='paper'&&!S.pp.unfold){drawFolded();return}
+  const L=Math.min(w,h-44)*0.95,cx=w/2,cy=h/2+18,ds=L/(2*G.E),dz=ds*viewZ();
+  G.M=viewM().multiply(new DOMMatrix().translate(cx,cy).scale(ds,-ds).rotate(theta()*180/Math.PI));G.Minv=G.M.inverse();
+  if(S.mode==='draw'){
+    const R=S.dia/2,n=S.points;withM(c,G.M);c.strokeStyle='rgba(255,255,255,.14)';c.lineWidth=1/dz;c.setLineDash([4/dz,6/dz]);
+    c.beginPath();for(let j=0;j<2*n;j++){const a=j*Math.PI/n;c.moveTo(0,0);c.lineTo(R*Math.cos(a),R*Math.sin(a))}c.moveTo(R,0);c.arc(0,0,R,0,TAU);c.stroke();c.setLineDash([]);
+    const p=G.pc.getContext('2d');p.setTransform(1,0,0,1,0,0);p.globalCompositeOperation='source-over';p.clearRect(0,0,G.pc.width,G.pc.height);
+    withM(p,G.M);p.fillStyle=p.strokeStyle='#fff';p.lineCap=p.lineJoin='round';drawDrawing(p,R,n);
+    tintIslands(p,G.M);
+    if(G.ring){p.globalCompositeOperation='source-over';withM(p,G.M.multiply(new DOMMatrix().rotate(-theta()*180/Math.PI)));
+      p.beginPath();p.arc(0,G.ring.cy,G.ring.ro,0,TAU);p.moveTo(G.ring.ri,G.ring.cy);p.arc(0,G.ring.cy,G.ring.ri,0,TAU);p.fill('evenodd')}
+    c.setTransform(1,0,0,1,0,0);c.save();c.shadowColor='rgba(0,14,9,.55)';c.shadowBlur=16*dpr;c.shadowOffsetY=5*dpr;c.drawImage(G.pc,0,0);c.restore();
+    return}
+  c.save();c.shadowColor='rgba(0,14,9,.55)';c.shadowBlur=16*dpr;c.shadowOffsetY=5*dpr;
+  c.drawImage(G.fc,(cx-L/2)*dpr,(cy-L/2)*dpr,L*dpr,L*dpr);c.restore();
+  if(S.mode==='type'&&G.islands){c.save();c.globalAlpha=0.9;c.drawImage(G.islands,(cx-L/2)*dpr,(cy-L/2)*dpr,L*dpr,L*dpr);c.restore()}
+}
+const zoomable=()=>S.mode==='draw'||(S.mode==='paper'&&!S.pp.unfold);
+const viewZ=()=>zoomable()?G.view[S.mode].z:1;
+const viewM=()=>{if(!zoomable())return new DOMMatrix();const v=G.view[S.mode];return new DOMMatrix().translate(v.x,v.y).scale(v.z)};
+function tintIslands(p,M){
+  if(!G.islands)return;
+  const F=new DOMMatrix([G.k,0,0,-G.k,FS/2,FS/2]).rotate(theta()*180/Math.PI);
+  p.save();p.globalCompositeOperation='source-atop';p.globalAlpha=0.85;p.imageSmoothingEnabled=true;
+  p.setTransform(new DOMMatrix().scale(G.dpr,G.dpr).multiply(M).multiply(F.inverse()));p.drawImage(G.islands,0,0);p.restore();
+}
+function eraseIslands(p,M,sc){
+  if(!G.islands)return;
+  const F=new DOMMatrix([G.k,0,0,-G.k,FS/2,FS/2]).rotate(theta()*180/Math.PI).scale(sc),T=new DOMMatrix().scale(G.dpr,G.dpr).multiply(M).multiply(F.inverse());
+  p.save();p.globalCompositeOperation='destination-out';
+  for(const[ox,oy]of[[0,0],[-1,0],[1,0],[0,-1],[0,1],[-2,0],[2,0],[0,-2],[0,2],[-1,-1],[1,1],[-1,1],[1,-1]]){p.setTransform(T.multiply(new DOMMatrix().translate(ox,oy)));p.drawImage(G.islands,0,0)}
+  p.restore();
+}
+function drawFolded(){
+  const c=G.dctx,w=G.dw,h=G.dh,dpr=G.dpr,n=S.points,a=Math.PI/n,s0=Math.min(h*0.74,w*0.9/(2*Math.sin(a/2)+0.25)),s=s0*viewZ();
+  G.M=viewM().multiply(new DOMMatrix().translate(w/2,h*0.92).scale(s0,-s0).rotate((Math.PI/2-a/2)*180/Math.PI));G.Minv=G.M.inverse();
+  const p=G.pc.getContext('2d');p.setTransform(1,0,0,1,0,0);p.clearRect(0,0,G.pc.width,G.pc.height);
+  withM(p,G.M);p.save();p.clip(sectorPath(a,2));
+  const gr=p.createLinearGradient(0,0,1,0);gr.addColorStop(0,'#ffffff');gr.addColorStop(1,'#eef1f4');p.fillStyle=gr;p.fill(sheetPath(1,n));
+  p.globalCompositeOperation='destination-out';for(const cut of S.pp.cuts)p.fill(polyPath(cut,1,true));
+  eraseIslands(p,G.M,S.dia/2);
+  p.globalCompositeOperation='source-atop';p.strokeStyle='rgba(15,59,46,.35)';p.lineWidth=1.5/s;p.setLineDash([5/s,4/s]);
+  p.beginPath();p.moveTo(0,0);p.lineTo(1,0);p.moveTo(0,0);p.lineTo(Math.cos(a),Math.sin(a));p.stroke();p.setLineDash([]);
+  p.restore();
+  c.setTransform(1,0,0,1,0,0);
+  c.globalAlpha=0.35;c.drawImage(G.pc,6*dpr,5*dpr);c.globalAlpha=0.6;c.drawImage(G.pc,3*dpr,2.5*dpr);c.globalAlpha=1;
+  c.save();c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=8*dpr;c.drawImage(G.pc,0,0);c.restore();
+  c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='rgba(255,255,255,.7)';c.font='600 13px "Nunito Sans",sans-serif';c.textBaseline='middle';
+  const pr=G.M.transformPoint(new DOMPoint(0.5,0)),pl=G.M.transformPoint(new DOMPoint(0.5*Math.cos(a),0.5*Math.sin(a)));
+  c.textAlign='left';c.fillText('fold',pr.x+12,pr.y);c.textAlign='right';c.fillText('fold',pl.x-12,pl.y);
+  withM(c,G.M);c.strokeStyle='#ff5a6e';c.fillStyle='#ff5a6e';c.lineWidth=2.2/s;
+  if(G.live){c.setLineDash([6/s,4/s]);c.beginPath();G.live.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.stroke();c.setLineDash([])}
+  if(G.poly){c.beginPath();G.poly.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));if(G.hover)c.lineTo(G.hover[0],G.hover[1]);c.stroke();
+    for(const[x,y]of G.poly){c.beginPath();c.arc(x,y,4/s,0,TAU);c.fill()}
+    c.beginPath();c.arc(G.poly[0][0],G.poly[0][1],9/s,0,TAU);c.stroke()}
+  const q=Math.round(Math.min(w,h)*0.27),ix=w-q-12,iy=h-q-12;G.inset={x:ix,y:iy,w:q,h:q};
+  c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.roundRect?c.roundRect(ix,iy,q,q,12):c.rect(ix,iy,q,q);c.fill();
+  c.drawImage(G.fc,ix+6,iy+6,q-12,q-12);c.fillStyle='rgba(255,255,255,.75)';c.textAlign='left';c.textBaseline='top';c.font='600 12px "Nunito Sans",sans-serif';c.fillText('Unfolded · tap',ix+8,iy+6);
+}
+
+/* ---------- 3D ---------- */
+const V={};
+function init3D(){
+  if(!window.THREE){$('#dims').textContent='3D preview could not load';return}
+  const cv=$('#c3');V.r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});V.r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  V.scene=new THREE.Scene();V.cam=new THREE.PerspectiveCamera(32,1,1,4000);
+  V.scene.add(new THREE.HemisphereLight(0xffffff,0x1d4a3a,0.75));
+  const d1=new THREE.DirectionalLight(0xffffff,0.85);d1.position.set(60,90,150);V.scene.add(d1);
+  const d2=new THREE.DirectionalLight(0xffe0b8,0.35);d2.position.set(-120,-40,60);V.scene.add(d2);
+  V.spin=new THREE.Group();V.hold=new THREE.Group();V.spin.add(V.hold);V.scene.add(V.spin);
+  V.mesh=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshStandardMaterial({color:0xf3f7ff,roughness:0.38,metalness:0.05}));V.hold.add(V.mesh);
+  V.str=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xe9c46a}));V.hold.add(V.str);
+  V.th=0;V.ph=0.12;V.zoom=1;V.base=200;V.user=false;
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let drag=null;
+  cv.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];V.user=true;cv.setPointerCapture(e.pointerId)});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;V.th-=(e.clientX-drag[0])*0.01;V.ph=Math.max(-1.35,Math.min(1.35,V.ph+(e.clientY-drag[1])*0.01));drag=[e.clientX,e.clientY]});
+  const end=()=>{drag=null};cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+  cv.addEventListener('wheel',e=>{e.preventDefault();V.zoom=Math.max(0.35,Math.min(3,V.zoom*Math.exp(e.deltaY*0.0012)))},{passive:false});
+  cv.addEventListener('dblclick',()=>{V.th=0;V.ph=0.12;V.zoom=1;V.user=false;V.spin.rotation.y=0});
+  new ResizeObserver(()=>{const r=cv.getBoundingClientRect();if(!r.width)return;V.r.setSize(r.width,r.height,false);V.cam.aspect=r.width/r.height;V.cam.updateProjectionMatrix()}).observe(cv);
+  const tick=t=>{
+    if(!V.user&&!reduce)V.spin.rotation.y=Math.sin(t*0.0005)*0.55;
+    const d=V.base*V.zoom;V.cam.position.set(d*Math.sin(V.th)*Math.cos(V.ph),d*Math.sin(V.ph),d*Math.cos(V.th)*Math.cos(V.ph));V.cam.lookAt(0,0,0);
+    V.r.render(V.scene,V.cam);requestAnimationFrame(tick)};
+  requestAnimationFrame(tick);
+}
+let t3=0;const schedule3D=()=>{clearTimeout(t3);t3=setTimeout(build3D,160)};
+function build3D(){
+  const W=FS,img=G.fctx.getImageData(0,0,W,W).data,al=new Float32Array(W*W),k=G.k;
+  for(let i=0;i<W*W;i++)al[i]=img[i*4+3]/255;
+  for(let i=0;i<W;i++){al[i]=al[(W-1)*W+i]=al[i*W]=al[i*W+W-1]=0}
+  const loops=contours(al,W,W,0.5).map(f=>{const P=[];for(let i=0;i<f.length;i+=2)P.push([f[i]+0.5,f[i+1]+0.5]);
+    return rdpClosed(P,0.3).map(([x,y])=>[(x-W/2)/k,(W/2-y)/k])}).filter(P=>P.length>=3);
+  const{pieces,total}=classify(loops,S.dropLoose);
+  G.pieces=total;G.kept=pieces.length;
+  if(G.geom){G.geom.dispose();G.geom=null}
+  if(window.THREE&&pieces.length){
+    const shapes=pieces.map(o=>{const sh=new THREE.Shape(o.outer.map(([x,y])=>new THREE.Vector2(x,y)));
+      for(const h of o.holes)sh.holes.push(new THREE.Path(h.map(([x,y])=>new THREE.Vector2(x,y))));return sh});
+    try{G.geom=new THREE.ExtrudeGeometry(shapes,{depth:S.thick,bevelEnabled:false,curveSegments:1,steps:1});G.geom.computeVertexNormals();G.geom.computeBoundingBox()}catch(e){G.geom=null}
+  }
+  updateStats();
+  if(!V.mesh)return;
+  V.mesh.geometry=G.geom||new THREE.BufferGeometry();
+  if(G.geom){const b=G.geom.boundingBox,cx=(b.min.x+b.max.x)/2,cy=(b.min.y+b.max.y)/2;V.hold.position.set(-cx,-cy,-S.thick/2);
+    V.base=Math.max(b.max.x-b.min.x,b.max.y-b.min.y)/(2*Math.tan(16*Math.PI/180))*1.3;
+    const sg=new THREE.BufferGeometry();if(G.ring&&S.loop)sg.setAttribute('position',new THREE.Float32BufferAttribute([0,G.ring.cy,S.thick/2,0,G.ring.cy+600,S.thick/2],3));
+    V.str.geometry.dispose();V.str.geometry=sg}
+}
+function updateStats(){
+  const g=G.geom;
+  if(!g){$('#dims').textContent='Nothing to print yet';['#sSize','#sTris','#sBytes','#sPieces'].forEach(s=>$(s).textContent='–');return}
+  const b=g.boundingBox,wx=b.max.x-b.min.x,hy=b.max.y-b.min.y,nt=g.attributes.position.count/3;
+  const size=`${wx.toFixed(1)} × ${hy.toFixed(1)} × ${S.thick.toFixed(1)} mm`;
+  const loose=G.pieces-1;
+  $('#dims').innerHTML='';$('#dims').append(size);
+  if(loose>0){const sm=document.createElement('small');sm.textContent=S.dropLoose?`${loose} loose piece${loose>1?'s':''} removed`:`${loose} loose piece${loose>1?'s':''} will fall off`;$('#dims').append(sm)}
+  $('#sSize').textContent=size;$('#sTris').textContent=Math.round(nt).toLocaleString();
+  $('#sBytes').textContent=((84+50*nt)/1048576).toFixed(2)+' MB';
+  const pc=$('#sPieces');pc.textContent=loose>0?(S.dropLoose?`1 (removed ${loose})`:`${G.pieces} — not all connected`):'1, all connected';pc.className=loose>0&&!S.dropLoose?'warn':'';
+}
+function exportSTL(){
+  const st=$('#status');st.className='status';
+  if(!G.geom){st.textContent='There is nothing to export yet.';return}
+  const nm=(S.name||'').trim().replace(/[^\w\-]+/g,'-').replace(/^-+|-+$/g,'')||'snowflake-ornament';
+  const g=G.geom,blob=new Blob([toSTL(g.attributes.position.array,g.index?g.index.array:null)],{type:'model/stl'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm+'.stl';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  st.textContent=`Saved ${nm}.stl.`;
+}
+
+/* ---------- UI ---------- */
+const fmt=(v,unit,step)=>(step<1?(+v).toFixed(step<0.1?2:1):Math.round(v))+unit;
+for(const el of $$('[data-ranges]')){const g=el.dataset.ranges;
+  el.innerHTML=RANGES[g].map(([k,l,mi,ma,st,u])=>{const key=(g==='orn'||g==='loop')?k:g==='tip'?'cr.'+k:(g==='tysize'||g==='tybar'||g==='tyhub')?'ty.'+k:g+'.'+k;
+    return `<label class="rng"><span>${l}</span><output data-out="${key}"></output><input type="range" min="${mi}" max="${ma}" step="${st}" data-key="${key}" data-unit="${u}"></label>`}).join('')}
+const hints={crystal:'Tap the snowflake for a new variation.',type:'Type your words in the Snowflake panel below. Letters are joined so they print as one piece; anything shown in red isn’t connected and will be left out.',draw:'Draw anywhere. Every stroke repeats around the flake and smooths out when you lift. Scroll to zoom, right-drag to pan.',
+  pfree:'This is your folded paper. Draw a closed shape to cut it away; cuts that cross a fold open up on both sides. Scroll to zoom, right-drag to pan.',pstraight:'Tap to place corners. Tap the first corner, or double-click, to make the cut. Scroll to zoom, right-drag to pan.',
+  unfolded:'Unfolded view. Tap Fold to keep cutting.'};
+function setHint(){
+  let t=S.mode==='paper'?(S.pp.unfold?hints.unfolded:S.pp.tool==='free'?hints.pfree:hints.pstraight):hints[S.mode];
+  if(S.mode==='draw'&&G.islands)t='Parts in red aren’t connected to the flake, so they’ll be left out of the print. Draw a line to join them.';
+  $('#hint').textContent=t;
+}
+function syncUI(){
+  for(const t of $$('.tab'))t.setAttribute('aria-selected',t.dataset.mode===S.mode);
+  for(const el of $$('[data-show]'))el.hidden=el.dataset.show!==S.mode;
+  for(const el of $$('input[type=range]')){el.value=getK(el.dataset.key);$(`[data-out="${el.dataset.key}"]`).textContent=fmt(el.value,el.dataset.unit,+el.step)}
+  for(const el of $$('.seg')){const v=String(getK(el.dataset.key));for(const b of el.children)b.setAttribute('aria-pressed',b.dataset.v===v)}
+  for(const el of $$('input[type=checkbox]'))el.checked=!!getK(el.dataset.key);
+  $('#fname').value=S.name;
+  if(document.activeElement!==$('#tyText'))$('#tyText').value=S.ty.text;
+  $('#tyBarOpts').hidden=S.ty.join!=='bar';$('#tyCenter').hidden=S.ty.layout!=='arms';$('#tyHubOpts').hidden=!S.ty.center||S.ty.center==='none';$('#tyUpright').hidden=S.ty.layout!=='arms';$('#spNote').hidden=!(S.ty.layout==='arms'&&S.ty.join!=='bar'&&(S.ty.spacing??-6)>0);
+  for(const el of $$('[data-ranges=loop] input'))el.disabled=!S.loop;
+  {const c=S.cr,closed=c.tip==='plate'||c.tip==='round';$('[data-tipopts]').hidden=!closed;
+    const tr=(c.tip==='plate'?c.armW*1.5:c.armW)*(c.tipSize||100)/100,hr=(c.tip==='plate'?tr*Math.cos(Math.PI/6):tr)-Math.max(1.0,c.armW*0.45);
+    $('#tipNote').hidden=!(closed&&c.tipHole&&hr<0.6)}
+  const pr=(act,on)=>$$(`[data-act=${act}]`).forEach(b=>b.setAttribute('aria-pressed',on));
+  pr('pen',S.dr.tool==='pen');pr('erase',S.dr.tool==='erase');pr('free',S.pp.tool==='free');pr('straight',S.pp.tool==='straight');pr('unfold',S.pp.unfold);
+  $('#unfoldBtn').textContent=S.pp.unfold?'Fold':'Unfold';
+  syncFit();
+  setHint();
+}
+let tsave=0;const save=()=>{clearTimeout(tsave);tsave=setTimeout(()=>{try{localStorage.setItem('flurry-v1',JSON.stringify(S))}catch(e){}},400)};
+function refresh(full){ensureFont();renderField();renderDisplay();setHint();if(S.mode==='type'){const nt=$('#tyNote');nt.textContent=G.tyNote||'';nt.hidden=!G.tyNote}if(full){schedule3D();save()}}
+const pushHist=()=>{const m=S.mode,arr=m==='draw'?S.dr.strokes:S.pp.cuts;G.hist[m].push(JSON.stringify(arr));if(G.hist[m].length>60)G.hist[m].shift()};
+function undo(){
+  if(S.mode==='paper'&&G.poly){G.poly=null;G.hover=null;renderDisplay();return}
+  const h=G.hist[S.mode];if(!h||!h.length)return;const arr=JSON.parse(h.pop());
+  if(S.mode==='draw')S.dr.strokes=arr;else S.pp.cuts=arr;refresh(true)}
+function closePoly(){
+  const P=G.poly.filter((p,i,a)=>!i||Math.hypot(p[0]-a[i-1][0],p[1]-a[i-1][1])>0.002);
+  G.poly=null;G.hover=null;if(P.length<3){renderDisplay();return}
+  pushHist();S.pp.cuts.push(P);refresh(true)}
+function randomStrokes(){
+  const r=Math.random,rng=(a,b)=>a+(b-a)*r(),n=S.points,maxA=Math.PI/n*0.95,out=[];
+  const tip=rng(0.8,0.92);out.push({w:+rng(2,2.8).toFixed(1),pts:[[0.04,0],[tip,0]]});
+  const nb=2+((r()*3)|0);
+  for(let i=0;i<nb;i++){
+    const x=rng(0.2,0.75)*(0.6+0.4*(i+1)/nb),ang=rng(0.45,1)*Math.min(maxA*1.9,1.15),L=rng(0.1,0.3)*(1.1-x*0.6),w=+rng(1.4,2.2).toFixed(1);
+    if(r()<0.35){const bend=rng(-0.6,0.6),pts=[];for(let k=0;k<=12;k++){const t=k/12,a=ang+bend*t;pts.push([x+L*t*Math.cos(a),L*t*Math.sin(a)])}out.push({w,pts})}
+    else out.push({w,pts:[[x,0],[x+L*Math.cos(ang),L*Math.sin(ang)]]});
+    if(r()<0.4){const ex=x+L*Math.cos(ang),ey=L*Math.sin(ang),rr=rng(0.025,0.05);out.push({w:1.4,pts:circ(ex+rr*Math.cos(ang),ey+rr*Math.sin(ang),rr,18)})}
+  }
+  const end=r();
+  if(end<0.4){const rr=rng(0.035,0.06);out.push({w:1.6,pts:circ(tip+rr,0,rr,22)})}
+  else if(end<0.75){const l=rng(0.06,0.12),a=rng(2.2,2.7);out.push({w:1.6,pts:[[tip,0],[tip+l*Math.cos(a),l*Math.sin(a)]]})}
+  if(r()<0.5){const rr=rng(0.12,0.22);const pts=[];for(let k=0;k<=10;k++){const a=maxA*k/10;pts.push([rr*Math.cos(a),rr*Math.sin(a)])}out.push({w:1.6,pts})}
+  return out.map(s=>({w:Math.max(1.2,s.w),pts:s.pts.map(clampUnit)}));
+}
+function randomCuts(){
+  const r=Math.random,rng=(a,b)=>a+(b-a)*r(),a=Math.PI/S.points,out=[];
+  const on=(rad,ang)=>[rad*Math.cos(ang),rad*Math.sin(ang)];
+  const k=5+((r()*4)|0);
+  for(let i=0;i<k;i++){
+    const t=i===0?0.9:i===1?0.5:i===2?0.1:r();
+    if(t<0.25){const c=on(rng(0.2,0.7),a),rr=rng(0.05,0.1);out.push(circ(c[0],c[1],rr,22).slice(0,-1))}
+    else if(t<0.38){const c=on(rng(0.25,0.65),0),rr=rng(0.03,0.05);out.push(circ(c[0],c[1],rr,18).slice(0,-1))}
+    else if(t<0.7){const rad=rng(0.3,0.78),ang=a*rng(0.35,0.65),c=on(rad,ang),s=Math.min(rad*Math.sin(a*0.38),0.13)*rng(0.7,1);
+      out.push(r()<0.5?[[c[0]-s,c[1]],[c[0],c[1]-s*0.7],[c[0]+s,c[1]],[c[0],c[1]+s*0.7]]:circ(c[0],c[1],s*0.8,18).slice(0,-1))}
+    else{const ang=a*rng(0.3,1),rad=rng(0.6,0.85),w=rng(0.08,0.2),p=on(rad,ang);
+      out.push([p,on(1.25,ang-w),on(1.25,ang+w)])}
+  }
+  return out;
+}
+function act(a){
+  if(a==='variation'){S.cr.seed=(Math.random()*1e9)|0;refresh(true)}
+  else if(a==='random'){
+    if(S.mode==='crystal')return act('surprise');
+    if(S.mode==='type'){const pick=l=>l[(Math.random()*l.length)|0];Object.assign(S.ty,{layout:pick(['arms','ring','plate']),font:pick(['rounded','script','festive','chunky']),size:+(7+Math.random()*6).toFixed(1),bar:+(1.2+Math.random()*0.8).toFixed(1),join:pick(['touch','touch','bar'])});S.points=pick([5,6,6,8]);syncUI();refresh(true);return}
+    pushHist();
+    if(S.mode==='draw')S.dr.strokes=randomStrokes();else{S.pp.cuts=randomCuts();G.poly=null;S.pp.unfold=false;syncUI()}
+    refresh(true)}
+  else if(a==='surprise'){const r=Math.random,pick=l=>l[(r()*l.length)|0];
+    S.points=pick([4,5,6,6,8]);
+    Object.assign(S.cr,{preset:'',seed:(r()*1e9)|0,branches:1+((r()*5)|0),blen:40+((r()*70)|0),bang:pick([45,55,60,60,60,70]),sub:(r()*3)|0,armW:+(1.8+r()*1.2).toFixed(1),brW:+(1.2+r()*1).toFixed(1),hub:6+((r()*30)|0),hubStyle:pick(['solid','ring','open','solid']),tip:pick(['plate','round','plate','round','arrow','none']),tipSize:100+5*((r()*25)|0),tipHole:r()<0.5});
+    syncUI();refresh(true)}
+  else if(a==='pen'||a==='erase'){S.dr.tool=a;syncUI();save()}
+  else if(a==='free'||a==='straight'){S.pp.tool=a;G.poly=null;S.pp.unfold=false;syncUI();renderDisplay();save()}
+  else if(a==='fit'){const v=G.view[S.mode];if(v){v.z=1;v.x=v.y=0}syncFit();renderDisplay()}
+  else if(a==='tsmaller'||a==='tbigger'){S.ty.size=Math.max(4,Math.min(30,S.ty.size+(a==='tbigger'?1:-1)));syncUI();refresh(true)}
+  else if(a==='undo')undo();
+  else if(a==='clear'){pushHist();if(S.mode==='draw')S.dr.strokes=[];else{S.pp.cuts=[];G.poly=null}refresh(true)}
+  else if(a==='unfold'){S.pp.unfold=!S.pp.unfold;G.poly=null;syncUI();renderDisplay()}
+  else if(a==='sample'){pushHist();S.pp.cuts=JSON.parse(JSON.stringify(SAMPLE_CUTS));S.pp.unfold=false;syncUI();refresh(true)}
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.act)return act(t.dataset.act);
+  if(t.classList.contains('tab')){S.mode=t.dataset.mode;G.live=null;G.poly=null;S.pp.unfold=false;syncUI();refresh(true);return}
+  const sg=t.parentElement&&t.parentElement.classList.contains('seg')?t.parentElement:null;
+  if(sg){const key=sg.dataset.key,v='num'in sg.dataset?+t.dataset.v:t.dataset.v;setK(key,v);
+    if(key==='cr.preset')Object.assign(S.cr,PRESETS[v]);syncUI();refresh(true)}
+});
+document.addEventListener('input',e=>{const el=e.target,key=el.dataset&&el.dataset.key;if(!key)return;
+  if(el.type==='range'){setK(key,+el.value);$(`[data-out="${key}"]`).textContent=fmt(el.value,el.dataset.unit,+el.step);if(key.startsWith('cr.'))S.cr.preset='';syncUI();refresh(true)}
+  else if(el.type==='checkbox'){setK(key,el.checked);syncUI();refresh(true)}
+  else if(el.type==='text'){setK(key,el.value);if(key==='name')save();else refresh(true)}});
+$('#dlBtn').addEventListener('click',exportSTL);
+
+/* drawing input */
+const dc=G.dc,R1=()=>S.dia/2;
+const local=e=>{const r=dc.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,p=G.Minv.transformPoint(new DOMPoint(x,y));return{x,y,q:[p.x,p.y]}};
+const clampUnit=q=>{const l=Math.hypot(q[0],q[1]);return l>1?[q[0]/l,q[1]/l]:q};
+const clampPen=q=>{const l=Math.hypot(q[0],q[1]);return l>1.6?[q[0]*1.6/l,q[1]*1.6/l]:q};
+function syncFit(){const show=zoomable()&&viewZ()!==1;for(const b of $$('[data-act=fit]'))b.hidden=!show}
+dc.addEventListener('wheel',e=>{
+  if(!zoomable())return;e.preventDefault();
+  const r=dc.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,v=G.view[S.mode];
+  const nz=Math.max(1,Math.min(12,v.z*Math.exp(-e.deltaY*0.0015)));
+  if(nz===1){v.x=v.y=0}else{v.x=sx-(sx-v.x)*nz/v.z;v.y=sy-(sy-v.y)*nz/v.z}
+  v.z=nz;syncFit();renderDisplay();
+  if(G.poly&&G.hoverEvt)G.hover=local(G.hoverEvt).q;
+},{passive:false});
+dc.addEventListener('contextmenu',e=>{if(zoomable())e.preventDefault()});
+dc.addEventListener('pointerdown',e=>{
+  if(!G.Minv)return;const{x,y,q}=local(e);
+  if(S.mode==='crystal'){act('variation');return}
+  if(S.mode==='type')return;
+  if(zoomable()&&(e.button===1||e.button===2||G.space)){e.preventDefault();G.pan={x:e.clientX,y:e.clientY};dc.setPointerCapture(e.pointerId);dc.style.cursor='grabbing';return}
+  if(e.button!==0&&e.pointerType==='mouse')return;
+  if(S.mode==='paper'){
+    if(G.inset&&x>=G.inset.x&&x<=G.inset.x+G.inset.w&&y>=G.inset.y&&y<=G.inset.y+G.inset.h){act('unfold');return}
+    if(S.pp.unfold){act('unfold');return}
+    if(S.pp.tool==='straight'){
+      if(!G.poly)G.poly=[q];
+      else{const f=G.M.transformPoint(new DOMPoint(G.poly[0][0],G.poly[0][1]));if(G.poly.length>=3&&Math.hypot(f.x-x,f.y-y)<16){closePoly();return}G.poly.push(q)}
+      renderDisplay();return}
+    G.live=[q];dc.setPointerCapture(e.pointerId);renderDisplay();return}
+  G.live=[clampPen([q[0]/R1(),q[1]/R1()])];dc.setPointerCapture(e.pointerId);renderDisplay();
+});
+dc.addEventListener('pointermove',e=>{
+  if(!G.Minv)return;
+  if(G.pan){const v=G.view[S.mode];v.x+=e.clientX-G.pan.x;v.y+=e.clientY-G.pan.y;G.pan={x:e.clientX,y:e.clientY};renderDisplay();return}
+  G.hoverEvt={clientX:e.clientX,clientY:e.clientY};
+  if(S.mode==='paper'&&G.poly&&!G.live){G.hover=local(e).q;renderDisplay();return}
+  if(!G.live)return;
+  let q=local(e).q;if(S.mode==='draw')q=clampPen([q[0]/R1(),q[1]/R1()]);
+  const l=G.live[G.live.length-1];if(Math.hypot(q[0]-l[0],q[1]-l[1])<0.002)return;
+  G.live.push(q);renderDisplay();
+});
+const finish=()=>{
+  if(G.pan){G.pan=null;dc.style.cursor='';return}
+  if(!G.live)return;const raw=G.live;G.live=null;
+  if(S.mode==='draw'){pushHist();S.dr.strokes.push({w:S.dr.width,erase:S.dr.tool==='erase',pts:cleanStroke(raw,false,S.dr.smooth,S.dr.straighten)})}
+  else if(S.mode==='paper'&&raw.length>=3){const P=cleanStroke(raw,true,S.pp.smooth,false);if(P.length>=3&&Math.abs(area(P))>1e-4){pushHist();S.pp.cuts.push(P)}}
+  refresh(true)};
+dc.addEventListener('pointerup',finish);dc.addEventListener('pointercancel',finish);
+dc.addEventListener('dblclick',()=>{if(S.mode==='paper'&&G.poly&&G.poly.length>=3)closePoly()});
+document.addEventListener('keyup',e=>{if(e.key===' '){G.space=false;dc.style.cursor=''}});
+document.addEventListener('keydown',e=>{
+  if(e.target.matches&&e.target.matches('input[type=text]'))return;
+  if(e.key===' '&&zoomable()&&!(e.target.closest&&e.target.closest('button,input'))){e.preventDefault();G.space=true;dc.style.cursor='grab';return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}
+  else if(e.key==='Escape'&&G.poly){G.poly=null;G.hover=null;renderDisplay()}
+  else if(e.key==='Enter'&&G.poly&&G.poly.length>=3)closePoly()});
+
+new ResizeObserver(()=>{sizeDisplay();renderDisplay()}).observe(dc);
+init3D();syncUI();sizeDisplay();refresh(true);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>renderDisplay());
+}
+</script>
+</body>
+</html>
