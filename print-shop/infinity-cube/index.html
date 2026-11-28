@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Infinity Cube | The Print Shop | GTALHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#e7dfd2,#16140f);--plate:light-dark(#c9b48f,#3a3124);--panel:light-dark(#f8f4ec,#211e18);--ink:light-dark(#211c16,#f1eadf);--mute:light-dark(#6c6152,#b0a592);--line:light-dark(#dcd2c1,#3a342a);--acc:#b0337f;--acc2:light-dark(#8e2265,#e06aae);--chip:light-dark(#efe8dc,#2b2720)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2{font-family:"Space Grotesk",system-ui,sans-serif;margin:0;line-height:1.05}
+h1{font-size:clamp(26px,4vw,38px);text-wrap:balance}
+h2{font-size:19px;margin-bottom:10px}
+header{padding:16px max(4vw,14px) 10px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header p{margin:0;color:var(--mute);font-size:14px}
+.back{color:var(--acc2);font:600 14px Inter,sans-serif;text-decoration:none;width:100%}
+.back:hover{text-decoration:underline}
+.wrap{display:grid;gap:14px;padding:0 max(4vw,14px) 32px;max-width:1400px;margin:0 auto}
+@media(min-width:900px){.wrap{grid-template-columns:minmax(0,1.35fr) minmax(340px,1fr);align-items:start}.stage{position:sticky;top:12px}}
+.stage{border-radius:16px;overflow:hidden;background:radial-gradient(120% 90% at 50% 30%,light-dark(#efe2c8,#4a3d2a),var(--plate));box-shadow:0 1px 0 var(--line),0 10px 30px -18px #0008}
+.view{position:relative;height:clamp(340px,58vh,640px);touch-action:none}
+.view canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;left:10px;top:10px;right:10px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.tag{pointer-events:none;background:light-dark(#fffc,#000a);border-radius:999px;padding:4px 10px;font-size:13px;color:var(--ink)}
+.busy{position:absolute;right:12px;bottom:12px;font-size:13px;background:light-dark(#fffd,#000b);padding:5px 10px;border-radius:999px;display:none}
+.bar{display:flex;gap:8px;align-items:center;padding:10px;flex-wrap:wrap;background:light-dark(#fff6,#0004)}
+.bar input[type=range]{flex:1 1 140px}
+button,.btn{font:600 15px Inter,sans-serif;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button[aria-pressed=true]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc2);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.col{display:grid;gap:14px}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.sw button{padding:4px;min-height:0;display:grid;gap:3px;justify-items:center;font:500 12px Inter,sans-serif;border-radius:10px}
+.sw canvas{width:100%;aspect-ratio:1;border-radius:6px;display:block}
+.sw button[aria-pressed=true]{background:var(--chip);color:var(--ink);border:2px solid var(--acc)}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px}
+.seg button{flex:1 1 auto}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;margin-top:12px}
+.row label{font-size:14px;font-weight:500}
+.row output{font:600 14px "Space Grotesk",sans-serif;white-space:nowrap}
+.row input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--acc);height:28px}
+input[type=text],select{font:16px Inter,sans-serif;min-height:44px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+.hint{font-size:13px;color:var(--mute);margin:8px 0 0}
+.warn{font-size:13px;color:var(--acc2);margin:8px 0 0}
+.colors{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.colors button{width:44px;height:44px;padding:0;border-radius:50%;border:3px solid var(--panel);box-shadow:0 0 0 1px var(--line)}
+.colors button[aria-pressed=true]{box-shadow:0 0 0 3px var(--acc)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+details summary{cursor:pointer;font:600 15px "Space Grotesk",sans-serif;min-height:32px}
+ul.tips{margin:8px 0 0;padding-left:18px;font-size:14px}
+.stat{font-size:13px;color:var(--mute);margin-top:8px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<header><a class="back" href="/print-shop/">← The Print Shop</a><h1>Infinity Cube Generator</h1><p>Print-in-place, folds forever. Tap any face to texture it.</p><button class="pri" id="randTop" style="margin-left:auto">Random</button></header>
+<div class="wrap">
+ <section class="stage">
+  <div class="view" id="view"><div class="hud"><span class="tag" id="stateTag">Cube</span><span class="tag" id="modeTag">Tap a face to paint</span></div><div class="busy" id="busy">Meshing…</div></div>
+  <div class="bar">
+   <button id="play" class="pri" aria-pressed="false">Play fold</button>
+   <button id="step">Next fold</button>
+   <input type="range" id="scrub" min="0" max="4" step="0.001" value="0" aria-label="Fold position">
+   <button id="plateBtn" aria-pressed="false">Print layout</button>
+  </div>
+ </section>
+ <div class="col">
+  <section class="panel">
+   <h2>Face textures</h2>
+   <div class="sw" id="swatches"></div>
+   <div class="seg" role="group" aria-label="Paint mode">
+    <button data-mode="face" aria-pressed="true">One face</button><button data-mode="side" aria-pressed="false">Whole side</button><button data-mode="all" aria-pressed="false">Every face</button>
+   </div>
+   <p class="hint" id="paintHint">Pick a texture, then tap faces in the viewer. Fold the cube to reach hidden faces.</p>
+   <div id="textBox" style="display:none;margin-top:10px"><label for="txt" style="font-size:14px;font-weight:500">Text for this brush</label><input type="text" id="txt" maxlength="4" value="A"></div>
+   <div id="diceBox" style="display:none;margin-top:10px"><label for="diceN" style="font-size:14px;font-weight:500">Pips</label><select id="diceN"><option value="auto">Auto: opposite sides add to 7</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+   <label id="spreadBox" style="display:none;gap:8px;align-items:center;margin-top:12px;font-size:14px"><input type="checkbox" id="spread" style="width:20px;height:20px;accent-color:var(--acc)">Spread one picture across the whole side (it scrambles when you fold)</label>
+   <div id="imgBox" style="display:none;margin-top:10px"><label class="btn" style="display:inline-flex;align-items:center" for="img">Choose image…</label><input type="file" id="img" accept="image/*" style="position:absolute;opacity:0;width:1px"><p class="hint">Dark areas are carved. Square images work best.</p></div>
+   <div class="row"><label for="depth">Texture depth</label><output id="depthO"></output><input type="range" id="depth" min="0.2" max="1.4" step="0.05"></div>
+   <div class="row"><label for="pitch">Texture scale</label><output id="pitchO"></output><input type="range" id="pitch" min="1" max="6" step="0.1"></div>
+   <label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px"><input type="checkbox" id="raise" style="width:20px;height:20px;accent-color:var(--acc)">Raise text and images instead of engraving</label>
+   <div class="seg"><button id="undo">Undo</button><button id="shuffle">Surprise me</button><button id="clear">Clear all</button></div>
+  </section>
+  <section class="panel">
+   <h2>Cube</h2>
+   <div class="row"><label for="size">Block size</label><output id="sizeO"></output><input type="range" id="size" min="12" max="35" step="0.5"></div>
+   <div class="row"><label for="chamfer">Edge chamfer</label><output id="chamferO"></output><input type="range" id="chamfer" min="0" max="5" step="0.1"></div>
+   <div class="row"><label for="gap">Gap between blocks</label><output id="gapO"></output><input type="range" id="gap" min="0.3" max="1.2" step="0.05"></div>
+   <p class="warn" id="chamferWarn"></p>
+   <div class="colors" id="colors"></div>
+  </section>
+  <section class="panel">
+   <h2>Hinges</h2>
+   <div class="row"><label for="inset">Hinge size</label><output id="insetO"></output><input type="range" id="inset" min="2" max="4" step="0.1"></div>
+   <div class="row"><label for="linkW">Link width</label><output id="linkWO"></output><input type="range" id="linkW" min="3" max="12" step="0.5"></div>
+   <div class="row"><label for="pinR">Pin diameter</label><output id="pinRO"></output><input type="range" id="pinR" min="1.6" max="4" step="0.1"></div>
+   <div class="row"><label for="clear">Print clearance</label><output id="clearO"></output><input type="range" id="clear" min="0.2" max="0.6" step="0.025"></div>
+   <p class="hint">Six double-pivot links let each fold swing a full 180°. Pin diameter is limited by hinge size.</p>
+  </section>
+  <section class="panel">
+   <h2>Export</h2>
+   <div class="two"><div><label for="res" style="font-size:14px;font-weight:500">Mesh detail</label>
+    <select id="res"><option value="0.3">Draft · 0.30 mm</option><option value="0.2" selected>Standard · 0.20 mm</option><option value="0.14">Fine · 0.14 mm</option><option value="0.1">Ultra · 0.10 mm</option></select></div>
+    <div><label for="pres" style="font-size:14px;font-weight:500">Preview detail</label>
+    <select id="pres"><option value="0.5">Fast</option><option value="0.36" selected>Balanced</option><option value="0.26">Sharp</option></select></div></div>
+   <div class="seg"><button class="pri" id="export">Download print-in-place STL</button></div>
+   <p class="stat" id="expStat">Exports the flat 2×4 layout, already assembled, with all 12 parts in one STL.</p>
+   <details style="margin-top:10px"><summary>Printing tips</summary><ul class="tips">
+    <li>Print flat as exported. No supports. Four links sit on the bed, two on top.</li>
+    <li>Clearance 0.35 mm suits most tuned printers at 0.2 mm layers. Raise it if the hinges fuse.</li>
+    <li>Keep "Hinge size" at 2.6 mm or more so the links stay strong.</li>
+    <li>After printing, flex each hinge gently before folding the whole cube.</li>
+    <li>Fold cycle: open the cube into the flat strip, fold its ends back to make a new cube, and repeat.</li></ul></details>
+  </section>
+ </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script id="coreSrc" type="text/plain">// ===== Infinity cube core: model, SDFs, textures, surface-nets mesher =====
+const DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const UPS=[[0,0,1],[0,0,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]];
+const vadd=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const vsub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const vmul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const vdot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const vcross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const CUBE_IDS=['a','b','c','d','e','f','g','h'];
+const FUSED={a:2,b:3,g:2,h:3}; // faces glued inside a rigid pair
+function minChamfer(P){const d=P.inset,g=P.gap;return Math.max(0,2*d-Math.SQRT2*(d+g/2))+0.4;}
+function buildModel(P){
+  const s=P.size,g=P.gap,p=s+g,h=s/2,d=P.inset,c=P.clear,b=P.linkW;
+  const grid={a:[0,0,0],b:[0,1,0],c:[0,0,1],d:[0,1,1],e:[1,0,1],f:[1,1,1],g:[1,0,0],h:[1,1,0]};
+  const cubes={};
+  for(const id of CUBE_IDS)cubes[id]={id,c:grid[id].map(t=>(t-.5)*p),notches:[],pins:[]};
+  const H=[['a','c',[0,0,1],[-1,0,0],[-p/2-h,-p/2,0],0],['b','d',[0,0,1],[-1,0,0],[-p/2-h,p/2,0],0],
+    ['c','e',[1,0,0],[0,0,1],[0,-p/2,p/2+h],1],['d','f',[1,0,0],[0,0,1],[0,p/2,p/2+h],1],
+    ['e','g',[0,0,-1],[1,0,0],[p/2+h,-p/2,0],2],['f','h',[0,0,-1],[1,0,0],[p/2+h,p/2,0],2]];
+  const hinges=H.map(([pa,ch,m,n,S,grp])=>{
+    const A=vcross(m,n),off=g/2+d;
+    const Pp=vsub(vsub(S,vmul(m,off)),vmul(n,d)),Pc=vsub(vadd(S,vmul(m,off)),vmul(n,d));
+    const nr=[-(2*d+c),1.5],ar=[-(b/2+c),b/2+c];
+    cubes[pa].notches.push({S,m,n,A,mr:[-(g/2+2*d+c),0],nr,ar});
+    cubes[ch].notches.push({S,m,n,A,mr:[0,g/2+2*d+c],nr,ar});
+    const half=b/2+c+Math.min(1.8,h-b/2-c-0.5);
+    cubes[pa].pins.push({P:Pp,A,half,r:P.pinR});cubes[ch].pins.push({P:Pc,A,half,r:P.pinR});
+    return {id:pa+ch,parent:pa,child:ch,m,n,A,S,Pp,Pc,grp,off};
+  });
+  const bodies=[{id:'AB',cubes:['a','b']},{id:'C',cubes:['c']},{id:'D',cubes:['d']},
+    {id:'E',cubes:['e']},{id:'F',cubes:['f']},{id:'GH',cubes:['g','h']}];
+  const bodyOf={a:'AB',b:'AB',c:'C',d:'D',e:'E',f:'F',g:'GH',h:'GH'};
+  return {P,s,g,p,h,d,c,b,cubes,hinges,bodies,bodyOf};
+}
+// ---------- patterns: carve amount 0..1 ----------
+const fr=x=>x-Math.floor(x),dn=x=>Math.abs(x-Math.round(x));
+const clamp01=x=>x<0?0:x>1?1:x;
+const sst=(a,b,x)=>{const t=clamp01((x-a)/(b-a));return t*t*(3-2*t)};
+function hash2(i,j){let n=i*374761393+j*668265263;n=(n^(n>>>13))*1274126177;n=n^(n>>>16);return (n>>>0)/4294967296;}
+function vnoise(x,y){const i=Math.floor(x),j=Math.floor(y),fx=x-i,fy=y-j,ux=fx*fx*(3-2*fx),uy=fy*fy*(3-2*fy);
+  const a=hash2(i,j),b=hash2(i+1,j),c=hash2(i,j+1),d=hash2(i+1,j+1);return a+(b-a)*ux+(c-a)*uy+(a-b-c+d)*ux*uy;}
+function fbm(x,y){return 0.55*vnoise(x,y)+0.3*vnoise(x*2.03+5.2,y*2.03+1.3)+0.15*vnoise(x*4.1+9.1,y*4.1+3.7);}
+const groove=(t,w)=>t<w?Math.sqrt(1-(t/w)*(t/w)):0;
+function cells(u,v,jit,hex){ // returns [F1,F2] distances in cell units
+  let f1=9,f2=9;const y0=hex?v/0.8660254:v,j0=Math.floor(y0);
+  for(let dj=-1;dj<=2;dj++){const j=j0+dj,ox=hex&&(j&1)?0.5:0,i0=Math.floor(u-ox);
+    for(let di=-1;di<=2;di++){const i=i0+di;let cx=i+ox,cy=hex?j*0.8660254:j;
+      if(jit){cx+=0.5+(hash2(i,j)-0.5)*jit;cy+=0.5+(hash2(i+71,j+13)-0.5)*jit;}
+      const dd=Math.hypot(u-cx,v-cy);if(dd<f1){f2=f1;f1=dd}else if(dd<f2)f2=dd;}}
+  return [f1,f2];
+}
+const PATTERNS={
+  none:()=>0,
+  knurl:(u,v)=>{const r=0.70710678;return 1-2*Math.min(dn((u+v)*r),dn((u-v)*r));},
+  pyramids:(u,v)=>1-2*Math.min(dn(u),dn(v)),
+  grooves:(u,v)=>groove(dn(u),0.24),
+  diagonal:(u,v)=>groove(dn((u+v)*0.70710678),0.24),
+  crosshatch:(u,v)=>Math.max(groove(dn(u),0.18),groove(dn(v),0.18)),
+  dimples:(u,v)=>{const [f1]=cells(u,v,0,true);return groove(f1,0.36);},
+  studs:(u,v)=>{const [f1]=cells(u,v,0,true);return 1-groove(f1,0.42);},
+  honeycomb:(u,v)=>{const [f1,f2]=cells(u,v,0,true);return groove((f2-f1),0.14);},
+  organic:(u,v)=>{const [f1,f2]=cells(u*0.8,v*0.8,0.9,false);return groove((f2-f1),0.16);},
+  scales:(u,v)=>{const row=Math.floor(v),x=u+(row&1?0.5:0),dx=x-Math.round(x),dy=v-row;const r=Math.hypot(dx,dy*1.0);return sst(0.35,0.62,r)*(1-sst(0.62,0.72,r))+ (dy<0.12?0:0);},
+  waves:(u,v)=>0.5+0.5*Math.sin(2*Math.PI*(u+0.35*Math.sin(2*Math.PI*v/2.4))),
+  ripples:(u,v)=>0.5+0.5*Math.cos(2*Math.PI*Math.hypot(u,v)),
+  checker:(u,v)=>{const a=Math.min(dn(u),dn(v)),k=((Math.floor(u)+Math.floor(v))&1);return k?sst(0.0,0.06,a):0;},
+  bricks:(u,v)=>{const vv=v*1.6,row=Math.floor(vv),uu=u*0.8+(row&1?0.5:0);return Math.max(groove(dn(vv),0.12),groove(dn(uu),0.09));},
+  contours:(u,v)=>{const n=fbm(u*0.35,v*0.35)*7;return groove(dn(n),0.17);},
+  bark:(u,v)=>{const n=fbm(u*0.25,v*1.6);return sst(0.35,0.75,n);},
+  truchet:(u,v)=>{const i=Math.floor(u),j=Math.floor(v);let fx=u-i,fy=v-j;if(hash2(i,j)<0.5)fx=1-fx;
+    return groove(Math.min(Math.abs(Math.hypot(fx,fy)-0.5),Math.abs(Math.hypot(1-fx,1-fy)-0.5)),0.13);},
+  wood:(u,v)=>{const [f1]=cells(u*0.16+3.3,v*0.09+1.7,0.8,false);const w=u*0.75+2.4*fbm(u*0.07+11,v*0.025+5)+2.2*Math.exp(-f1*f1*14);
+    return Math.min(1,groove(dn(w),0.17)*0.85+0.2*vnoise(u*2.5,v*0.25));},
+  cheese:(u,v)=>{const x=u*0.31,y=v*0.31;let best=0;const i0=Math.floor(x),j0=Math.floor(y);
+    for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){const i=i0+di,j=j0+dj,hsh=hash2(i*7+3,j*5+11);if(hsh<0.06)continue;
+      const cx=i+0.15+0.7*hash2(i,j),cy=j+0.15+0.7*hash2(i+41,j+17),r=0.16+0.34*hash2(i+9,j+29)*hsh;
+      const d=Math.hypot(x-cx,y-cy)/r;if(d<1){const c=Math.sqrt(1-d*d)*(1.2+1.4*r/0.44);if(c>best)best=c;}}
+    return Math.min(2.6,best);},
+  image:()=>0,text:()=>0,dice:()=>0,maze:()=>0,dish:()=>0
+};
+const MAXK=2.6; // largest carve multiple any pattern returns
+function mapKey(spec){if(spec.t!=='image'&&spec.t!=='text')return null;const sp=spec.span?':'+spec.span.cols+'x'+spec.span.rows:'';
+  return spec.t==='image'?'image'+sp:'text:'+(spec.txt||'')+sp;}
+function makeMaze(n,seed){const open=new Uint8Array(n*n),seen=new Uint8Array(n*n),st=[0];let s=(seed>>>0)||1;
+  const rnd=()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return (s>>>0)/4294967296;};seen[0]=1;
+  while(st.length){const c=st[st.length-1],x=c%n,y=(c/n)|0,nb=[];
+    if(x<n-1&&!seen[c+1])nb.push([c+1,1,2]);if(x>0&&!seen[c-1])nb.push([c-1,2,1]);if(y<n-1&&!seen[c+n])nb.push([c+n,4,8]);if(y>0&&!seen[c-n])nb.push([c-n,8,4]);
+    if(!nb.length){st.pop();continue;}const [m,a,b]=nb[Math.floor(rnd()*nb.length)];open[c]|=a;open[m]|=b;seen[m]=1;st.push(m);}
+  return (U,V)=>{const x=(U+1)/2*n,y=(V+1)/2*n,i=Math.floor(x),j=Math.floor(y);if(i<0||j<0||i>=n||j>=n)return 0;
+    const fx=x-i-0.5,fy=y-j-0.5,o=open[j*n+i];let d=Math.hypot(fx,fy);
+    if(o&1&&fx>0)d=Math.min(d,Math.abs(fy));if(o&2&&fx<0)d=Math.min(d,Math.abs(fy));if(o&4&&fy>0)d=Math.min(d,Math.abs(fx));if(o&8&&fy<0)d=Math.min(d,Math.abs(fx));
+    return groove(d,0.27);};}
+const PIPS={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[-1,1],[1,1],[0,0]],6:[[-1,-1],[1,-1],[-1,1],[1,1],[-1,0],[1,0]]};
+function strHash(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+// returns (u,v in mm on face) -> carve amount (multiples of depth)
+function facePattern(spec,key,inner,pitch,map,p){const t=spec.t;
+  if(t==='image'||t==='text'){if(!map)return null;const W=map.w,Hh=map.h||map.w,D=map.data,sp=spec.span;
+    const Wt=sp?(sp.cols-1)*p+2*inner:2*inner,Ht=sp?(sp.rows-1)*p+2*inner:2*inner;
+    return (u,v)=>{let X=u,Y=v;if(sp){X=sp.cx*p+u*sp.a+v*sp.c;Y=sp.cy*p+u*sp.b+v*sp.d;}
+      const uu=(X+Wt/2)/Wt,vv=(Ht/2-Y)/Ht;if(uu<0||uu>1||vv<0||vv>1)return 0;
+      const Xp=uu*(W-1),Yp=vv*(Hh-1),a=Math.floor(Xp),b=Math.floor(Yp),ax=Xp-a,ay=Yp-b,a1=Math.min(a+1,W-1),b1=Math.min(b+1,Hh-1);
+      return ((D[b*W+a]*(1-ax)+D[b*W+a1]*ax)*(1-ay)+(D[b1*W+a]*(1-ax)+D[b1*W+a1]*ax)*ay)/255;};}
+  if(t==='dice'){const pts=PIPS[spec.n]||PIPS[1],r=0.21;return (u,v)=>{const U=u/inner,V=v/inner;let d=9;for(const q of pts)d=Math.min(d,Math.hypot(U-q[0]*0.56,V-q[1]*0.56));return 1.7*groove(d,r);};}
+  if(t==='dish')return (u,v)=>{const r2=((u/inner)**2+(v/inner)**2)/0.92;return r2<1?MAXK*Math.pow(1-r2,1.6):0;};
+  if(t==='maze'){const n=Math.max(3,Math.min(12,Math.round(2*inner/(pitch*1.3)))),mz=makeMaze(n,strHash(key+(spec.seed||'')));return (u,v)=>mz(u/inner,v/inner);}
+  if(t==='cheese'){const hk=strHash(key+(spec.seed||'')),ox=(hk%997)*1.37,oy=((hk>>>10)%991)*1.91;return (u,v)=>PATTERNS.cheese(u/pitch+ox,v/pitch+oy);}
+  const fn=PATTERNS[t];if(!fn||t==='none')return null;return (u,v)=>fn(u/pitch,v/pitch);
+}
+// ---------- SDF construction ----------
+function boxLocal(q,nt){ // signed distance to notch-type oriented box
+  const r=vsub(q,nt.S),lm=vdot(r,nt.m),ln=vdot(r,nt.n),la=vdot(r,nt.A);
+  const cm=(nt.mr[0]+nt.mr[1])/2,hm=(nt.mr[1]-nt.mr[0])/2,cn=(nt.nr[0]+nt.nr[1])/2,hn=(nt.nr[1]-nt.nr[0])/2,ca=(nt.ar[0]+nt.ar[1])/2,ha=(nt.ar[1]-nt.ar[0])/2;
+  const dx=Math.abs(lm-cm)-hm,dy=Math.abs(ln-cn)-hn,dz=Math.abs(la-ca)-ha;
+  const ox=Math.max(dx,0),oy=Math.max(dy,0),oz=Math.max(dz,0);
+  return Math.hypot(ox,oy,oz)+Math.min(Math.max(dx,dy,dz),0);
+}
+function prepBox(nt){const cm=(nt.mr[0]+nt.mr[1])/2,hm=(nt.mr[1]-nt.mr[0])/2,cn=(nt.nr[0]+nt.nr[1])/2,hn=(nt.nr[1]-nt.nr[0])/2,ca=(nt.ar[0]+nt.ar[1])/2,ha=(nt.ar[1]-nt.ar[0])/2;
+  return [nt.S[0],nt.S[1],nt.S[2],nt.m[0],nt.m[1],nt.m[2],nt.n[0],nt.n[1],nt.n[2],nt.A[0],nt.A[1],nt.A[2],cm,hm,cn,hn,ca,ha];}
+function boxD(B,x,y,z,grow){const rx=x-B[0],ry=y-B[1],rz=z-B[2];
+  const dx=Math.abs(rx*B[3]+ry*B[4]+rz*B[5]-B[12])-B[13]-grow,dy=Math.abs(rx*B[6]+ry*B[7]+rz*B[8]-B[14])-B[15]-grow,dz=Math.abs(rx*B[9]+ry*B[10]+rz*B[11]-B[16])-B[17]-grow;
+  const m=dx>dy?(dx>dz?dx:dz):(dy>dz?dy:dz);if(m<=0)return m;
+  const ox=dx>0?dx:0,oy=dy>0?dy:0,oz=dz>0?dz:0;return Math.sqrt(ox*ox+oy*oy+oz*oz);}
+function makeCubeSDF(M,id,faces,maps,res){
+  const cu=M.cubes[id],[cx,cy,cz]=cu.c,h=M.h,P=M.P,k=Math.max(P.chamfer,minChamfer(P)),depth=P.depth,pitch=P.pitch;
+  const border=k+0.9,inner=h-border,lim=h-depth*MAXK-0.6;
+  const NB=cu.notches.map(prepBox);
+  const PN=cu.pins.map(p=>[p.P[0],p.P[1],p.P[2],p.A[0],p.A[1],p.A[2],p.half,p.r]);
+  // bake each face's displacement into a 2D grid
+  const step=Math.max(0.05,Math.min(res*0.5,0.12)),G=Math.ceil(2*h/step)+1;
+  const fx=[];
+  for(let f=0;f<6;f++){
+    const spec=faces&&faces[id+f]||{t:'none'};let t=spec.t;
+    if(FUSED[id]===f)t='none';
+    const map=maps&&mapKey(spec)?maps[mapKey(spec)]:null;
+    const S=t==='none'?null:facePattern(Object.assign({},spec,{t}),id+f,inner,pitch,map,M.p);
+    if(!S){fx.push(null);continue;}
+    const n=DIRS[f],up=UPS[f],ua=vcross(up,n),grid=new Float32Array(G*G);
+    for(let j=0;j<G;j++){const v=-h+j*step;for(let i=0;i<G;i++){const u=-h+i*step;
+      let mask=sst(0,0.7,Math.min(inner-Math.abs(u),inner-Math.abs(v)));if(mask<=0)continue;
+      const px=cx+n[0]*h+ua[0]*u+up[0]*v,py=cy+n[1]*h+ua[1]*u+up[1]*v,pz=cz+n[2]*h+ua[2]*u+up[2]*v;
+      for(const B of NB){const bd=boxD(B,px,py,pz,0.9);if(bd<0.7){mask*=sst(0,0.7,bd);}}
+      if(mask<=0)continue;const val=S(u,v);
+      grid[j*G+i]=depth*val*mask;}}
+    fx.push({grid,ua,up});
+  }
+  function disp(f,lx,ly,lz){const F=fx[f];if(!F)return 0;
+    const u=(lx*F.ua[0]+ly*F.ua[1]+lz*F.ua[2]+h)/step,v=(lx*F.up[0]+ly*F.up[1]+lz*F.up[2]+h)/step;
+    if(u<0||v<0||u>=G-1||v>=G-1)return 0;const i=u|0,j=v|0,ax=u-i,ay=v-j,o=j*G+i,g=F.grid;
+    return (g[o]*(1-ax)+g[o+1]*ax)*(1-ay)+(g[o+G]*(1-ax)+g[o+G+1]*ax)*ay;}
+  const S2=Math.SQRT1_2,e=2*h-k,ec=3*h-1.25*k;
+  return function(x,y,z){
+    const lx=x-cx,ly=y-cy,lz=z-cz,ax=Math.abs(lx),ay=Math.abs(ly),az=Math.abs(lz);
+    let fxv=ax-h,fyv=ay-h,fzv=az-h;
+    if(ax>lim)fxv+=disp(lx>0?0:1,lx,ly,lz);
+    if(ay>lim)fyv+=disp(ly>0?2:3,lx,ly,lz);
+    if(az>lim)fzv+=disp(lz>0?4:5,lx,ly,lz);
+    let dd=Math.max(fxv,fyv,fzv);
+    if(dd>0){const ox=Math.max(fxv,0),oy=Math.max(fyv,0),oz=Math.max(fzv,0);dd=Math.sqrt(ox*ox+oy*oy+oz*oz);}
+    dd=Math.max(dd,(ax+ay-e)*S2,(ay+az-e)*S2,(ax+az-e)*S2,(ax+ay+az-ec)*0.57735);
+    for(let i=0;i<NB.length;i++){const v=-boxD(NB[i],x,y,z,0);if(v>dd)dd=v;}
+    for(let i=0;i<PN.length;i++){const p=PN[i],rx=x-p[0],ry=y-p[1],rz=z-p[2],la=rx*p[3]+ry*p[4]+rz*p[5],qx=rx-p[3]*la,qy=ry-p[4]*la,qz=rz-p[5]*la;
+      const v=Math.max(Math.sqrt(qx*qx+qy*qy+qz*qz)-p[7],Math.abs(la)-p[6]);if(v<dd)dd=v;}
+    return dd;
+  };
+}
+function makeBodySDF(M,body,faces,maps,res){
+  const fns=body.cubes.map(id=>makeCubeSDF(M,id,faces,maps,res));
+  let bridge=null;
+  if(body.cubes.length===2){const A=M.cubes[body.cubes[0]].c,B=M.cubes[body.cubes[1]].c,k=Math.max(M.P.chamfer,minChamfer(M.P));
+    const mid=vmul(vadd(A,B),0.5),ext=[M.h-k-0.6,M.g/2+1.5,M.h-k-0.6];bridge={mid,ext};}
+  return function(x,y,z){let d=fns[0](x,y,z);for(let i=1;i<fns.length;i++)d=Math.min(d,fns[i](x,y,z));
+    if(bridge){const dx=Math.abs(x-bridge.mid[0])-bridge.ext[0],dy=Math.abs(y-bridge.mid[1])-bridge.ext[1],dz=Math.abs(z-bridge.mid[2])-bridge.ext[2];
+      d=Math.min(d,Math.max(dx,dy,dz));}
+    return d;};
+}
+function bodyBounds(M,body){const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
+  for(const id of body.cubes){const c=M.cubes[id].c;for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],c[i]-M.h);hi[i]=Math.max(hi[i],c[i]+M.h);}}
+  return [lo,hi];}
+function makeLinkSDF(M,hg){
+  const d=M.d,off=hg.off,b=M.b,hr=M.P.pinR+M.c,ch=Math.min(0.5,d*0.2);
+  return function(x,y,z){const r=[x-hg.S[0],y-hg.S[1],z-hg.S[2]],lm=vdot(r,hg.m),ln=vdot(r,hg.n),la=vdot(r,hg.A);
+    const dm=Math.max(Math.abs(lm)-off,0),d2=Math.hypot(dm,ln+d)-d;
+    let dd=Math.max(d2,Math.abs(la)-b/2,(Math.abs(la)-b/2+(ln+ch))*0.7071-0.0);
+    dd=Math.max(dd,hr-Math.hypot(lm+off,ln+d),hr-Math.hypot(lm-off,ln+d));
+    return dd;};
+}
+function linkBounds(M,hg){const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9],d=M.d,E=hg.off+d;
+  for(const a of [-E,E])for(const b of [-2*d,0.2])for(const c of [-M.b/2,M.b/2]){
+    const pt=vadd(vadd(vadd(hg.S,vmul(hg.m,a)),vmul(hg.n,b)),vmul(hg.A,c));
+    for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],pt[i]);hi[i]=Math.max(hi[i],pt[i]);}}
+  return [lo,hi];}
+// ---------- surface nets ----------
+function surfaceNets(f,lo,hi,res,slack){
+  const pad=res*2;lo=lo.map(v=>v-pad);hi=hi.map(v=>v+pad);
+  const nx=Math.ceil((hi[0]-lo[0])/res)+1,ny=Math.ceil((hi[1]-lo[1])/res)+1,nz=Math.ceil((hi[2]-lo[2])/res)+1;
+  const N=nx*ny*nz,vals=new Float32Array(N),sx=1,sy=nx,sz=nx*ny;
+  const B=8,bx=Math.ceil((nx-1)/B),by=Math.ceil((ny-1)/B),bz=Math.ceil((nz-1)/B);
+  const active=new Uint8Array(bx*by*bz),rad=res*B*0.8661+slack;
+  for(let K=0;K<bz;K++)for(let J=0;J<by;J++)for(let I=0;I<bx;I++){
+    const i0=I*B,j0=J*B,k0=K*B,i1=Math.min(i0+B,nx-1),j1=Math.min(j0+B,ny-1),k1=Math.min(k0+B,nz-1);
+    const v=f(lo[0]+(i0+i1)/2*res,lo[1]+(j0+j1)/2*res,lo[2]+(k0+k1)/2*res);
+    if(Math.abs(v)>rad){const sv=v>0?1e3:-1e3;for(let k=k0;k<=k1;k++)for(let j=j0;j<=j1;j++){let o=i0+j*sy+k*sz;for(let i=i0;i<=i1;i++)vals[o++]=sv;}}
+    else active[I+J*bx+K*bx*by]=1;}
+  for(let K=0;K<bz;K++)for(let J=0;J<by;J++)for(let I=0;I<bx;I++){if(!active[I+J*bx+K*bx*by])continue;
+    const i0=I*B,j0=J*B,k0=K*B,i1=Math.min(i0+B,nx-1),j1=Math.min(j0+B,ny-1),k1=Math.min(k0+B,nz-1);
+    for(let k=k0;k<=k1;k++){const z=lo[2]+k*res;for(let j=j0;j<=j1;j++){const y=lo[1]+j*res;let o=i0+j*sy+k*sz;for(let i=i0;i<=i1;i++)vals[o++]=f(lo[0]+i*res,y,z);}}}
+  const vid=new Int32Array(N).fill(-1);const pos=[];const tris=[];
+  const corner=[[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]];
+  const edges=[[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+  const co=corner.map(c=>c[0]*sx+c[1]*sy+c[2]*sz),cv=new Float64Array(8),eps=res*0.3;
+  const cellList=[];
+  for(let K=0;K<bz;K++)for(let J=0;J<by;J++)for(let I=0;I<bx;I++){if(!active[I+J*bx+K*bx*by])continue;
+    for(let k=K*B;k<Math.min(K*B+B,nz-1);k++)for(let j=J*B;j<Math.min(J*B+B,ny-1);j++)for(let i=I*B;i<Math.min(I*B+B,nx-1);i++){
+      const o=i+j*sy+k*sz;let mask=0;for(let c=0;c<8;c++){cv[c]=vals[o+co[c]];if(cv[c]<0)mask|=1<<c;}
+      if(mask===0||mask===255)continue;
+      let px=0,py=0,pz=0,cnt=0;
+      for(const [a,b] of edges){const va=cv[a],vb=cv[b];if((va<0)===(vb<0))continue;const t=va/(va-vb);
+        px+=corner[a][0]+(corner[b][0]-corner[a][0])*t;py+=corner[a][1]+(corner[b][1]-corner[a][1])*t;pz+=corner[a][2]+(corner[b][2]-corner[a][2])*t;cnt++;}
+      let X=lo[0]+(i+px/cnt)*res,Y=lo[1]+(j+py/cnt)*res,Z=lo[2]+(k+pz/cnt)*res;
+      const xa=lo[0]+i*res,ya=lo[1]+j*res,za=lo[2]+k*res;
+      for(let it=0;it<2;it++){const v0=f(X,Y,Z);const gx=(f(X+eps,Y,Z)-f(X-eps,Y,Z))/(2*eps),gy=(f(X,Y+eps,Z)-f(X,Y-eps,Z))/(2*eps),gz=(f(X,Y,Z+eps)-f(X,Y,Z-eps))/(2*eps);
+        const g2=gx*gx+gy*gy+gz*gz;if(g2<1e-6)break;X-=v0*gx/g2;Y-=v0*gy/g2;Z-=v0*gz/g2;
+        X=Math.min(Math.max(X,xa-res*0.25),xa+res*1.25);Y=Math.min(Math.max(Y,ya-res*0.25),ya+res*1.25);Z=Math.min(Math.max(Z,za-res*0.25),za+res*1.25);}
+      vid[o]=pos.length/3;pos.push(X,Y,Z);cellList.push(o,i,j,k);}}
+  const quad=(a,b,c,d,flip)=>{if(a<0||b<0||c<0||d<0)return;if(flip){tris.push(a,d,c,a,c,b);}else tris.push(a,b,c,a,c,d);};
+  for(let n=0;n<cellList.length;n+=4){const o=cellList[n],i=cellList[n+1],j=cellList[n+2],k=cellList[n+3];const v0=vals[o]<0;
+    if(j>0&&k>0&&(v0!==(vals[o+sx]<0)))quad(vid[o],vid[o-sy],vid[o-sy-sz],vid[o-sz],!v0);
+    if(i>0&&k>0&&(v0!==(vals[o+sy]<0)))quad(vid[o],vid[o-sz],vid[o-sx-sz],vid[o-sx],!v0);
+    if(i>0&&j>0&&(v0!==(vals[o+sz]<0)))quad(vid[o],vid[o-sx],vid[o-sx-sy],vid[o-sy],!v0);}
+  return {pos:new Float32Array(pos),idx:new Uint32Array(tris)};
+}
+function meshItem(M,item,faces,maps,res){
+  if(item[0]==='L'){const hg=M.hinges.find(x=>x.id===item.slice(1));const [lo,hi]=linkBounds(M,hg);return surfaceNets(makeLinkSDF(M,hg),lo,hi,res,0.3);}
+  const body=M.bodies.find(x=>x.id===item);const [lo,hi]=bodyBounds(M,body);
+  return surfaceNets(makeBodySDF(M,body,faces,maps,res),lo,hi,res,M.P.depth*MAXK+0.8);
+}
+// ---------- kinematics (rigid transforms as [r00..r22, tx,ty,tz]) ----------
+const TI=()=>[1,0,0,0,1,0,0,0,1,0,0,0];
+function Tmul(A,B){const R=new Array(12);for(let i=0;i<3;i++)for(let j=0;j<3;j++)R[i*3+j]=A[i*3]*B[j]+A[i*3+1]*B[3+j]+A[i*3+2]*B[6+j];
+  for(let i=0;i<3;i++)R[9+i]=A[i*3]*B[9]+A[i*3+1]*B[10]+A[i*3+2]*B[11]+A[9+i];return R;}
+function Tinv(A){const R=[A[0],A[3],A[6],A[1],A[4],A[7],A[2],A[5],A[8]];const t=A.slice(9);
+  return R.concat([-(R[0]*t[0]+R[1]*t[1]+R[2]*t[2]),-(R[3]*t[0]+R[4]*t[1]+R[5]*t[2]),-(R[6]*t[0]+R[7]*t[1]+R[8]*t[2])]);}
+function Tapply(A,p){return [A[0]*p[0]+A[1]*p[1]+A[2]*p[2]+A[9],A[3]*p[0]+A[4]*p[1]+A[5]*p[2]+A[10],A[6]*p[0]+A[7]*p[1]+A[8]*p[2]+A[11]];}
+function Trot(ax,P,ang){const [x,y,z]=ax,c=Math.cos(ang),s=Math.sin(ang),C=1-c;
+  const R=[c+x*x*C,x*y*C-z*s,x*z*C+y*s, y*x*C+z*s,c+y*y*C,y*z*C-x*s, z*x*C-y*s,z*y*C+x*s,c+z*z*C];
+  const rp=[R[0]*P[0]+R[1]*P[1]+R[2]*P[2],R[3]*P[0]+R[4]*P[1]+R[5]*P[2],R[6]*P[0]+R[7]*P[1]+R[8]*P[2]];
+  return R.concat([P[0]-rp[0],P[1]-rp[1],P[2]-rp[2]]);}
+function poseAll(M,th){ // th: [ac/bd, ce/df, eg/fh] fold angles 0..PI ; root = cube a
+  const T={a:TI(),b:TI()},L={};
+  const order=['ac','ce','eg','bd','df'];
+  for(const hid of order){const hg=M.hinges.find(x=>x.id===hid),phi=th[hg.grp]/2;
+    const R1=Trot(hg.A,hg.Pp,phi),R2=Trot(hg.A,hg.Pc,phi);
+    L[hid]=Tmul(T[hg.parent],R1);T[hg.child]=Tmul(L[hid],R2);}
+  const hg=M.hinges.find(x=>x.id==='fh');L.fh=Tmul(T.f,Trot(hg.A,hg.Pp,th[2]/2));T.h=T.g;
+  const out={};for(const b of M.bodies)out[b.id]=T[b.cubes[0]];for(const k in L)out['L'+k]=L[k];
+  return {T,out};
+}
+</script>
+<script>{const s=document.createElement('script');s.textContent=document.getElementById('coreSrc').textContent;document.head.append(s);}</script>
+<script>{
+const $=id=>document.getElementById(id);
+const DEF={size:20,chamfer:2.5,gap:0.6,inset:2.8,linkW:6,pinR:2.6,clear:0.35,depth:0.6,pitch:2.5,raise:false,color:'#b0337f'};
+const TEX=[['none','Smooth'],['knurl','Knurl'],['pyramids','Pyramids'],['grooves','Grooves'],['diagonal','Diagonal'],['crosshatch','Crosshatch'],['dimples','Dimples'],['studs','Studs'],['honeycomb','Honeycomb'],['organic','Organic'],['scales','Scales'],['waves','Waves'],['ripples','Ripples'],['checker','Checker'],['bricks','Bricks'],['contours','Topo'],['bark','Bark'],['cheese','Cheese'],['wood','Wood grain'],['truchet','Truchet'],['maze','Maze'],['dish','Thumb dish'],['dice','Dice'],['text','Text'],['image','Image']];
+const COLORS=['#b0337f','#1d1d1f','#e8e4da','#d9452b','#2f6fdb','#1f9e6e','#f2b705','#7a4bd1'];
+let P=Object.assign({},DEF),faces={},brush={t:'knurl',txt:'A',n:'auto',spread:false},mode='face',history=[],imageMap=null,imgEl=null;
+try{const s=JSON.parse(localStorage.getItem('icg-v1')||'null');if(s){Object.assign(P,s.P||{});faces=s.faces||{};}}catch(e){}
+const save=()=>{try{localStorage.setItem('icg-v1',JSON.stringify({P,faces}))}catch(e){}};
+let M=buildModel(eff());
+function eff(){const q=Object.assign({},P);q.pinR=Math.min(P.pinR/2,P.inset-P.clear-0.8);return q;}
+function defaultFaces(){const f={},side=['knurl','honeycomb','grooves','organic','dimples','waves'];
+  for(const id of CUBE_IDS){const c=M.cubes[id].c;for(let k=0;k<6;k++){if(FUSED[id]===k)continue;f[id+k]={t:vdot(c,DIRS[k])>0?side[k]:'contours'};}}return f;}
+if(!Object.keys(faces).length)faces=defaultFaces();
+// ---------- three.js scene ----------
+const view=$('view'),renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));view.prepend(renderer.domElement);
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,1,1,2000);cam.position.set(95,-120,85);cam.up.set(0,0,1);
+const ctl=new THREE.OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;ctl.target.set(0,0,0);
+scene.add(new THREE.HemisphereLight(0xfff4e6,0x5a4a35,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.75);sun.position.set(60,-80,140);scene.add(sun);
+const rim=new THREE.DirectionalLight(0xffe0c0,0.35);rim.position.set(-90,90,40);scene.add(rim);
+const root=new THREE.Group();scene.add(root);
+const bodyMat=new THREE.MeshStandardMaterial({color:P.color,roughness:0.55,metalness:0.05});
+const linkMat=new THREE.MeshStandardMaterial({color:P.color,roughness:0.45,metalness:0.05});
+const plate=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshStandardMaterial({color:0xb49a6c,roughness:0.9,metalness:0.2}));plate.visible=false;scene.add(plate);
+const grid=new THREE.GridHelper(220,22,0x8b7550,0x9d8660);grid.rotation.x=Math.PI/2;grid.position.z=0.05;grid.visible=false;scene.add(grid);
+const meshes={};
+const ITEMS=()=>[...M.bodies.map(b=>b.id),...M.hinges.map(h=>'L'+h.id)];
+function setColor(c){P.color=c;bodyMat.color.set(c);linkMat.color.set(c).offsetHSL(0,0,-0.06);}
+setColor(P.color);
+function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(view);resize();
+// ---------- workers ----------
+const wsrc=$('coreSrc').textContent+`
+const MC={};
+onmessage=e=>{const m=e.data;const key=JSON.stringify(m.P);let Mo=MC[key];if(!Mo){for(const k in MC)delete MC[k];Mo=MC[key]=buildModel(m.P);}
+ const r=meshItem(Mo,m.item,m.faces,m.maps,m.res);postMessage({jid:m.jid,item:m.item,pos:r.pos,idx:r.idx},[r.pos.buffer,r.idx.buffer]);};`;
+const wurl=URL.createObjectURL(new Blob([wsrc],{type:'text/javascript'}));
+const NW=Math.max(2,Math.min(4,(navigator.hardwareConcurrency||4)-1)),workers=[];
+for(let i=0;i<NW;i++){const w=new Worker(wurl);w.busy=false;w.onmessage=e=>{w.busy=false;const cb=w.cb;w.cb=null;cb(e.data);pump();};workers.push(w);}
+let queue=[];
+function pump(){for(const w of workers){if(w.busy||!queue.length)continue;const job=queue.shift();w.busy=true;w.cb=job.cb;w.postMessage(job.msg);}
+  $('busy').style.display=(queue.length||workers.some(w=>w.busy))?'block':'none';}
+function mapsFor(item){const out={};if(item[0]==='L')return out;const b=M.bodies.find(x=>x.id===item);
+  for(const id of b.cubes)for(let k=0;k<6;k++){const s=faces[id+k];if(!s)continue;const key=mapKey(s);if(!key||out[key])continue;const m=buildMap(s);if(m)out[key]=m;}
+  return out;}
+function buildMap(s){const cols=s.span?s.span.cols:1,rows=s.span?s.span.rows:1;return s.t==='text'?textMap(s.txt||'',cols,rows):imageMapFor(cols,rows);}
+function facesFor(item){const o={};if(item[0]==='L')return o;const b=M.bodies.find(x=>x.id===item);for(const id of b.cubes)for(let k=0;k<6;k++)if(faces[id+k])o[id+k]=faces[id+k];return o;}
+let gen=0;const pendingGen={};
+function remesh(items){const res=+$('pres').value,g=++gen,E=eff();
+  queue=queue.filter(j=>!items.includes(j.item));
+  for(const it of items){pendingGen[it]=g;queue.push({item:it,msg:{jid:g,item:it,P:E,faces:facesFor(it),maps:mapsFor(it),res},cb:d=>{if(pendingGen[d.item]!==d.jid)return;applyMesh(d.item,d.pos,d.idx);}});}
+  pump();}
+function applyMesh(item,pos,idx){const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setIndex(new THREE.BufferAttribute(idx,1));geo.computeVertexNormals();
+  let m=meshes[item];if(m){m.geometry.dispose();m.geometry=geo;}else{m=meshes[item]=new THREE.Mesh(geo,item[0]==='L'?linkMat:bodyMat);m.matrixAutoUpdate=false;m.userData.item=item;root.add(m);}
+  updatePose();}
+// ---------- maps for text / images ----------
+const MAPW=160,mapCache={};
+function canvasFor(cols,rows){const sc=Math.min(1,480/(MAPW*Math.max(cols,rows)));const c=document.createElement('canvas');c.width=Math.round(MAPW*cols*sc);c.height=Math.round(MAPW*rows*sc);return c;}
+function toMap(c,lumFn){const g=c.getContext('2d'),d=g.getImageData(0,0,c.width,c.height).data,a=new Uint8Array(c.width*c.height);
+  for(let i=0;i<a.length;i++){const v=lumFn(d,i*4);a[i]=P.raise?255-v:v;}return {w:c.width,h:c.height,data:a};}
+function textMap(t,cols=1,rows=1){const key=t+'|'+P.raise+'|'+cols+'x'+rows;if(mapCache[key])return mapCache[key];const c=canvasFor(cols,rows),g=c.getContext('2d'),W=c.width,H=c.height;
+  g.fillStyle='#000';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';let fs=H*0.9;
+  g.font=`700 ${fs}px "Space Grotesk",Inter,sans-serif`;const w=g.measureText(t).width;if(w>W*0.92){fs*=W*0.92/w;g.font=`700 ${fs}px "Space Grotesk",Inter,sans-serif`;}
+  g.fillText(t,W/2,H/2+fs*0.04);return mapCache[key]=toMap(c,(d,i)=>d[i]);}
+function imageMapFor(cols=1,rows=1){if(!imgEl)return null;const key='img|'+P.raise+'|'+cols+'x'+rows+'|'+imgEl.src;if(mapCache[key])return mapCache[key];
+  const c=canvasFor(cols,rows),g=c.getContext('2d'),W=c.width,H=c.height,s=Math.max(W/imgEl.width,H/imgEl.height);g.fillStyle='#fff';g.fillRect(0,0,W,H);
+  g.drawImage(imgEl,(W-imgEl.width*s)/2,(H-imgEl.height*s)/2,imgEl.width*s,imgEl.height*s);
+  return mapCache[key]=toMap(c,(d,i)=>255-Math.round(d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11));}
+$('img').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{imgEl=im;remeshFacesOfType('image');drawSwatch('image');};im.src=URL.createObjectURL(f);};
+function remeshFacesOfType(t){const set=new Set();for(const k in faces)if(faces[k].t===t)set.add(M.bodyOf[k[0]]);if(set.size)remesh([...set]);}
+// ---------- swatches ----------
+const swBox=$('swatches');
+swBox.innerHTML=TEX.map(([k,n])=>`<button data-t="${k}" aria-pressed="${k===brush.t}"><canvas width="56" height="56"></canvas>${n}</button>`).join('');
+function drawSwatch(k){const btn=swBox.querySelector(`[data-t="${k}"]`),cv=btn.querySelector('canvas'),g=cv.getContext('2d'),W=56,img=g.createImageData(W,W),H=new Float32Array(W*W);
+  const sp=k==='text'?{t:'text',txt:brush.txt||'A'}:k==='dice'?{t:'dice',n:5}:{t:k,seed:'sw'};
+  const map=k==='text'?textMap(brush.txt||'A'):k==='image'?imageMapFor():null;
+  const S=facePattern(sp,'swatch',7,P.pitch,map,M.p);
+  for(let j=0;j<W;j++)for(let i=0;i<W;i++){const u=(i-W/2)/W*16,v=(W/2-j)/W*16;let c=0;
+    if(k==='image'&&!imgEl)c=0.5*(((i>>3)+(j>>3))&1);else if(S)c=S(u,v);if(k==='dish'||k==='dice')c*=0.5;H[j*W+i]=-c;}
+  const base=new THREE.Color(P.color);
+  for(let j=0;j<W;j++)for(let i=0;i<W;i++){const o=j*W+i,dx=(H[o+(i<W-1?1:0)]-H[o-(i>0?1:0)]),dy=(H[o+(j<W-1?W:0)]-H[o-(j>0?W:0)]);
+    const l=Math.max(0.25,Math.min(1.25,0.85+(-dx*1.2+dy*1.6)*1.6+H[o]*0.25));img.data[o*4]=base.r*255*l;img.data[o*4+1]=base.g*255*l;img.data[o*4+2]=base.b*255*l;img.data[o*4+3]=255;}
+  g.putImageData(img,0,0);}
+const drawAllSwatches=()=>TEX.forEach(([k])=>drawSwatch(k));drawAllSwatches();
+swBox.onclick=e=>{const b=e.target.closest('button');if(!b)return;brush.t=b.dataset.t;swBox.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  $('textBox').style.display=brush.t==='text'?'block':'none';$('imgBox').style.display=brush.t==='image'?'block':'none';
+  $('diceBox').style.display=brush.t==='dice'?'block':'none';$('spreadBox').style.display=brush.t==='text'||brush.t==='image'?'flex':'none';
+  if(mode==='all')paintAll();};
+$('diceN').onchange=e=>{brush.n=e.target.value;};$('spread').onchange=e=>{brush.spread=e.target.checked;};
+$('txt').oninput=e=>{brush.txt=e.target.value.trim().slice(0,4)||'A';drawSwatch('text');};
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  $('modeTag').textContent=mode==='face'?'Tap a face to paint':mode==='side'?'Tap a side to paint it':'Painting every face';if(mode==='all')paintAll();});
+function snapshot(){history.push(JSON.stringify(faces));if(history.length>40)history.shift();}
+const DICE_BY_AXIS={'1,0,0':1,'-1,0,0':6,'0,1,0':2,'0,-1,0':5,'0,0,1':3,'0,0,-1':4};
+function spec(key){const s={t:brush.t};if(brush.t==='text')s.txt=brush.txt;if(brush.t==='maze'||brush.t==='cheese')s.seed=Math.floor(Math.random()*1e9);
+  if(brush.t==='dice'){s.n=brush.n==='auto'?(DICE_BY_AXIS[worldNormal(key[0],+key[1]).map(Math.round).join()]||1):+brush.n;}
+  return s;}
+function paint(keys,extra){snapshot();const set=new Set();for(const k of keys){faces[k]=Object.assign(spec(k),extra&&extra[k]||{});set.add(M.bodyOf[k[0]]);}remesh([...set]);save();}
+function paintAll(){const keys=[];for(const id of CUBE_IDS)for(let k=0;k<6;k++)if(FUSED[id]!==k)keys.push(id+k);paint(keys);}
+$('randTop').onclick=()=>{const b=COLORS[Math.floor(Math.random()*COLORS.length)];setColor(b);
+  $('colors').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.c===b));drawAllSwatches();$('shuffle').click();};
+$('undo').onclick=()=>{if(!history.length)return;faces=JSON.parse(history.pop());remesh(M.bodies.map(b=>b.id));save();};
+$('clear').onclick=()=>{snapshot();faces={};remesh(M.bodies.map(b=>b.id));save();};
+$('shuffle').onclick=()=>{snapshot();const pool=TEX.map(t=>t[0]).filter(t=>!['none','text','image','dice'].includes(t));const sideTex={};
+  const {T}=pose;for(const id of CUBE_IDS)for(let k=0;k<6;k++){if(FUSED[id]===k)continue;const n=worldNormal(id,k);const key=n.map(v=>Math.round(v)).join();
+    sideTex[key]=sideTex[key]||pool[Math.floor(Math.random()*pool.length)];faces[id+k]={t:Math.random()<0.75?sideTex[key]:pool[Math.floor(Math.random()*pool.length)],seed:Math.floor(Math.random()*1e9)};}
+  remesh(M.bodies.map(b=>b.id));save();};
+// ---------- sliders ----------
+const SL={size:['mm',1],chamfer:['mm',1],gap:['mm',2],inset:['mm',1],linkW:['mm',1],pinR:['mm',1],clear:['mm',3],depth:['mm',2],pitch:['mm',1]};
+const geomKeys=['size','chamfer','gap','inset','linkW','pinR','clear'];
+let geoT=null;
+for(const k in SL){const el=$(k),o=$(k+'O');el.value=P[k];const show=()=>{o.textContent=(+el.value).toFixed(SL[k][1])+' '+SL[k][0];};show();
+  el.oninput=()=>{P[k]=+el.value;show();checks();clearTimeout(geoT);geoT=setTimeout(()=>{M=buildModel(eff());save();
+    remesh(geomKeys.includes(k)||k==='depth'?ITEMS():M.bodies.map(b=>b.id));if(k==='pitch')drawAllSwatches();},220);};}
+$('raise').checked=P.raise;$('raise').onchange=e=>{P.raise=e.target.checked;save();drawSwatch('text');drawSwatch('image');remeshFacesOfType('text');remeshFacesOfType('image');};
+$('pres').onchange=()=>remesh(ITEMS());
+function checks(){const kmin=minChamfer(P),w=[];if(P.chamfer<kmin)w.push(`Chamfer below ${kmin.toFixed(1)} mm would bind mid-fold, so ${kmin.toFixed(1)} mm is used.`);
+  const pr=Math.min(P.pinR/2,P.inset-P.clear-0.8);if(pr<P.pinR/2-0.01)w.push(`Pin trimmed to ${(pr*2).toFixed(1)} mm to keep link walls 0.8 mm thick.`);
+  if(P.linkW>P.size-2*P.clear-4)w.push('Links are nearly as wide as the blocks; narrow them for stronger hinge walls.');
+  $('chamferWarn').textContent=w.join(' ');}
+checks();
+$('colors').innerHTML=COLORS.map(c=>`<button style="background:${c}" data-c="${c}" aria-label="Filament ${c}" aria-pressed="${c===P.color}"></button>`).join('');
+$('colors').onclick=e=>{const b=e.target.closest('button');if(!b)return;setColor(b.dataset.c);$('colors').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawAllSwatches();save();};
+// ---------- kinematics / animation ----------
+const ST=[[0,0,0],[0,Math.PI,0],[Math.PI,Math.PI,Math.PI],[Math.PI,0,Math.PI]],ROOTS=['a','c','a','c'],NAMES=['Cube','Flat strip','Cube (flipped)','Flat strip (flipped)'];
+let t=0,base=TI(),playing=false,plateMode=false,pose=null,target=null;
+const ease=x=>x<0.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+function chain(tt){let G=base;const k=Math.min(3,Math.floor(tt)),u=ease(Math.min(1,tt-k));
+  for(let s=0;s<k;s++){const r=ROOTS[s],A=poseAll(M,ST[s]).T[r],B=poseAll(M,ST[(s+1)%4]).T[r];G=Tmul(Tmul(G,A),Tinv(B));}
+  const a=ST[k],b=ST[(k+1)%4],th=a.map((v,i)=>v+(b[i]-v)*u),r=ROOTS[k];
+  const P0=poseAll(M,a).T[r],Pt=poseAll(M,th);G=Tmul(Tmul(G,P0),Tinv(Pt.T[r]));return {G,P:Pt};}
+function toMat(T){return new THREE.Matrix4().set(T[0],T[1],T[2],T[9],T[3],T[4],T[5],T[10],T[6],T[7],T[8],T[11],0,0,0,1);}
+function printPose(){const ps=poseAll(M,[0,Math.PI,0]);const R=[0,0,-1,0,1,0,1,0,0,0,0,0];const G=Tmul(R,TI());
+  let lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];for(const id of CUBE_IDS){const c=Tapply(Tmul(G,ps.T[id]),M.cubes[id].c);for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],c[i]-M.h);hi[i]=Math.max(hi[i],c[i]+M.h);}}
+  G[9]=-(lo[0]+hi[0])/2;G[10]=-(lo[1]+hi[1])/2;G[11]=-lo[2];return {G,P:ps};}
+function worldVec(id,v){const T=pose.T[id];return [T[0]*v[0]+T[1]*v[1]+T[2]*v[2],T[3]*v[0]+T[4]*v[1]+T[5]*v[2],T[6]*v[0]+T[7]*v[1]+T[8]*v[2]];}
+function worldNormal(id,k){const T=pose.T[id];return [T[0]*DIRS[k][0]+T[1]*DIRS[k][1]+T[2]*DIRS[k][2],T[3]*DIRS[k][0]+T[4]*DIRS[k][1]+T[5]*DIRS[k][2],T[6]*DIRS[k][0]+T[7]*DIRS[k][1]+T[8]*DIRS[k][2]];}
+function updatePose(){const {G,P:ps}=plateMode?printPose():chain(t);pose={T:{}};
+  for(const id of CUBE_IDS)pose.T[id]=Tmul(G,ps.T[id]);
+  let cx=0,cy=0,cz=0;if(!plateMode){for(const id of CUBE_IDS){const c=Tapply(pose.T[id],M.cubes[id].c);cx+=c[0]/8;cy+=c[1]/8;cz+=c[2]/8;}}
+  root.position.set(-cx,-cy,-cz);
+  for(const it of ITEMS()){const m=meshes[it];if(!m)continue;m.matrix.copy(toMat(Tmul(G,ps.out[it])));m.matrixWorldNeedsUpdate=true;}
+  const k=Math.floor(t+1e-6)%4,f=t-Math.floor(t);$('stateTag').textContent=plateMode?'Print layout':f<0.02||f>0.98?NAMES[Math.round(t)%4]:'Folding…';}
+let last=performance.now();
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(playing||target!==null){const sp=matchMedia('(prefers-reduced-motion: reduce)').matches?3:0.55;let nt=t+dt*sp;
+    if(target!==null&&nt>=target){nt=target;target=null;}
+    if(nt>=4){base=chain(4).G;nt-=4;if(target!==null)target-=4;}
+    t=nt;$('scrub').value=t;updatePose();}
+  ctl.update();renderer.render(scene,cam);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+$('play').onclick=()=>{if(plateMode)togglePlate(false);playing=!playing;$('play').setAttribute('aria-pressed',playing);$('play').textContent=playing?'Pause':'Play fold';};
+$('step').onclick=()=>{if(plateMode)togglePlate(false);playing=false;$('play').setAttribute('aria-pressed',false);$('play').textContent='Play fold';target=Math.floor(t+1e-6)+1;};
+$('scrub').oninput=e=>{if(plateMode)togglePlate(false);playing=false;target=null;t=+e.target.value;updatePose();};
+function togglePlate(on){plateMode=on;$('plateBtn').setAttribute('aria-pressed',on);plate.visible=grid.visible=on;if(on){playing=false;$('play').textContent='Play fold';$('play').setAttribute('aria-pressed',false);}updatePose();}
+$('plateBtn').onclick=()=>togglePlate(!plateMode);
+// ---------- picking ----------
+const ray=new THREE.Raycaster();let down=null;
+renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
+renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;down=null;
+  if(mode==='all'){paintAll();return;}
+  const r=renderer.domElement.getBoundingClientRect();ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-(e.clientY-r.top)/r.height*2+1},cam);
+  const hits=ray.intersectObjects(M.bodies.map(b=>meshes[b.id]).filter(Boolean));if(!hits.length)return;
+  const hit=hits[0],item=hit.object.userData.item,body=M.bodies.find(b=>b.id===item);
+  const inv=new THREE.Matrix4().copy(hit.object.matrixWorld).invert(),p=hit.point.clone().applyMatrix4(inv);
+  let best=null,bd=1e9;for(const id of body.cubes){const c=M.cubes[id].c,d=Math.hypot(p.x-c[0],p.y-c[1],p.z-c[2]);if(d<bd){bd=d;best=id;}}
+  const c=M.cubes[best].c,l=[p.x-c[0],p.y-c[1],p.z-c[2]],ax=l.map(Math.abs),i=ax.indexOf(Math.max(...ax)),k=i*2+(l[i]>0?0:1);
+  if(FUSED[best]===k)return;
+  const spreadOn=brush.spread&&(brush.t==='text'||brush.t==='image');
+  if(mode==='face'&&!spreadOn){paint([best+k]);flash([best+k]);return;}
+  const n=worldNormal(best,k),fc=Tapply(pose.T[best],vadd(c,vmul(DIRS[k],M.h))),off=vdot(n,fc),keys=[],ctr={};
+  for(const id of CUBE_IDS)for(let kk=0;kk<6;kk++){if(FUSED[id]===kk)continue;const n2=worldNormal(id,kk);if(vdot(n,n2)<0.99)continue;
+    const f2=Tapply(pose.T[id],vadd(M.cubes[id].c,vmul(DIRS[kk],M.h)));if(Math.abs(vdot(n,f2)-off)<1.5){keys.push(id+kk);ctr[id+kk]=f2;}}
+  if(spreadOn){const cu=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1);let Up=null,bd=-2;
+    for(const ax of DIRS){if(Math.abs(vdot(ax,n))>0.5)continue;const d=ax[0]*cu.x+ax[1]*cu.y+ax[2]*cu.z;if(d>bd){bd=d;Up=ax;}}
+    const R=vcross(Up,n.map(Math.round));let mc=[0,0,0];for(const kk of keys)mc=vadd(mc,vmul(ctr[kk],1/keys.length));
+    const ss=keys.map(kk=>vdot(vsub(ctr[kk],mc),R)/M.p),tt=keys.map(kk=>vdot(vsub(ctr[kk],mc),Up)/M.p);
+    const cols=Math.round(Math.max(...ss)-Math.min(...ss))+1,rows=Math.round(Math.max(...tt)-Math.min(...tt))+1,extra={};
+    keys.forEach((kk,i)=>{const id=kk[0],f=+kk[1],ua=worldVec(id,vcross(UPS[f],DIRS[f])),uw=worldVec(id,UPS[f]);
+      extra[kk]={span:{cols,rows,cx:Math.round(ss[i]*2)/2,cy:Math.round(tt[i]*2)/2,a:Math.round(vdot(ua,R)),b:Math.round(vdot(ua,Up)),c:Math.round(vdot(uw,R)),d:Math.round(vdot(uw,Up))}};});
+    paint(keys,extra);flash(keys);return;}
+  paint(keys);flash(keys);});
+const flashMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.55,depthTest:false});
+function flash(keys){const g=new THREE.Group();for(const key of keys){const id=key[0],k=+key[1],c=M.cubes[id].c,q=new THREE.Mesh(new THREE.PlaneGeometry(M.s*0.9,M.s*0.9),flashMat);
+    const n=new THREE.Vector3(...DIRS[k]);q.position.set(...vadd(c,vmul(DIRS[k],M.h+0.3)));q.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),n);
+    q.applyMatrix4(toMat(pose.T[id]));g.add(q);}root.add(g);let a=0.55;const fade=()=>{a-=0.04;flashMat.opacity=Math.max(0,a);if(a>0)requestAnimationFrame(fade);else{root.remove(g);flashMat.opacity=0.55;}};fade();}
+// ---------- export ----------
+function stl(list){let n=0;for(const m of list)n+=m.idx.length/3;const buf=new ArrayBuffer(84+n*50),dv=new DataView(buf);
+  new Uint8Array(buf,0,80).set(new TextEncoder().encode('Infinity Cube Generator - print in place'));dv.setUint32(80,n,true);let o=84;
+  for(const m of list){const p=m.pos,ix=m.idx,T=m.T;const tp=new Float32Array(p.length);for(let i=0;i<p.length;i+=3){const v=Tapply(T,[p[i],p[i+1],p[i+2]]);tp[i]=v[0];tp[i+1]=v[1];tp[i+2]=v[2];}
+    for(let i=0;i<ix.length;i+=3){const a=ix[i]*3,b=ix[i+1]*3,c=ix[i+2]*3;const ux=tp[b]-tp[a],uy=tp[b+1]-tp[a+1],uz=tp[b+2]-tp[a+2],vx=tp[c]-tp[a],vy=tp[c+1]-tp[a+1],vz=tp[c+2]-tp[a+2];
+      let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=Math.hypot(nx,ny,nz)||1;dv.setFloat32(o,nx/l,true);dv.setFloat32(o+4,ny/l,true);dv.setFloat32(o+8,nz/l,true);o+=12;
+      for(const q of [a,b,c]){dv.setFloat32(o,tp[q],true);dv.setFloat32(o+4,tp[q+1],true);dv.setFloat32(o+8,tp[q+2],true);o+=12;}o+=2;}}
+  return new Uint8Array(buf);}
+$('export').onclick=async()=>{const btn=$('export');
+  btn.disabled=true;const res=+$('res').value,E=eff(),items=ITEMS(),out={};let done=0;$('expStat').textContent=`Meshing 0 of ${items.length} parts at ${res} mm…`;
+  await new Promise(ok=>{for(const it of items)queue.push({item:it,msg:{jid:-1,item:it,P:E,faces:facesFor(it),maps:mapsFor(it),res},cb:d=>{out[d.item]=d;done++;$('expStat').textContent=`Meshing ${done} of ${items.length} parts at ${res} mm…`;if(done===items.length)ok();}});pump();});
+  const {G,P:ps}=printPose();const list=items.map(it=>({pos:out[it].pos,idx:out[it].idx,T:Tmul(G,ps.out[it])}));
+  const tris=list.reduce((s,m)=>s+m.idx.length/3,0),blob=new Blob([stl(list)],{type:'model/stl'}),s=M.s,p=M.p;
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`infinity-cube-${s}mm.stl`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  $('expStat').textContent=`Saved: ${(blob.size/1048576).toFixed(1)} MB, ${tris.toLocaleString()} triangles, ${(4*p-P.gap).toFixed(0)} × ${(2*p-P.gap).toFixed(0)} × ${s} mm on the bed.`;
+  btn.disabled=false;};
+remesh(ITEMS());updatePose();
+}
+</script>
+</body></html>
