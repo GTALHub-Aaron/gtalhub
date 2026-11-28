@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Fidget Ring | The Print Shop | GTALHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a workshop tool — precise, calm, a little playful when it spins.
+   IDEA: the slicer's build plate — the ring sitting on a plate, settings beside it.
+   PICTURE: the live 3D spinner ring, outer band spinning on its captive V-track.
+   COLOR and TYPE: warm plate gray, graphite ink, filament orange accent; Barlow Semi Condensed + Barlow.
+   LAYOUT: viewer left / settings right on wide screens; viewer on top, settings below on phones. */
+:root{color-scheme:light dark;--bg:light-dark(#eceae5,#16181a);--ink:light-dark(#1a1c1e,#ecebe7);--mut:light-dark(#5d6166,#a3a7ac);--card:light-dark(#fff,#202326);--line:light-dark(#d8d5ce,#33373b);--acc:#ff6a13;--warn:light-dark(#b3261e,#ff8a80);--ok:light-dark(#2e6b3a,#8fd19e)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1{font:700 clamp(28px,4vw,40px)/1.05 "Barlow Semi Condensed",sans-serif;margin:0;text-wrap:balance}
+h2{font:700 19px/1.2 "Barlow Semi Condensed",sans-serif;margin:0 0 10px}
+.top{padding:18px max(3vw,14px) 10px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+.top p{margin:0;color:var(--mut)}
+.back{flex-basis:100%;font-size:14px;color:var(--mut);text-decoration:none}.back:hover{color:var(--acc)}
+.wrap{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:16px;padding:0 max(3vw,14px) 28px;max-width:1500px;margin:0 auto}
+.stage{position:sticky;top:12px;align-self:start}
+.fig{position:relative;height:min(72vh,680px);border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 20%,light-dark(#f8f7f4,#2a2e32),light-dark(#d9d6cf,#111315))}
+.fig canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:end;pointer-events:none}
+.hud>*{pointer-events:auto}
+.stats{display:flex;flex-wrap:wrap;gap:6px}
+.pill{background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:14px;white-space:nowrap}
+.pill b{font-weight:600}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:600 15px Barlow,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.go{background:var(--acc);border-color:var(--acc);color:#1a0d04}
+button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:disabled{opacity:.5;cursor:default}
+.panel{display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:10px;align-items:center;margin:8px 0}
+.row label{font-size:15px}
+.row small{display:block;color:var(--mut);font-size:13px;line-height:1.3}
+input[type=number],select{font:500 16px Barlow,sans-serif;width:100%;min-height:44px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);text-align:right}
+select{text-align:left}
+input[type=checkbox]{width:24px;height:24px;accent-color:var(--acc);justify-self:end}
+input[type=color]{width:100%;height:44px;border:1px solid var(--line);border-radius:9px;background:var(--bg);padding:3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{min-height:36px;padding:0 12px;border-radius:999px;font-size:14px}
+.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#1a0d04}
+.sw{width:30px;height:30px;min-height:30px;padding:0;border-radius:50%;border:2px solid var(--line)}
+.msgs{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px}
+.msgs li{padding:7px 10px;border-radius:8px;border:1px solid var(--line)}
+.msgs .bad{color:var(--warn);border-color:currentColor}
+.msgs .good{color:var(--ok)}
+.note{font-size:13px;color:var(--mut);margin:8px 0 0}
+.sec{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:12px;align-items:center}
+.sec svg{width:100%;height:auto;max-height:240px}
+.sec dl{margin:0;display:grid;grid-template-columns:auto auto;gap:2px 10px;font-size:14px}
+.sec dt{color:var(--mut)}.sec dd{margin:0;text-align:right;white-space:nowrap;font-weight:600}
+#dlmsg{font-size:14px;color:var(--mut);min-height:1.2em;margin:6px 0 0}
+@media(max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}.stage{position:relative;top:0}.fig{height:52vh;min-height:320px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="/print-shop/">← The Print Shop</a>
+  <h1>Fidget ring generator</h1>
+  <p>Print-in-place spinner rings, captive V-track → STL</p>
+</header>
+<main class="wrap">
+  <section class="stage">
+    <div class="fig" id="fig">
+      <div class="hud">
+        <div class="stats" id="stats"></div>
+        <div class="btns"><button id="cut" aria-pressed="false">Cutaway</button><button id="flick" class="go">Flick</button></div>
+      </div>
+    </div>
+    <ul class="msgs" id="msgs" style="margin-top:10px"></ul>
+  </section>
+
+  <section class="panel">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><h2 style="margin:0">Presets</h2><button id="rnd" class="go">Random</button></div>
+      <div class="chips" id="presets"></div>
+      <p class="note">Random keeps your ring size, band width and track settings.</p>
+    </div>
+
+    <div class="card">
+      <h2>Size</h2>
+      <div class="row"><label for="us">US ring size <small>A wide band fits snug — go up ½ size if unsure</small></label><input id="us" type="number" step="0.25" min="2" max="16"></div>
+      <div class="row"><label for="dia">Inside diameter <small>mm — measure a ring that fits</small></label><input id="dia" type="number" step="0.05" min="12" max="26"></div>
+      <div class="row"><label for="w">Band width <small>mm</small></label><input id="w" type="number" step="0.5" min="5" max="16"></div>
+    </div>
+
+    <div class="card">
+      <h2>Spinner track</h2>
+      <div class="row"><label for="ret">Track <small>45° V ridge, prints without supports</small></label><select id="ret"><option value="single">Single V</option><option value="double">Double V</option></select></div>
+      <div class="row"><label for="vh">V ridge height <small>mm — how much the outer band is captured</small></label><input id="vh" type="number" step="0.05" min="0.3" max="2"></div>
+      <div class="row"><label for="clr">Clearance <small>mm between rings — 0.25–0.35 for most printers</small></label><input id="clr" type="number" step="0.05" min="0.1" max="0.8"></div>
+      <div class="row"><label for="tin">Inner band wall <small>mm under the ridge</small></label><input id="tin" type="number" step="0.1" min="0.6" max="3"></div>
+      <div class="row"><label for="tout">Outer band wall <small>mm over the ridge</small></label><input id="tout" type="number" step="0.1" min="0.6" max="3"></div>
+      <div class="row"><label for="ef">First-layer relief <small>mm — opens the gap at the bed so elephant's foot can't fuse it</small></label><input id="ef" type="number" step="0.05" min="0" max="0.8"></div>
+      <div class="row"><label for="cf">Comfort-fit edge <small>mm chamfer inside the bore</small></label><input id="cf" type="number" step="0.05" min="0" max="1"></div>
+      <div class="row"><label for="edge">Outer edge chamfer <small>mm</small></label><input id="edge" type="number" step="0.05" min="0" max="1.2"></div>
+      <div class="row"><label for="crown">Crown <small>mm of dome across the outer band</small></label><input id="crown" type="number" step="0.05" min="0" max="1.2"></div>
+    </div>
+
+    <div class="card">
+      <h2>Cutout pattern</h2>
+      <div class="row"><label for="pat">Shape</label><select id="pat">
+        <option value="none">None (solid)</option><option value="diamond">Diamond lattice</option><option value="circle">Circles</option><option value="slot">Slots</option><option value="hex">Honeycomb</option><option value="square">Squares</option><option value="tri">Triangles</option><option value="chevron">Chevrons</option><option value="star">Stars</option><option value="wave">Wave</option><option value="notch">Edge notches</option></select></div>
+      <div class="row"><label for="n">Count around</label><input id="n" type="number" step="1" min="2" max="60"></div>
+      <div class="row"><label for="rows">Rows</label><input id="rows" type="number" step="1" min="1" max="5"></div>
+      <div class="row"><label for="size">Hole size <small>0.2–0.95 of each cell</small></label><input id="size" type="number" step="0.05" min="0.2" max="0.95"></div>
+      <div class="row"><label for="rim">Solid rim <small>mm kept at each edge</small></label><input id="rim" type="number" step="0.1" min="0.4" max="4"></div>
+      <div class="row"><label for="twist">Slant <small>degrees — slants slots into diagonals</small></label><input id="twist" type="number" step="5" min="-60" max="60"></div>
+      <div class="row"><label for="stag">Stagger rows</label><input id="stag" type="checkbox"></div>
+      <div class="row"><label for="alt">Alternate <small>Every other hole smaller or flipped</small></label><input id="alt" type="checkbox"></div>
+    </div>
+
+    <div class="card">
+      <h2>Outer surface texture</h2>
+      <div class="row"><label for="tex">Texture</label><select id="tex"><option value="none">Smooth</option><option value="flutes">Flutes</option><option value="helix">Twisted flutes</option><option value="knurl">Knurl</option><option value="rings">Grooves</option></select></div>
+      <div class="row"><label for="tk">Texture count</label><input id="tk" type="number" step="1" min="6" max="120"></div>
+      <div class="row"><label for="td">Texture depth <small>mm</small></label><input id="td" type="number" step="0.05" min="0.05" max="1"></div>
+    </div>
+
+    <div class="card">
+      <h2>Cross-section</h2>
+      <div class="sec"><svg id="secsvg" role="img" aria-label="Ring cross-section"></svg><dl id="secdl"></dl></div>
+      <p class="note">The dashed line is the bed. The outer band's V-groove wraps the inner ridge, so it spins but can't slide off.</p>
+    </div>
+
+    <div class="card">
+      <h2>Look</h2>
+      <div class="row"><label for="cout">Outer band color</label><input id="cout" type="color"></div>
+      <div class="chips" id="swout"></div>
+      <div class="row" style="margin-top:12px"><label for="cin">Inner band color</label><input id="cin" type="color"></div>
+      <div class="chips" id="swin"></div>
+      <div class="row" style="margin-top:12px"><label for="fin">Finish</label><select id="fin"><option value="matte">Matte PLA</option><option value="silk">Silk PLA</option><option value="metal">Metal</option></select></div>
+    </div>
+
+    <div class="card">
+      <h2>Export</h2>
+      <div class="row"><label for="q">Mesh quality</label><select id="q"><option value="0.4">Draft</option><option value="0.25">Normal</option><option value="0.15">Fine</option></select></div>
+      <button id="dl" class="go" style="width:100%">Download print-in-place STL</button>
+      <p id="dlmsg"></p>
+      <p class="note">One STL with both bands already in position as separate bodies — split it into parts in your slicer to print two colors. Print flat, no supports, 0.12–0.16 mm layers.</p>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+{
+
+const TAU=Math.PI*2;
+const US2D=s=>11.63+0.8128*s, D2US=d=>(d-11.63)/0.8128;
+function polyAt(pts,z){
+  if(z<=pts[0][0])return pts[0][1];
+  for(let i=1;i<pts.length;i++){if(z<=pts[i][0]){const [z0,r0]=pts[i-1],[z1,r1]=pts[i];return z1-z0<1e-12?r1:r0+(r1-r0)*(z-z0)/(z1-z0)}}
+  return pts[pts.length-1][1];
+}
+function offsetPoly(pts,c){
+  const L=[];
+  for(let i=0;i<pts.length-1;i++){const [z0,r0]=pts[i],[z1,r1]=pts[i+1],dz=z1-z0,dr=r1-r0,l=Math.hypot(dz,dr);
+    if(l<1e-9)continue;L.push({p:[z0-dr/l*c,r0+dz/l*c],d:[dz,dr]})}
+  const out=[[pts[0][0],pts[0][1]+c]];
+  for(let i=0;i<L.length-1;i++){const a=L[i],b=L[i+1],den=a.d[0]*b.d[1]-a.d[1]*b.d[0];
+    if(Math.abs(den)<1e-12)continue;
+    const t=((b.p[0]-a.p[0])*b.d[1]-(b.p[1]-a.p[1])*b.d[0])/den;out.push([a.p[0]+a.d[0]*t,a.p[1]+a.d[1]*t])}
+  out.push([pts[pts.length-1][0],pts[pts.length-1][1]+c]);
+  return out;
+}
+function profiles(P){
+  const Ri=P.dia/2,W=P.w,a=Ri+P.tin;
+  const cs=P.ret==='double'?[W*0.3,W*0.7]:[W/2];
+  const hmax=P.ret==='double'?W*0.2-0.25:W/2-0.5;
+  const h=Math.max(0.2,Math.min(P.vh,hmax));
+  const A=[[0,a]];for(const zc of cs)A.push([zc-h,a],[zc,a+h],[zc+h,a]);A.push([W,a]);
+  const B=offsetPoly(A,P.clr);
+  const ef=P.ef,k=P.cf,e=P.edge;
+  const Ain=z=>polyAt(A,z)-Math.max(0,ef-z);
+  const Bout=z=>polyAt(B,z)+Math.max(0,ef-z);
+  const Rbore=z=>Ri+Math.max(0,k-z)+Math.max(0,k-(W-z));
+  const R0=Math.max(...B.map(p=>p[1]))+P.tout;
+  const Rbase=z=>{let r=R0;if(P.crown>0){const q=2*z/W-1;r+=P.crown*(1-q*q)}return r-Math.max(0,e-z)-Math.max(0,e-(W-z))};
+  const corners=[ef,k,W-k,e,W-e,...A.map(p=>p[0]),...B.map(p=>p[0])].filter(z=>z>1e-3&&z<W-1e-3);
+  return {Ri,W,h,A,B,Ain,Bout,Rbore,R0,Rbase,corners};
+}
+function texture(P,R0,W){
+  const K=Math.max(3,Math.round(P.tk)),d=P.td;
+  const tri=x=>{x-=Math.floor(x);return 1-Math.abs(2*x-1)};
+  switch(P.tex){
+    case 'flutes':return (th,z)=>d*(0.5+0.5*Math.cos(K*th));
+    case 'helix':return (th,z)=>d*(0.5+0.5*Math.cos(K*th+K*(z-W/2)/R0*0.7));
+    case 'knurl':{const p=TAU*R0/K;return (th,z)=>{const u=th*R0;return d*Math.max(tri((u+z)/p),tri((u-z)/p))**2}}
+    case 'rings':return (th,z)=>d*(0.5+0.5*Math.cos(TAU*(z-W/2)/1.3));
+    default:return ()=>0;
+  }
+}
+function polyD(pts,x,y){let d=1e18,ins=false;
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){const xi=pts[i][0],yi=pts[i][1],xj=pts[j][0],yj=pts[j][1],ex=xi-xj,ey=yi-yj,wx=x-xj,wy=y-yj;
+    const t=Math.max(0,Math.min(1,(wx*ex+wy*ey)/(ex*ex+ey*ey))),dx=wx-ex*t,dy=wy-ey*t;d=Math.min(d,dx*dx+dy*dy);
+    if((yj>y)!==(yi>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)ins=!ins}
+  return (ins?-1:1)*Math.sqrt(d)}
+function segD(x,y,x0,y0,x1,y1){const ex=x1-x0,ey=y1-y0,t=Math.max(0,Math.min(1,((x-x0)*ex+(y-y0)*ey)/(ex*ex+ey*ey)));return Math.hypot(x-x0-ex*t,y-y0-ey*t)}
+function boxD(x,y,a,b,r){const qx=Math.abs(x)-a+r,qy=Math.abs(y)-b+r;return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-r}
+const SHAPES={
+  circle:(x,y,a,b,alt)=>Math.hypot(x,y)-Math.min(a,b)*(alt?0.58:1),
+  slot:(x,y,a,b,alt)=>{const bb=alt?b*0.6:b;if(bb<=a)return Math.hypot(x,y)-bb;return Math.hypot(x,Math.max(Math.abs(y)-(bb-a),0))-a},
+  diamond:(x,y,a,b,alt)=>{const s=alt?0.6:1;return polyD([[0,b*s],[-a*s,0],[0,-b*s],[a*s,0]],x,y)},
+  square:(x,y,a,b,alt)=>{const s=alt?0.6:1;return boxD(x,y,a*s,b*s,0.25*Math.min(a,b)*s)},
+  hex:(x,y,a,b,alt)=>{const r=Math.min(a/0.866,b)*(alt?0.6:1),p=[];for(let i=0;i<6;i++)p.push([r*Math.cos(Math.PI/6+i*Math.PI/3),r*Math.sin(Math.PI/6+i*Math.PI/3)]);return polyD(p,x,y)},
+  tri:(x,y,a,b,alt)=>{const f=alt?-1:1;return polyD(f>0?[[0,b],[-a,-b],[a,-b]]:[[0,-b],[a,b],[-a,b]],x,y)},
+  chevron:(x,y,a,b,alt)=>{const f=alt?-1:1,t=0.3*Math.min(a,b);const xa=-0.55*a*f,xb=0.45*a*f;
+    return Math.min(segD(x,y,xa,b-t,xb,0),segD(x,y,xb,0,xa,-b+t))-t},
+  star:(x,y,a,b,alt)=>{const R=Math.min(a,b)*(alt?0.65:1),p=[];for(let i=0;i<10;i++){const r=i%2?R*0.45:R,an=Math.PI/2+i*Math.PI/5;p.push([r*Math.cos(an),r*Math.sin(an)])}return polyD(p,x,y)}
+};
+function pattern(P,R0,W){
+  if(P.pat==='none')return ()=>1e9;
+  let N=Math.max(1,Math.round(P.n));if(P.alt&&N%2&&P.pat!=='wave'&&P.pat!=='notch')N++;
+  const Tw=TAU*R0/N,tw=Math.tan(P.twist*Math.PI/180),s=P.size;
+  if(P.pat==='notch'){const a=s*Tw*0.32,dep=Math.min(W*0.42,0.35+s*W*0.28);
+    return (th,z)=>{const v=z-W/2,uu=th*R0-v*tw;let d=1e9;
+      for(const [off,yc] of [[0,W/2],[Tw/2,-W/2]]){const x0=uu-off,n0=Math.round(x0/Tw);for(let q=n0-1;q<=n0+1;q++)d=Math.min(d,boxD(x0-q*Tw,v-yc,a,dep,Math.min(0.35,a*0.4)))}
+      return d}}
+  const rim=P.rim,Hu=W-2*rim,M=Math.max(1,Math.round(P.rows)),p=Hu/M,sl=P.pat==='slot',a=sl?s*Tw/4:s*Tw/2,b=sl?p/2-Math.max(0.2,p*0.03):s*p/2,sh=SHAPES[P.pat];
+  if(P.pat==='wave'){const t=Math.max(0.3,s*p*0.22),A=Math.max(0,p/2-t-0.25),gap=Math.max(1.2,Tw*(1-s)*0.6),L=Math.max(0.5,Tw/2-gap/2-t),k2=Math.sqrt(1+(A*TAU/Tw)**2*0.5);
+    return (th,z)=>{const v=z-W/2;let d=1e9;for(let k=0;k<M;k++){const y=v-(-Hu/2+p*(k+0.5)),x0=th*R0-v*tw-(P.stag&&k%2?Tw/2:0),n0=Math.round(x0/Tw);
+      for(let q=n0-1;q<=n0+1;q++){const x=x0-q*Tw,w=Math.abs(y-A*Math.sin(TAU*x/Tw+Math.PI))/k2;d=Math.min(d,Math.hypot(Math.max(Math.abs(x)-L,0),w)-t)}}return d}}
+  return (th,z)=>{const v=z-W/2,uu=th*R0-v*tw;let d=1e9;
+    for(let k=0;k<M;k++){const y=v-(-Hu/2+p*(k+0.5));if(Math.abs(y)>b+p)continue;const x0=uu-(P.stag&&k%2?Tw/2:0),n0=Math.round(x0/Tw);
+      for(let q=n0-1;q<=n0+1;q++){const qi=((q%N)+N)%N;d=Math.min(d,sh(x0-q*Tw,y,a,b,P.alt?(qi+(P.stag?0:k))%2===1:false))}}
+    return d};
+}
+function band(cols,zs,field,rIn,rOut){
+  const nz=zs.length,N=cols*nz,F=new Float64Array(N),pos=[],idx=[],vmap=new Map();
+  for(let j=0;j<nz;j++)for(let i=0;i<cols;i++){let f=field(i*TAU/cols,zs[j]);if(f===0)f=-1e-7;F[j*cols+i]=f}
+  const vert=(key,th,z)=>{let v=vmap.get(key);if(v===undefined){v=pos.length/3;const ro=rOut(th,z),ri=rIn(th,z),c=Math.cos(th),s=Math.sin(th);pos.push(ro*c,ro*s,z,ri*c,ri*s,z);vmap.set(key,v)}return v};
+  const clip=(p)=>{const poly=[];let ex=-1,en=-1;
+    for(let k=0;k<3;k++){const c=p[k],n=p[(k+1)%3];if(c.f>0)poly.push(vert(c.g,c.th,c.z));
+      if((c.f>0)!==(n.f>0)){const t=c.f/(c.f-n.f),key=N+Math.min(c.g,n.g)*N+Math.max(c.g,n.g),v=vert(key,c.th+(n.th-c.th)*t,c.z+(n.z-c.z)*t);poly.push(v);if(c.f>0)ex=v;else en=v}}
+    for(let k=1;k<poly.length-1;k++){idx.push(poly[0],poly[k],poly[k+1]);idx.push(poly[0]+1,poly[k+1]+1,poly[k]+1)}
+    if(ex>=0)idx.push(ex+1,en+1,en,ex+1,en,ex)};
+  const pt=(i,j)=>{const ii=i%cols,g=j*cols+ii;return {g,th:i*TAU/cols,z:zs[j],f:F[g]}};
+  for(let j=0;j<nz-1;j++)for(let i=0;i<cols;i++){const a=pt(i,j),b=pt(i+1,j),c=pt(i+1,j+1),d=pt(i,j+1);
+    if(a.f<=0&&b.f<=0&&c.f<=0&&d.f<=0)continue;clip([a,b,c]);clip([a,c,d])}
+  return {pos:new Float32Array(pos),idx:new Uint32Array(idx)};
+}
+function buildRing(P){
+  const pr=profiles(P),W=P.w,res=P.q,dz=res*0.8;
+  const nz=Math.max(8,Math.round(W/dz)),step=W/nz;
+  let zs=[];for(let j=0;j<nz;j++)zs.push((j+0.5)*step);
+  for(const c of pr.corners){zs=zs.filter(z=>Math.abs(z-c)>step*0.2);zs.push(c)}
+  zs.sort((x,y)=>x-y);zs=zs.filter((z,i)=>i===0||z-zs[i-1]>1e-4);zs.unshift(-step*0.5);zs.push(W+step*0.5);
+  const cap=z=>Math.min(z,W-z),pat=pattern(P,pr.R0,W),tex=texture(P,pr.R0,W);
+  const rimT=P.pat==='notch'?-1e9:P.rim;
+  const colsO=Math.max(96,Math.round(TAU*pr.R0/res)),colsI=Math.max(96,Math.round(TAU*pr.Ri/(res*1.4)));
+  const outer=band(colsO,zs,(th,z)=>Math.min(Math.max(pat(th,z),rimT-cap(z)),cap(z)),(th,z)=>pr.Bout(z),(th,z)=>pr.Rbase(z)-tex(th,z));
+  const inner=band(colsI,zs,(th,z)=>cap(z),(th,z)=>pr.Rbore(z),(th,z)=>pr.Ain(z));
+  return {pr,outer,inner,zs};
+}
+function bridgeWidth(P,R0,W){
+  if(P.pat==='none')return Infinity;
+  const pat=pattern(P,R0,W),N=Math.max(1,Math.round(P.n)),span=Math.min(TAU,2.05*TAU/N),st=0.05;
+  const nu=Math.ceil(span*R0/st),z0=0.01,z1=W-0.01,nv=Math.max(3,Math.ceil((z1-z0)/st)),rimT=P.pat==='notch'?-1e9:P.rim,cap=z=>Math.min(z,W-z);
+  const D=new Float32Array(nu*nv);for(let j=0;j<nv;j++){const z=z0+(z1-z0)*j/(nv-1);for(let i=0;i<nu;i++)D[j*nu+i]=Math.min(Math.max(pat(i*st/R0,z),rimT-cap(z)),cap(z))}
+  let m=Infinity;const R=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]];
+  for(let j=1;j<nv-1;j++)for(let i=1;i<nu-1;i++){const d=D[j*nu+i];if(d<=0||2*d>=m)continue;
+    let ch=0,prev=D[(j+R[7][1])*nu+i+R[7][0]]-d>=-1e-5;
+    for(const [a,b] of R){const up=D[(j+b)*nu+i+a]-d>=-1e-5;if(up!==prev)ch++;prev=up}
+    if(ch>=4)m=2*d}
+  return m;
+}
+function pieces(b){const n=b.pos.length/3,par=new Int32Array(n);for(let i=0;i<n;i++)par[i]=i;
+  const f=x=>{while(par[x]!==x)x=par[x]=par[par[x]];return x},I=b.idx;
+  for(let i=0;i<I.length;i+=3){const a=f(I[i]);par[a]=f(I[i+1]);par[f(I[i+1])]=f(I[i+2])}
+  const s=new Set();for(let i=0;i<I.length;i++)s.add(f(I[i]));return s.size}
+const $=id=>document.getElementById(id);
+const KEYS=['dia','w','ret','vh','clr','tin','tout','ef','cf','edge','crown','pat','n','rows','size','rim','twist','stag','alt','tex','tk','td','cout','cin','fin','q'];
+const STRS=new Set(['ret','pat','tex','cout','cin','fin']);
+const DEF={dia:US2D(8),w:8,ret:'single',vh:0.8,clr:0.3,tin:1.2,tout:1.2,ef:0.3,cf:0.4,edge:0.4,crown:0,pat:'diamond',n:18,rows:2,size:0.75,rim:1,twist:0,stag:1,alt:0,tex:'none',tk:40,td:0.3,cout:'#f4f4f2',cin:'#ff6a13',fin:'silk',q:0.25};
+const PRESETS=[
+ {name:'Lattice',v:{pat:'diamond',n:18,rows:2,size:0.78,rim:0.9,stag:1,alt:0,twist:0,cout:'#f4f4f2',cin:'#e0302b'}},
+ {name:'Bubbles',v:{pat:'circle',n:12,rows:2,size:0.9,rim:0.9,stag:1,alt:1,twist:0,cout:'#b9bdc2',cin:'#8b3fd9',fin:'metal'}},
+ {name:'Portholes',v:{pat:'circle',n:9,rows:1,size:0.9,rim:1,stag:0,alt:0,twist:0,cout:'#b9bdc2',cin:'#2fbf4a',fin:'metal'}},
+ {name:'Slash',v:{pat:'slot',n:14,rows:1,size:0.6,rim:1.1,stag:0,alt:0,twist:40,cout:'#b9bdc2',cin:'#2563eb',fin:'metal'}},
+ {name:'Chevron',v:{pat:'chevron',n:10,rows:1,size:0.9,rim:1.1,stag:0,alt:0,twist:0,cout:'#c9a13b',cin:'#f5c400',fin:'metal'}},
+ {name:'Tread',v:{pat:'notch',n:12,size:0.7,twist:0,alt:0,cout:'#1d1e20',cin:'#ff6a13',fin:'silk'}},
+ {name:'Honeycomb',v:{pat:'hex',n:16,rows:3,size:0.82,rim:0.9,stag:1,alt:0,twist:0,w:9,cout:'#f5c400',cin:'#1d1e20'}},
+ {name:'Wave',v:{pat:'wave',n:6,rows:2,size:0.7,rim:1,stag:1,alt:0,twist:0,cout:'#2563eb',cin:'#f4f4f2'}},
+ {name:'Triangles',v:{pat:'tri',n:16,rows:2,size:0.74,rim:0.9,stag:1,alt:1,twist:0,cout:'#1d1e20',cin:'#2fbf4a'}},
+ {name:'Stars',v:{pat:'star',n:11,rows:1,size:0.95,rim:1,stag:0,alt:0,twist:0,cout:'#2563eb',cin:'#f5c400'}},
+ {name:'Knurled',v:{pat:'none',tex:'knurl',tk:40,td:0.35,cout:'#b9bdc2',cin:'#1d1e20',fin:'metal'}},
+ {name:'Twisted flutes',v:{pat:'none',tex:'helix',tk:30,td:0.35,crown:0.3,cout:'#8b3fd9',cin:'#f4f4f2',fin:'silk'}},
+ {name:'Twin track',v:{ret:'double',w:11,vh:0.7,pat:'slot',n:20,rows:2,size:0.6,rim:1,stag:1,twist:-25,alt:0,tex:'none',cout:'#1d1e20',cin:'#ff6a13',fin:'matte'}}
+];
+const SW=['#f4f4f2','#1d1e20','#b9bdc2','#c9a13b','#ff6a13','#e0302b','#f5c400','#2fbf4a','#2563eb','#8b3fd9'];
+let P={...DEF};
+try{const s=JSON.parse(localStorage.getItem('fring')||'null');if(s)P={...P,...s}}catch(e){}
+
+function readUI(){for(const k of KEYS){const el=$(k);P[k]=el.type==='checkbox'?(el.checked?1:0):STRS.has(k)?el.value:parseFloat(el.value);if(!STRS.has(k)&&!isFinite(P[k]))P[k]=DEF[k]}}
+function writeUI(){for(const k of KEYS){const el=$(k);if(el.type==='checkbox')el.checked=!!P[k];else el.value=STRS.has(k)?P[k]:(k==='q'?String(P[k]):+(+P[k]).toFixed(3))}$('us').value=+D2US(P.dia).toFixed(2)}
+
+/* ---------- three ---------- */
+const fig=$('fig'),renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.localClippingEnabled=true;
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;
+fig.prepend(renderer.domElement);
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,1,0.5,2000);cam.up.set(0,0,1);
+const ctl=new THREE.OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;ctl.enablePan=false;
+{ // soft studio environment for reflections
+  const es=new THREE.Scene(),g=new THREE.SphereGeometry(50,32,16),col=[],p=g.attributes.position;
+  for(let i=0;i<p.count;i++){const t=(p.getY(i)/50+1)/2;col.push(0.25+0.6*t,0.25+0.6*t,0.27+0.6*t)}
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  es.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
+  for(const [x,y,z,s] of [[0,40,10,30],[-35,10,25,18],[30,-5,-30,22]]){const m=new THREE.Mesh(new THREE.PlaneGeometry(s,s),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m)}
+  const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(es,0.03).texture;
+}
+const key=new THREE.DirectionalLight(0xffffff,0.9);key.position.set(-30,-40,60);scene.add(key,new THREE.HemisphereLight(0xffffff,0x444444,0.35));
+const cutPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+const mOut=new THREE.MeshStandardMaterial({side:THREE.DoubleSide}),mIn=new THREE.MeshStandardMaterial({side:THREE.DoubleSide});
+const grp=new THREE.Group(),meshOut=new THREE.Mesh(new THREE.BufferGeometry(),mOut),meshIn=new THREE.Mesh(new THREE.BufferGeometry(),mIn);
+grp.add(meshOut,meshIn);scene.add(grp);
+const FIN={matte:[0.72,0],silk:[0.3,0.45],metal:[0.2,0.92]};
+function setLook(){for(const [m,c] of [[mOut,P.cout],[mIn,P.cin]]){m.color.set(c);m.roughness=FIN[P.fin][0];m.metalness=FIN[P.fin][1];m.clippingPlanes=cut?[cutPlane]:[];m.needsUpdate=true}}
+function toGeo(b){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(b.pos,3));g.setIndex(new THREE.BufferAttribute(b.idx,1));const n=g.toNonIndexed();n.computeVertexNormals();g.dispose();return n}
+
+let G=null,framed=false,cut=false;
+function rebuild(){readUI();
+  try{G=buildRing(P)}catch(e){console.error(e);return}
+  meshOut.geometry.dispose();meshIn.geometry.dispose();meshOut.geometry=toGeo(G.outer);meshIn.geometry=toGeo(G.inner);
+  grp.position.z=-P.w/2;setLook();
+  const pr=G.pr,Rmax=pr.R0+P.crown;
+  if(!framed){const d=Rmax*5.2;cam.position.set(d*0.35,-d*0.8,d*0.55);ctl.target.set(0,0,0);ctl.update();framed=true}
+  const tris=(G.outer.idx.length+G.inner.idx.length)/3;
+  $('stats').innerHTML=[['Inside Ø',P.dia.toFixed(2)+' mm'],['Outside Ø',(2*Rmax).toFixed(1)+' mm'],['Width',P.w+' mm'],['Triangles',(tris/1000).toFixed(0)+'k']].map(([a,b])=>`<span class="pill">${a} <b>${b}</b></span>`).join('');
+  checks();section();
+  try{localStorage.setItem('fring',JSON.stringify(P))}catch(e){}
+}
+function checks(){const pr=G.pr,W=P.w,M=[];let gap=9,wo=9,wi=9;
+  const td=P.tex==='none'?0:P.td;
+  for(let z=0;z<=W+1e-9;z+=0.02){gap=Math.min(gap,pr.Bout(z)-pr.Ain(z));wo=Math.min(wo,pr.Rbase(z)-td-pr.Bout(z));wi=Math.min(wi,pr.Ain(z)-pr.Rbore(z))}
+  G.gap=gap;G.wo=wo;G.wi=wi;
+  if(P.clr<0.2)M.push(['bad',`Clearance ${P.clr} mm is very tight — most printers will fuse the bands. Try 0.25–0.35.`]);
+  else if(P.clr>0.5)M.push(['',`Clearance ${P.clr} mm will spin freely but wobble.`]);
+  if(P.vh-P.clr<0.3)M.push(['bad','The ridge barely overlaps the groove — the outer band could pop off. Raise the V ridge or cut clearance.']);
+  if(wo<0.8)M.push(['bad',`Outer band is only ${wo.toFixed(2)} mm thick at its thinnest — raise the outer wall or ease the texture.`]);
+  if(wi<0.45)M.push(['bad',`Inner band is only ${wi.toFixed(2)} mm thick at the bed edge — raise the inner wall or trim the chamfers.`]);
+  const po=pieces(G.outer),pi=pieces(G.inner);
+  if(po>1)M.push(['bad',`The cutouts split the outer band into ${po} separate pieces — shrink the holes, cut the slant, or add a row gap.`]);
+  if(pi>1)M.push(['bad',`The inner band came out in ${pi} pieces.`]);
+  const br=bridgeWidth(P,pr.R0,W);G.br=br;
+  if(br<0.75)M.push(['bad',`Thinnest bridge between holes is about ${br.toFixed(2)} mm — too thin to print well. Lower the hole size or count.`]);
+  else if(br<1)M.push(['',`Thinnest bridge is ${br.toFixed(2)} mm — fine with a 0.4 mm nozzle, but it will flex.`]);
+  if(P.pat!=='none'&&P.pat!=='notch'&&P.rim<0.7)M.push(['','A solid rim under 0.7 mm may feel sharp and flex.']);
+  if(P.ret==='double'&&W<9)M.push(['','Double V wants a band of 9 mm or more.']);
+  if(!M.some(m=>m[0]==='bad'))M.unshift(['good',`Prints flat in one go, no supports — min gap ${gap.toFixed(2)} mm, ${(P.vh-P.clr).toFixed(2)} mm of capture.`]);
+  $('msgs').innerHTML=M.map(([c,t])=>`<li class="${c}">${t}</li>`).join('');
+}
+function section(){const pr=G.pr,W=P.w,zs=[0,...G.zs.filter(z=>z>0&&z<W),W],x0=pr.Ri-0.5,x1=pr.R0+P.crown+0.5,vw=x1-x0,vh=W+0.8;
+  const pt=(r,z)=>`${(r-x0).toFixed(3)},${(W+0.4-z).toFixed(3)}`;
+  const td=P.tex==='none'?0:P.td*0.5;
+  const pin=[...zs.map(z=>pt(pr.Rbore(z),z)),...zs.slice().reverse().map(z=>pt(pr.Ain(z),z))].join(' ');
+  const pout=[...zs.map(z=>pt(pr.Bout(z),z)),...zs.slice().reverse().map(z=>pt(pr.Rbase(z)-td,z))].join(' ');
+  const s=$('secsvg');s.setAttribute('viewBox',`0 0 ${vw.toFixed(2)} ${vh.toFixed(2)}`);
+  s.innerHTML=`<line x1="0" x2="${vw}" y1="${W+0.4}" y2="${W+0.4}" stroke="var(--mut)" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="4 3"/>
+   <polygon points="${pin}" fill="${P.cin}" stroke="var(--ink)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+   <polygon points="${pout}" fill="${P.cout}" stroke="var(--ink)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  const Rmax=pr.R0+P.crown;
+  $('secdl').innerHTML=[['Inside Ø',P.dia.toFixed(2)+' mm'],['Outside Ø',(2*Rmax).toFixed(2)+' mm'],['Total wall',(Rmax-pr.Ri).toFixed(2)+' mm'],['Capture',(P.vh-P.clr).toFixed(2)+' mm'],['Min gap',G.gap.toFixed(2)+' mm'],['Thinnest bridge',isFinite(G.br)?G.br.toFixed(2)+' mm':'—'],['Outer band min',G.wo.toFixed(2)+' mm'],['Inner band min',G.wi.toFixed(2)+' mm']].map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
+}
+
+function size(){const w=fig.clientWidth,h=fig.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+const ro=new ResizeObserver(size);ro.observe(fig);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,idle=reduce?0:0.6;let w=idle,last=0;
+function loop(ts){const dt=Math.min(0.05,(ts-last)/1000||0);last=ts;w=idle+(w-idle)*Math.exp(-0.45*dt);meshOut.rotation.z+=w*dt;ctl.update();renderer.render(scene,cam);requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+$('flick').onclick=()=>{w=Math.min(w+14,40)};
+$('cut').onclick=()=>{cut=!cut;$('cut').setAttribute('aria-pressed',cut);setLook()};
+
+/* ---------- UI ---------- */
+$('presets').innerHTML=PRESETS.map((p,i)=>`<button class="chip" data-p="${i}">${p.name}</button>`).join('');
+$('presets').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;P={...DEF,dia:P.dia,q:P.q,...PRESETS[b.dataset.p].v};writeUI();framed=false;rebuild()};
+for(const [id,k] of [['swout','cout'],['swin','cin']]){$(id).innerHTML=SW.map(c=>`<button class="sw" style="background:${c}" data-c="${c}" aria-label="${c}"></button>`).join('');
+  $(id).onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;$(k).value=b.dataset.c;readUI();setLook();section();try{localStorage.setItem('fring',JSON.stringify(P))}catch(_){}}}
+let tmr;const LOOK=new Set(['cout','cin','fin']);
+for(const k of KEYS){const h=()=>{if(LOOK.has(k)){readUI();setLook();section();try{localStorage.setItem('fring',JSON.stringify(P))}catch(_){}return}clearTimeout(tmr);tmr=setTimeout(rebuild,220)};$(k).addEventListener('input',h);$(k).addEventListener('change',h)}
+$('us').addEventListener('input',()=>{const u=parseFloat($('us').value);if(isFinite(u)){$('dia').value=+US2D(u).toFixed(3);clearTimeout(tmr);tmr=setTimeout(rebuild,220)}});
+$('dia').addEventListener('input',()=>{const d=parseFloat($('dia').value);if(isFinite(d))$('us').value=+D2US(d).toFixed(2)});
+const RP={circle:[6,16,1,3],diamond:[12,24,1,3],slot:[8,20,1,2],hex:[10,20,1,3],square:[10,20,1,3],tri:[12,22,1,2],chevron:[8,14,1,1],star:[8,14,1,2],wave:[4,8,1,2],notch:[8,16,1,1]};
+const rf=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rf(a,b+1)),pick=a=>a[Math.floor(Math.random()*a.length)],r2=v=>Math.round(v*100)/100;
+function randomize(){const keep={};for(const k of ['dia','w','ret','vh','clr','tin','tout','ef','cf','q'])keep[k]=P[k];
+  for(let tries=0;tries<40;tries++){
+    const pat=Math.random()<0.15?'none':pick(Object.keys(RP)),c={...DEF,...keep,pat};
+    if(pat!=='none'){const [n0,n1,r0,r1]=RP[pat];c.n=ri(n0,n1);c.rows=ri(r0,r1);c.size=r2(rf(0.55,0.9));c.rim=r2(rf(0.8,1.4));
+      c.twist=pat==='slot'&&Math.random()<0.6?pick([-1,1])*ri(4,10)*5:Math.random()<0.2?pick([-1,1])*ri(2,6)*5:0;
+      c.stag=Math.random()<0.5?1:0;c.alt=Math.random()<0.3?1:0}
+    c.tex=(pat==='none'?Math.random()<0.85:Math.random()<0.2)?pick(['flutes','helix','knurl','rings']):'none';
+    c.tk=ri(24,60);c.td=r2(Math.min(rf(0.25,0.45),c.tout-0.85));if(c.tex!=='none'&&c.td<0.15)c.tex='none';
+    c.crown=Math.random()<0.3?r2(rf(0.2,0.5)):0;c.edge=r2(rf(0.3,0.6));
+    const o=pick(SW);let i=pick(SW);while(i===o)i=pick(SW);c.cout=o;c.cin=i;c.fin=pick(['matte','silk','metal']);
+    if(pat!=='none'&&bridgeWidth(c,profiles(c).R0,c.w)<0.85)continue;
+    P=c;writeUI();rebuild();if(G&&pieces(G.outer)===1)return}
+}
+$('rnd').onclick=randomize;
+writeUI();rebuild();
+
+/* ---------- STL download (GTALHub: plain .stl, both bands as separate bodies in one file) ---------- */
+function stl(list){let nt=0;for(const b of list)nt+=b.idx.length/3;
+  const buf=new ArrayBuffer(84+nt*50),dv=new DataView(buf);dv.setUint32(80,nt,true);let o=84;
+  for(const b of list){const p=b.pos,I=b.idx,T=v=>[p[v*3],p[v*3+1],p[v*3+2]];
+    for(let i=0;i<I.length;i+=3){const A=T(I[i]),B=T(I[i+1]),C=T(I[i+2]),u=[B[0]-A[0],B[1]-A[1],B[2]-A[2]],q=[C[0]-A[0],C[1]-A[1],C[2]-A[2]];
+      let n=[u[1]*q[2]-u[2]*q[1],u[2]*q[0]-u[0]*q[2],u[0]*q[1]-u[1]*q[0]];const l=Math.hypot(...n)||1;n=n.map(v=>v/l);
+      for(const v of [n,A,B,C])for(const x of v){dv.setFloat32(o,x,true);o+=4}o+=2}}
+  return new Uint8Array(buf)}
+const dlBtn=$('dl'),dlMsg=$('dlmsg');
+dlBtn.onclick=()=>{if(!G)return;
+  const tag=`us${(+D2US(P.dia).toFixed(2))}-w${P.w}-${P.pat==='none'?P.tex:P.pat}`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([stl([G.outer,G.inner])],{type:'model/stl'}));a.download=`fidget-ring-${tag}.stl`;
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);dlMsg.textContent='Saved.'};
+}
+</script>
+</body>
+</html>
