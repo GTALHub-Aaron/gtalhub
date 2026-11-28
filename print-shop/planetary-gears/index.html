@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Planetary Gears | The Print Shop | GTALHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a workshop tool — precise, calm, a little playful when it spins.
+   IDEA: the slicer's build plate — your part sitting on a plate, settings beside it.
+   PICTURE: the live 3D gear bearing, spinning through its own kinematics.
+   COLOUR and TYPE: warm plate gray, graphite ink, filament orange planets; Barlow Semi Condensed + Barlow.
+   LAYOUT: viewer left / settings right on wide screens; viewer on top, settings below on phones. */
+:root{color-scheme:light dark;--bg:light-dark(#eceae5,#16181a);--ink:light-dark(#1a1c1e,#ecebe7);--mut:light-dark(#5d6166,#a3a7ac);--card:light-dark(#fff,#202326);--line:light-dark(#d8d5ce,#33373b);--acc:#ff6a13;--warn:light-dark(#b3261e,#ff8a80);--ok:light-dark(#2e6b3a,#8fd19e)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1{font:700 clamp(28px,4vw,40px)/1.05 "Barlow Semi Condensed",sans-serif;margin:0;text-wrap:balance}
+h2{font:700 19px/1.2 "Barlow Semi Condensed",sans-serif;margin:0 0 10px}
+.top{padding:18px max(3vw,14px) 10px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+.top p{margin:0;color:var(--mut)}
+.wrap{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:16px;padding:0 max(3vw,14px) 28px;max-width:1500px;margin:0 auto}
+.stage{position:sticky;top:12px;align-self:start}
+.fig{position:relative;height:min(72vh,680px);border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 20%,light-dark(#f8f7f4,#2a2e32),light-dark(#d9d6cf,#111315))}
+.fig canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:end;pointer-events:none}
+.hud>*{pointer-events:auto}
+.stats{display:flex;flex-wrap:wrap;gap:6px}
+.pill{background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:14px;white-space:nowrap}
+.pill b{font-weight:600}
+.btns{display:flex;gap:8px}
+button{font:600 15px Barlow,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.go{background:var(--acc);border-color:var(--acc);color:#1a0d04}
+button:disabled{opacity:.5;cursor:default}
+.panel{display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:10px;align-items:center;margin:8px 0}
+.row label{font-size:15px}
+.row small{display:block;color:var(--mut);font-size:13px;line-height:1.3}
+input[type=number],select{font:500 16px Barlow,sans-serif;width:100%;min-height:44px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);text-align:right}
+select{text-align:left}
+.ro{font:600 18px Barlow,sans-serif;text-align:right;padding-right:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{min-height:36px;padding:0 12px;border-radius:999px;font-size:14px}
+.btns button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#1a0d04}
+.msgs{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px}
+.msgs li{padding:7px 10px;border-radius:8px;border:1px solid var(--line)}
+.msgs .bad{color:var(--warn);border-color:currentColor}
+.msgs .good{color:var(--ok)}
+.secbar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;align-items:center;margin-top:10px;font-size:15px}.secbar input{width:100%;accent-color:var(--acc);min-height:32px}
+.sub{font:600 15px Barlow,sans-serif;color:var(--mut);margin:14px 0 2px;padding-top:10px;border-top:1px solid var(--line)}.sub:first-of-type{border-top:0;padding-top:0;margin-top:4px}
+.modes{display:flex;gap:6px;flex-basis:100%}
+.back{order:-1;flex-basis:100%;font-size:14px;color:var(--mut);text-decoration:none}.back:hover{color:var(--acc)}
+.note{font-size:13px;color:var(--mut);margin:8px 0 0}
+#dlmsg{font-size:14px;color:var(--mut);min-height:1.2em;margin:6px 0 0}
+@media(max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}.stage{position:relative;top:0}.fig{height:52vh;min-height:320px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Planetary gear generator</h1>
+  <p>Print-in-place herringbone gear bearings → STL</p>
+  <a class="back" id="back" href="/print-shop/" hidden>← The Print Shop</a>
+  <div class="modes"><button class="chip" id="mode-bearing" aria-pressed="true">Gear bearing</button><button class="chip" id="mode-ring" aria-pressed="false">Gear ring (wearable)</button></div>
+</header>
+<main class="wrap">
+  <section class="stage">
+    <div class="fig" id="fig">
+      <div class="hud">
+        <div class="stats" id="stats"></div>
+        <div class="btns"><button id="rand" class="go">Random</button><button id="sect" aria-pressed="false">Section</button><button id="spin" aria-pressed="false">Spin</button></div>
+      </div>
+    </div>
+    <div class="card secbar" id="secbar" hidden>
+      <label for="cutpos">Cut position</label><input id="cutpos" type="range" min="-1" max="1" step="0.01" value="0">
+      <label for="cutang">Cut angle</label><input id="cutang" type="range" min="0" max="180" step="1" value="0">
+    </div>
+    <ul class="msgs" id="msgs" style="margin-top:10px"></ul>
+  </section>
+
+  <section class="panel">
+    <div class="card" id="c-presets">
+      <h2>Presets</h2>
+      <div class="chips" id="presets"></div>
+    </div>
+
+    <div class="card" id="c-ring" hidden>
+      <h2>Gear ring</h2>
+      <div class="row"><label for="rsize">US ring size <small>Measures the finger hole</small></label><input id="rsize" type="number" step="0.5" min="3" max="16"></div>
+      <div class="row"><label>Finger hole</label><div class="ro" id="rdia">–</div></div>
+      <div class="row"><label for="rm">Gear size</label><select id="rm"><option value="0.8">Fine (module 0.8)</option><option value="1">Medium (module 1)</option><option value="1.2">Chunky (module 1.2)</option></select></div>
+      <div class="row"><label for="rzp">Planet teeth <small>Fewer teeth = chunkier star-like planets</small></label><input id="rzp" type="number" step="1" min="5" max="9"></div>
+      <div class="row"><label for="rknurl">Outside texture</label><select id="rknurl"><option value="knurl">Diamond knurl</option><option value="smooth">Smooth</option></select></div>
+      <div class="row"><label for="rbk">Inside texture <small>Lightly knurled finger hole</small></label><select id="rbk"><option value="none">Smooth</option><option value="knurl">Diamond knurl</option></select></div>
+      <div class="row"><label for="rch">Finger hole chamfer (mm) <small>Rounds off the edge for comfort</small></label><input id="rch" type="number" step="0.1" min="0" max="2"></div>
+      <p class="note">Band height is the Thickness setting under Teeth &amp; fit. Use about 7–8 mm for a comfortable ring.</p>
+    </div>
+
+    <div class="card" id="c-train">
+      <h2>Gear train</h2>
+      <div class="row"><label for="m">Module <small>Tooth size in mm (pitch dia ÷ teeth)</small></label><input id="m" type="number" step="0.05" min="0.5" max="4"></div>
+      <div class="row"><label for="shape">Gear shape <small>Wavy: round planets, wavy ring, matched sun</small></label><select id="shape"><option value="round">Round</option><option value="wavy">Wavy (non-circular)</option></select></div>
+      <div class="row" id="r-pshape"><label for="pshape">Planet shape</label><select id="pshape"><option value="round">Round</option><option value="tri">Triangle</option><option value="square">Square</option></select></div>
+      <div class="row" id="r-lobe"><label for="lobe">Corner strength (%) <small>How pointy the planets get</small></label><input id="lobe" type="number" step="5" min="10" max="100"></div>
+      <div class="row" id="r-tpw"><label for="tpw">Teeth per wave</label><input id="tpw" type="number" step="1" min="4" max="20"></div>
+      <div class="row" id="r-nr"><label for="nr">Ring waves</label><input id="nr" type="number" step="1" min="3" max="12"></div>
+      <div class="row" id="r-ns"><label for="ns">Sun lobes <small>Fewer than the ring waves</small></label><input id="ns" type="number" step="1" min="2" max="11"></div>
+      <div class="row" id="r-flat"><label for="flat">Flat sides (%) <small>Squarer sun with flatter sides; 0 = soft wave</small></label><input id="flat" type="number" step="5" min="0" max="50"></div>
+      <div class="row" id="r-zsro"><label>Sun teeth</label><div class="ro" id="zsro">–</div></div>
+      <div class="row" id="r-zs"><label for="zs">Sun teeth</label><input id="zs" type="number" step="1" min="6" max="120"></div>
+      <div class="row"><label for="zp">Planet teeth</label><input id="zp" type="number" step="1" min="6" max="60"></div>
+      <div class="row"><label>Ring teeth</label><div class="ro" id="zr">–</div></div>
+      <div class="row"><label for="n">Planets <small>Tap a count that spaces evenly</small></label><input id="n" type="number" step="1" min="2" max="24"></div>
+      <div class="chips" id="nchips"></div>
+      <div class="row" id="r-rows"><label for="rows">Rows <small>Nest more gear bearings outward</small></label><select id="rows"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+    </div>
+
+    <div class="card">
+      <h2>Teeth &amp; fit</h2>
+      <div class="row" id="r-ret"><label for="ret">Lock-in <small>What keeps the parts from sliding apart</small></label><select id="ret"><option value="herring">Herringbone teeth</option><option value="channel">Center channel (V ridge)</option></select></div>
+      <div class="row" id="r-cw"><label for="cw">Channel band (mm) <small>Smooth band height at mid-thickness</small></label><input id="cw" type="number" step="0.25" min="1" max="30"></div>
+      <div class="row" id="r-cv"><label for="cv">Ridge depth (mm)</label><input id="cv" type="number" step="0.1" min="0.3" max="4"></div>
+      <div class="row"><label for="h">Thickness (mm)</label><input id="h" type="number" step="0.5" min="2" max="60"></div>
+      <div class="row" id="r-style"><label for="style">Tooth style <small>Herringbone keeps it captive</small></label><select id="style"><option value="herring">Herringbone</option><option value="helical">Helical</option><option value="spur">Spur</option></select></div>
+      <div class="row"><label for="beta">Helix angle (°)</label><input id="beta" type="number" step="1" min="0" max="45"></div>
+      <div class="row"><label for="pa">Pressure angle (°)</label><input id="pa" type="number" step="0.5" min="14" max="30"></div>
+      <div class="row"><label for="clr">Clearance (mm) <small>Gap between mating flanks; 0.2–0.4 for FDM</small></label><input id="clr" type="number" step="0.05" min="0" max="1"></div>
+    </div>
+
+    <div class="card" id="c-outer">
+      <h2>Outer ring</h2>
+      <div class="row"><label for="outer">Outside</label><select id="outer"><option value="gear">Gear teeth</option><option value="lobes">Grip lobes</option><option value="pebble">Organic pebble</option><option value="alien">Xeno fins</option><option value="flutes">Spiral flutes</option><option value="crystal">Crystal facets</option><option value="leaves">Leaf blades</option><option value="scythe">Turbine scythes</option><option value="scallop">Scalloped wave</option><option value="star">Star arms</option><option value="knurl">Diamond knurl</option><option value="smooth">Smooth</option></select></div>
+      <div class="row"><label for="wall">Wall (mm) <small>Ring root to outside</small></label><input id="wall" type="number" step="0.5" min="1" max="30"></div>
+      <div class="row"><label for="zo">Count <small>Teeth, lobes, bumps, fins or facets</small></label><input id="zo" type="number" step="1" min="3" max="200"></div>
+      <div class="row" id="r-gd"><label for="gd">Grip depth (mm)</label><input id="gd" type="number" step="0.25" min="0.3" max="15"></div>
+      <div class="row" id="r-etype"><label for="etype">Outer edges <small>Top and bottom edges of the ring</small></label><select id="etype"><option value="round">Rounded</option><option value="chamfer">Chamfered (45°)</option></select></div>
+      <div class="row" id="r-edge"><label for="edge">Edge size (mm) <small>0 for sharp edges</small></label><input id="edge" type="number" step="0.25" min="0" max="10"></div>
+      <div class="row"><label for="cut">Wall cutouts <small>Windows sit in each lobe or arm</small></label><select id="cut"><option value="none">None</option><option value="windows">Windows</option><option value="slots">Radial slots</option></select></div>
+      <div class="row" id="r-cn"><label for="cn">Slot count</label><input id="cn" type="number" step="1" min="6" max="200"></div>
+      <div class="row"><label for="deco">Face design <small>Shallow engraving on the ring face, clear of the gears</small></label><select id="deco"><option value="none">None</option><option value="rings">Rings</option><option value="rays">Sun rays</option><option value="swirl">Swirl</option><option value="wave">Wave</option><option value="zigzag">Zigzag</option><option value="chevrons">Chevrons</option><option value="dots">Dots</option><option value="petals">Petals</option><option value="diamonds">Diamonds</option></select></div>
+      <div class="row" id="r-dn"><label for="dn">Design count</label><input id="dn" type="number" step="1" min="2" max="120"></div>
+      <div class="row" id="r-dw"><label for="dw">Line width (mm)</label><input id="dw" type="number" step="0.1" min="0.4" max="4"></div>
+      <div class="row" id="r-ddp"><label for="ddp">Engrave depth (mm)</label><input id="ddp" type="number" step="0.1" min="0.2" max="2"></div>
+      <div class="row" id="r-dface"><label for="dface">Faces</label><select id="dface"><option value="top">Top</option><option value="both">Top and bottom</option></select></div>
+      <div class="row"><label for="att">Attachments <small>One per lobe, tooth or fin of the outer shape (any count on Smooth)</small></label><select id="att"><option value="none">None</option><option value="bubbles">Bubbles</option><option value="spikes">Spikes</option><option value="hearts">Hearts</option><option value="stars">Stars</option><option value="petals">Petals</option><option value="ears">Cat ears</option><option value="loop">Keychain loop</option></select></div>
+      <div class="row" id="r-an"><label for="an">Attachment count <small>Always evenly spaced, at least 2</small></label><input id="an" type="number" step="1" min="2" max="60"></div>
+      <div class="row" id="r-as"><label for="as">Attachment size (mm)</label><input id="as" type="number" step="0.5" min="3" max="60"></div>
+      <div class="row" id="r-aoff"><label for="aoff">Rotate attachments (°)</label><input id="aoff" type="number" step="5" min="-180" max="180"></div>
+      <div class="row" id="r-seed"><label for="seed">Shape seed <small>Each number grows a different pebble</small></label><input id="seed" type="number" step="1" min="0" max="999"></div>
+    </div>
+
+    <div class="card" id="c-centers">
+      <h2>Sun &amp; planet centers</h2>
+      <h3 class="sub">Sun</h3>
+      <div class="row"><label for="bore">Center shape</label><select id="bore"><option value="round">Round</option><option value="hex">Hex</option><option value="tri">Rounded triangle</option><option value="spline">Spline star</option><option value="spokes">Spokes</option><option value="turbine">Turbine vanes</option><option value="rifled">Rifled grooves</option><option value="none">None</option></select></div>
+      <div class="row"><label for="bd">Size (mm) <small>Diameter, or across flats for hex</small></label><input id="bd" type="number" step="0.5" min="0" max="200"></div>
+      <div class="row"><label for="bch">Chamfer (mm) <small>45° on top and bottom edges; 0 for none</small></label><input id="bch" type="number" step="0.1" min="0" max="5"></div>
+      <div class="row"><label for="dish">Thumb dish <small>A shallow finger dip in the sun; replaces the center hole</small></label><select id="dish"><option value="none">None</option><option value="top">Top</option><option value="both">Top and bottom</option></select></div>
+      <div class="row" id="r-dd"><label for="dd">Dish diameter (mm)</label><input id="dd" type="number" step="0.5" min="4" max="60"></div>
+      <div class="row" id="r-ddep"><label for="ddep">Dish depth (mm)</label><input id="ddep" type="number" step="0.1" min="0.3" max="6"></div>
+      <h3 class="sub">Planets</h3>
+      <div class="row"><label for="pstyle">Center shape</label><select id="pstyle"><option value="round">Round</option><option value="hex">Hex</option><option value="tri">Rounded triangle</option><option value="spline">Spline star</option><option value="spokes">Spokes</option><option value="turbine">Turbine vanes</option><option value="rifled">Rifled grooves</option><option value="none">None</option></select></div>
+      <div class="row"><label for="moons">Moons <small>Turns each planet into its own small gear bearing</small></label><select id="moons"><option value="none">None</option><option value="3">3 moons per planet</option></select></div>
+      <div class="row"><label for="ph">Size (mm)</label><input id="ph" type="number" step="0.5" min="0" max="60"></div>
+      <div class="row"><label for="pch">Chamfer (mm) <small>45° on top and bottom edges; 0 for none</small></label><input id="pch" type="number" step="0.1" min="0" max="5"></div>
+      <h3 class="sub">Both</h3>
+      <div class="row"><label for="vc">Vanes / spokes <small>For spokes and turbine centers</small></label><input id="vc" type="number" step="1" min="2" max="16"></div>
+      <div class="row"><label for="q">Mesh detail</label><select id="q"><option value="1">Draft</option><option value="2">Normal</option><option value="3">Fine</option></select></div>
+    </div>
+
+    <div class="card">
+      <h2>Export</h2>
+      <button class="go" id="dl" style="width:100%">Download print-in-place STL</button>
+      <p id="dlmsg"></p>
+      <p class="note">One STL with every part already in place. Print it flat with no supports; break it free by turning the sun with a hex key or by twisting the ring.</p>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+{
+const $=id=>document.getElementById(id);
+const TAU=Math.PI*2, inv=a=>Math.tan(a)-a;
+const KEYS=['rsize','rm','rzp','rknurl','rbk','rch','rows','shape','pshape','lobe','tpw','nr','ns','flat','m','zs','zp','n','ret','cw','cv','h','style','beta','pa','clr','outer','wall','zo','gd','etype','edge','seed','cut','cn','deco','dn','dw','ddp','dface','att','an','as','aoff','bore','bd','bch','dish','dd','ddep','pstyle','moons','ph','pch','vc','q'];
+const PRESETS=[
+ {name:'Gear bearing',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:24,zp:12,n:6,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'gear',wall:4,zo:44,gd:2,edge:0,seed:1,cut:'none',cn:40,bore:'round',bd:14,pstyle:'round',ph:4,vc:5,q:2}},
+ {name:'Seven-planet bearing',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1,zs:30,zp:12,n:7,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'lobes',wall:5,zo:12,gd:1.6,edge:0,seed:1,cut:'none',cn:40,bore:'round',bd:22,pstyle:'round',ph:3.5,vc:5,q:2}},
+ {name:'5:1 reducer',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:12,zp:18,n:3,ret:'herring',cw:3.5,cv:1,h:12,style:'herring',beta:25,pa:20,clr:0.3,outer:'smooth',wall:4,zo:30,gd:2,edge:1,seed:1,cut:'none',cn:40,bore:'hex',bd:6.35,pstyle:'round',ph:5,vc:5,q:2}},
+ {name:'Pebble',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:24,zp:12,n:6,ret:'herring',cw:3.5,cv:1,h:12,style:'herring',beta:30,pa:20,clr:0.3,outer:'pebble',wall:5,zo:7,gd:4,edge:2.5,seed:3,cut:'none',cn:40,bore:'round',bd:14,pstyle:'round',ph:4,vc:5,q:2}},
+ {name:'Xeno',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:24,zp:12,n:6,ret:'herring',cw:3.5,cv:1,h:12,style:'herring',beta:30,pa:20,clr:0.3,outer:'alien',wall:4,zo:9,gd:5,edge:1,seed:1,cut:'none',cn:40,bore:'hex',bd:8,pstyle:'round',ph:4,vc:5,q:2}},
+ {name:'Crystal',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:24,zp:12,n:6,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'crystal',wall:4,zo:10,gd:2,edge:0,seed:1,cut:'none',cn:40,bore:'hex',bd:8,pstyle:'round',ph:4,vc:5,q:2}},
+ {name:'Turbine',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1,zs:34,zp:20,n:4,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'leaves',wall:4,zo:36,gd:6,edge:0,seed:1,cut:'none',cn:40,bore:'round',bd:16,pstyle:'turbine',ph:14,vc:6,q:2}},
+ {name:'Cog windows',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:26,zp:16,n:6,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'lobes',wall:4,zo:11,gd:7,edge:1,seed:1,cut:'windows',cn:40,bore:'round',bd:20,pstyle:'round',ph:12,vc:5,q:2}},
+ {name:'Ribbed',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1,zs:22,zp:11,n:6,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'gear',wall:9,zo:66,gd:2,edge:0,seed:1,cut:'slots',cn:56,bore:'round',bd:14,pstyle:'spline',ph:6,vc:4,q:2}},
+ {name:'Star',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:16,zp:12,n:4,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'star',wall:5,zo:6,gd:16,edge:1.5,seed:1,cut:'windows',cn:40,bore:'round',bd:10,pstyle:'round',ph:7,vc:5,q:2}},
+ {name:'Flower',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1,zs:24,zp:16,n:5,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'scallop',wall:3,zo:9,gd:3,edge:0,seed:1,cut:'none',cn:40,bore:'round',bd:14,pstyle:'tri',ph:10,vc:5,q:2}},
+ {name:'Channel',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1.25,zs:30,zp:12,n:3,ret:'channel',cw:3.5,cv:1,h:12,style:'spur',beta:30,pa:20,clr:0.3,outer:'flutes',wall:4,zo:40,gd:1.5,edge:1.5,seed:1,cut:'none',cn:40,bore:'rifled',bd:28,pstyle:'round',ph:7,vc:5,q:2}},
+ {name:'Wavy',v:{shape:'wavy',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1,zs:32,zp:7,n:10,ret:'channel',cw:3,cv:0.8,h:12,style:'spur',beta:30,pa:20,clr:0.3,outer:'scallop',wall:3,zo:12,gd:2,edge:0,seed:1,cut:'none',cn:40,bore:'round',bd:12,pstyle:'none',ph:0,vc:5,q:2}},
+ {name:'Triangle planets',v:{shape:'wavy',pshape:'tri',lobe:60,tpw:8,nr:6,ns:6,m:1.25,zs:24,zp:12,n:6,ret:'channel',cw:3,cv:0.8,h:12,style:'spur',beta:30,pa:20,clr:0.3,outer:'gear',wall:4,zo:48,gd:2,edge:0,seed:1,cut:'none',cn:40,bore:'hex',bd:8,pstyle:'tri',ph:5,vc:5,q:2}},
+ {name:'Square sun',v:{shape:'wavy',pshape:'round',lobe:60,m:1,zs:32,ret:'channel',cw:3,cv:0.8,h:12,style:'spur',beta:30,pa:20,clr:0.3,seed:1,cut:'none',cn:40,pstyle:'none',ph:0,vc:5,q:2,tpw:8,nr:6,ns:4,zp:7,n:5,flat:30,outer:'lobes',wall:3,zo:8,gd:3,etype:'chamfer',edge:1,bore:'hex',bd:8,bch:0.6}},
+ {name:'Triangle sun',v:{shape:'wavy',pshape:'round',lobe:60,m:1,zs:32,ret:'channel',cw:3,cv:0.8,h:12,style:'spur',beta:30,pa:20,clr:0.3,seed:1,cut:'none',cn:40,pstyle:'none',ph:0,vc:5,q:2,tpw:8,nr:5,ns:3,zp:7,n:4,flat:30,outer:'smooth',wall:4,zo:8,gd:2,etype:'round',edge:1.5,bore:'tri',bd:9,bch:0.5}},
+ {name:'Pentagon sun',v:{shape:'wavy',pshape:'round',lobe:60,m:1,zs:32,ret:'channel',cw:3,cv:0.8,h:12,style:'spur',beta:30,pa:20,clr:0.3,seed:1,cut:'none',cn:40,pstyle:'none',ph:0,vc:5,q:2,tpw:9,nr:7,ns:5,zp:8,n:6,flat:25,outer:'crystal',wall:3,zo:10,gd:2,etype:'round',edge:0,bore:'round',bd:14,bch:0.8}},
+ {name:'Hex sun',v:{shape:'wavy',pshape:'round',lobe:60,m:1,zs:32,ret:'channel',cw:3,cv:0.8,h:12,style:'spur',beta:30,pa:20,clr:0.3,seed:1,cut:'none',cn:40,pstyle:'none',ph:0,vc:5,q:2,tpw:6,nr:9,ns:6,zp:8,n:5,flat:30,outer:'scallop',wall:3,zo:9,gd:2.5,etype:'round',edge:0,bore:'hex',bd:10,bch:0.6}},
+ {name:'Oval sun',v:{shape:'wavy',pshape:'round',lobe:60,m:1,zs:32,ret:'channel',cw:3,cv:0.8,h:12,style:'spur',beta:30,pa:20,clr:0.3,seed:1,cut:'none',cn:40,pstyle:'none',ph:0,vc:5,q:2,tpw:10,nr:4,ns:2,zp:9,n:3,flat:30,outer:'pebble',wall:4,zo:6,gd:3,etype:'round',edge:2,bore:'round',bd:6,bch:0.5}},
+ {name:'Moons',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,flat:0,m:1,zs:24,zp:24,n:3,ret:'herring',cw:3.5,cv:1,h:10,style:'herring',beta:30,pa:20,clr:0.3,outer:'scallop',wall:4,zo:12,gd:2.5,etype:'round',edge:1,seed:1,cut:'none',cn:40,deco:'none',dn:24,dw:0.8,ddp:0.5,dface:'top',att:'none',an:6,as:8,aoff:0,bore:'hex',bd:8,bch:0.6,dish:'none',dd:18,ddep:1.2,pstyle:'none',moons:'3',ph:0,pch:0,vc:5,q:2}},
+ {name:'Three rows',v:{rows:3,shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,flat:0,m:1,zs:18,zp:9,n:6,ret:'herring',cw:3.5,cv:1,h:8,style:'herring',beta:30,pa:20,clr:0.3,outer:'gear',wall:3,zo:80,gd:2,etype:'round',edge:0,seed:1,cut:'none',cn:40,deco:'none',dn:24,dw:0.8,ddp:0.5,dface:'top',att:'none',an:6,as:8,aoff:0,bore:'hex',bd:6.35,bch:0.5,dish:'none',dd:18,ddep:1.2,pstyle:'none',moons:'none',ph:0,pch:0,vc:5,q:2}},
+ {name:'Mini fidget',v:{shape:'round',pshape:'round',lobe:60,tpw:8,nr:6,ns:4,m:1,zs:16,zp:10,n:4,ret:'herring',cw:3.5,cv:1,h:8,style:'herring',beta:30,pa:20,clr:0.25,outer:'gear',wall:3,zo:36,gd:2,edge:0,seed:1,cut:'none',cn:40,bore:'hex',bd:6.35,pstyle:'round',ph:0,vc:5,q:2}}
+];
+for(const p of PRESETS)p.v={mode:'bearing',rsize:9,rm:'1',rzp:6,rknurl:'knurl',rbk:'none',rch:0.6,rows:1,moons:'none',att:'none',an:6,as:8,aoff:0,bch:0,pch:0,etype:'round',flat:0,dish:'none',dd:18,ddep:1.2,deco:'none',dn:24,dw:0.8,ddp:0.5,dface:'top',...p.v};
+let P={...PRESETS[0].v};
+try{const s=JSON.parse(localStorage.getItem('pgg')||'null');if(s)P={...P,...s}}catch(e){}
+
+function readUI(){for(const k of KEYS){const el=$(k);P[k]=el.tagName==='SELECT'?el.value:parseFloat(el.value)}}
+function writeUI(){for(const k of KEYS)$(k).value=P[k]}
+
+/* ---------- 2D profiles ---------- */
+const pol=(r,a)=>[r*Math.cos(a),r*Math.sin(a)];
+function extProfile(z,m,pa,clr,steps,ak=1){
+  const rp=m*z/2,rb=rp*Math.cos(pa),ra=rp+ak*m,rf=Math.max(rp-1.25*m,0.3);
+  const half=Math.PI/(2*z)-clr/(4*rp);
+  const phi=r=>Math.max(half+inv(pa)-inv(Math.acos(rb/Math.max(r,rb))),0.004);
+  const r0=Math.max(rb,rf),rs=[];
+  if(rf<rb)rs.push(rf);
+  for(let i=0;i<=steps;i++)rs.push(r0+(ra-r0)*i/steps);
+  const pts=[],g=TAU/z;
+  for(let k=0;k<z;k++){const c=k*g;
+    for(const r of rs)pts.push(pol(r,c-phi(r)));
+    const pa_=phi(ra);for(let j=1;j<3;j++)pts.push(pol(ra,c-pa_+2*pa_*j/3));
+    for(let i=rs.length-1;i>=0;i--)pts.push(pol(rs[i],c+phi(rs[i])));
+    const a0=c+phi(rf),a1=c+g-phi(rf);for(let j=1;j<3;j++)pts.push(pol(rf,a0+(a1-a0)*j/3));
+  }
+  return pts;
+}
+function intProfile(z,m,pa,clr,steps){ // CCW outline of the toothed hole
+  const rp=m*z/2,rb=rp*Math.cos(pa),rt=rp-m,rr=rp+1.25*m;
+  const half=Math.PI/(2*z)+clr/(4*rp);
+  const phi=r=>half+inv(pa)-inv(Math.acos(rb/Math.max(r,rb)));
+  const r0=Math.max(rb,rt),rs=[];
+  if(rt<rb)rs.push(rt);
+  for(let i=0;i<=steps;i++)rs.push(r0+(rr-r0)*i/steps);
+  const pts=[],g=TAU/z;
+  for(let k=0;k<z;k++){const c=k*g;
+    for(const r of rs)pts.push(pol(r,c-phi(r)));
+    const pr=phi(rr);for(let j=1;j<3;j++)pts.push(pol(rr,c-pr+2*pr*j/3));
+    for(let i=rs.length-1;i>=0;i--)pts.push(pol(rs[i],c+phi(rs[i])));
+    const a0=c+phi(rt),a1=c+g-phi(rt);for(let j=1;j<3;j++)pts.push(pol(rt,a0+(a1-a0)*j/3));
+  }
+  return pts;
+}
+const circle=(r,n)=>Array.from({length:n},(_,i)=>pol(r,i*TAU/n));
+const hexagon=af=>Array.from({length:6},(_,i)=>pol(af/Math.sqrt(3),i*TAU/6+Math.PI/6));
+function lobes(base,depth,n,res){const N=n*res;return Array.from({length:N},(_,i)=>{const a=i*TAU/N,s=0.5+0.5*Math.tanh(3*Math.cos(n*a));return pol(base+depth*s,a)})}
+const area=p=>{let s=0;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];s+=a[0]*b[1]-b[0]*a[1]}return s/2};
+
+/* ---------- extrusion with per-contour twist ---------- */
+function pip2(x,y,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c}
+function extrude(contours,h,nz,dish,pockets){ // contours[0] outer; each {pts,tw(z)->angle, off?(z)->radial mm, zl?:[z...]}
+  const pos=[],idx=[],bases=[],cnt=[],uni=Array.from({length:nz+1},(_,s)=>h*s/nz);
+  for(const c of contours){
+    const want=c===contours[0]?1:-1;
+    if(Math.sign(area(c.pts))!==want)c.pts=c.pts.slice().reverse();
+    const n=c.pts.length,zl=c.zl||uni;bases.push(pos.length/3);cnt.push(zl.length);
+    for(const z of zl){const a=c.tw(z),ca=Math.cos(a),sa=Math.sin(a),o=c.off?c.off(z):0,rc=c.cone?c.cone(z):0;
+      const bd=c.band?c.band(z):null;
+      for(let vi=0;vi<n;vi++){let [x0,y0]=c.pts[vi];if(c.rad){const r1=Math.hypot(x0,y0),r2=c.rad(vi,z);x0*=r2/r1;y0*=r2/r1}if(rc){const r1=Math.hypot(x0,y0);if(r1<rc){x0*=rc/r1;y0*=rc/r1}}const r0=Math.hypot(x0,y0);let f=o?1+o/r0:1;if(bd&&bd.s>0){const br=typeof bd.r==='function'?bd.r(Math.atan2(y0,x0)):bd.r;
+          if(bd.two){const rm=Math.min(r0,br);f=(bd.s<=0.5?r0+(rm-r0)*2*bd.s:rm+(br-rm)*(2*bd.s-1))/r0}else f=(r0+(br-r0)*bd.s)/r0}const x=x0*f,y=y0*f;pos.push(x*ca-y*sa,x*sa+y*ca,z)}}
+    const b=bases[bases.length-1];
+    for(let s=0;s<zl.length-1;s++)for(let i=0;i<n;i++){const j=(i+1)%n,
+      a0=b+s*n+i,a1=b+s*n+j,t0=a0+n,t1=a1+n;idx.push(a0,a1,t1,a0,t1,t0)}
+  }
+  for(const top of [0,1]){
+    const zf=top?h:0,sg=top?1:-1,loops=[];
+    contours.forEach((c,ci)=>{const n=c.pts.length,s0=top?cnt[ci]-1:0;loops.push(Array.from({length:n},(_,i)=>bases[ci]+s0*n+i))});
+    const tri=(a,b,c)=>{const ux=pos[b*3]-pos[a*3],uy=pos[b*3+1]-pos[a*3+1],vx=pos[c*3]-pos[a*3],vy=pos[c*3+1]-pos[a*3+1];if((ux*vy-uy*vx>0)!==!!top)[b,c]=[c,b];idx.push(a,b,c)};
+    if(dish&&(top?dish.top:dish.bottom)){ // concave spherical thumb dish in this face
+      const R=dish.R,d=dish.depth,Rs=(R*R+d*d)/(2*d),K=12,M=Math.max(48,Math.round(TAU*R/0.4)),rings=[];
+      for(let k=0;k<K;k++){const r=R*(1-k/K),z=zf-sg*(d-(Rs-Math.sqrt(Rs*Rs-r*r))),b0=pos.length/3;
+        for(let i=0;i<M;i++){const a=i*TAU/M;pos.push(r*Math.cos(a),r*Math.sin(a),z)}rings.push(b0)}
+      const ctr=pos.length/3;pos.push(0,0,zf-sg*d);
+      for(let k=0;k<K-1;k++)for(let i=0;i<M;i++){const j=(i+1)%M,a=rings[k]+i,b=rings[k]+j,c=rings[k+1]+j,e=rings[k+1]+i;tri(a,b,c);tri(a,c,e)}
+      for(let i=0;i<M;i++)tri(rings[K-1]+i,rings[K-1]+(i+1)%M,ctr);
+      loops.push(Array.from({length:M},(_,i)=>rings[0]+i));}
+    if(pockets&&(top?pockets.top:pockets.bottom))for(const p of pockets.list){ // shallow engraved shapes
+      const d=pockets.depth,all=[p.outer,...(p.holes||[])];
+      const mk=(pts,z)=>{const b0=pos.length/3;for(const [x,y] of pts)pos.push(x,y,z);return pts.map((_,i)=>b0+i)};
+      const T=all.map(q=>mk(q,zf)),B=all.map(q=>mk(q,zf-sg*d));T.forEach(L=>loops.push(L));
+      const isVoid=(x,y)=>pip2(x,y,p.outer)&&!(p.holes||[]).some(q=>pip2(x,y,q));
+      all.forEach((q,li)=>{const n=q.length;for(let i=0;i<n;i++){const j=(i+1)%n,a=T[li][i],b=T[li][j],c=B[li][j],e=B[li][i];
+        // normal of (a,b,c) = (b−a)×(c−a); keep the winding whose normal points into the engraved void
+        const ux=pos[b*3]-pos[a*3],uy=pos[b*3+1]-pos[a*3+1],uz=pos[b*3+2]-pos[a*3+2],vx=pos[c*3]-pos[a*3],vy=pos[c*3+1]-pos[a*3+1],vz=pos[c*3+2]-pos[a*3+2];
+        const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,l=Math.hypot(nx,ny)||1,mx=(q[i][0]+q[j][0])/2,my=(q[i][1]+q[j][1])/2;
+        if(isVoid(mx+nx/l*0.02,my+ny/l*0.02))idx.push(a,b,c,a,c,e);else idx.push(a,c,b,a,e,c)}});
+      const fv=[...B[0],...B.slice(1).flat()],ff=THREE.ShapeUtils.triangulateShape(all[0].map(([x,y])=>new THREE.Vector2(x,y)),all.slice(1).map(q=>q.map(([x,y])=>new THREE.Vector2(x,y))));
+      for(const f of ff)tri(fv[f[0]],fv[f[1]],fv[f[2]]);}
+    // nest loops at this face: even depth = solid region, the next depth inside it = its holes
+    const L2=loops.map(L=>L.map(v=>[pos[v*3],pos[v*3+1]])),bb=L2.map(q=>{let a=1e9,b=1e9,c=-1e9,d=-1e9;for(const [x,y] of q){a=Math.min(a,x);b=Math.min(b,y);c=Math.max(c,x);d=Math.max(d,y)}return [a,b,c,d]});
+    const inside=(i,j)=>{const [x,y]=L2[i][0],B2=bb[j];return x>=B2[0]&&x<=B2[2]&&y>=B2[1]&&y<=B2[3]&&pip2(x,y,L2[j])};
+    const dep=loops.map((_,i)=>loops.reduce((n,_,j)=>n+(j!==i&&inside(i,j)?1:0),0));
+    loops.forEach((L,i)=>{if(dep[i]%2)return;const hs=[];loops.forEach((_,j)=>{if(dep[j]===dep[i]+1&&inside(j,i))hs.push(j)});
+      const map=[...L,...hs.flatMap(j=>loops[j])],faces=THREE.ShapeUtils.triangulateShape(L2[i].map(([x,y])=>new THREE.Vector2(x,y)),hs.map(j=>L2[j].map(([x,y])=>new THREE.Vector2(x,y))));
+      for(const f of faces)tri(map[f[0]],map[f[1]],map[f[2]])});
+  }
+  return {pos,idx};
+}
+
+
+
+
+/* ---------- shapes attached to the outer ring (local frame: pointing out along +x, centered at origin) ---------- */
+function attachShape(type,sz){const M=96,r=sz/2,P=(x,y)=>[x,y];
+  if(type==='bubbles'||type==='loop')return Array.from({length:M},(_,i)=>P(r*Math.cos(i*TAU/M),r*Math.sin(i*TAU/M)));
+  if(type==='stars'){const n=5,o=[];for(let i=0;i<n*16;i++){const t=i*TAU/(n*16),k=0.5+0.5*Math.cos(n*t),rr=r*(0.46+0.54*Math.pow(k,1.6));o.push(P(rr*Math.cos(t),rr*Math.sin(t)))}return o}
+  if(type==='hearts'){const o=[];for(let i=0;i<M;i++){const t=i*TAU/M,x=16*Math.pow(Math.sin(t),3),y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);o.push(P(y*r/16+r*0.12,-x*r/16))}return o}
+  if(type==='petals'){const o=[];for(let i=0;i<M;i++){const t=i*TAU/M,u=Math.cos(t),v=Math.sin(t);o.push(P(r*u,r*0.58*v*(0.55+0.45*(1+u)/2)))}return o}
+  // spikes / ears: rounded triangle pointing out
+  const L=type==='ears'?r*1.1:r*1.25,W=type==='ears'?r*0.95:r*0.6,o=[];
+  const tri=[[L,0],[-r*0.55,W],[-r*0.55,-W]],rad=Math.min(W,L)*0.22;
+  for(let k=0;k<3;k++){const A=tri[(k+2)%3],B=tri[k],C=tri[(k+1)%3],u1=[A[0]-B[0],A[1]-B[1]],u2=[C[0]-B[0],C[1]-B[1]],l1=Math.hypot(...u1),l2=Math.hypot(...u2);
+    const p1=[B[0]+u1[0]/l1*rad*1.6,B[1]+u1[1]/l1*rad*1.6],p2=[B[0]+u2[0]/l2*rad*1.6,B[1]+u2[1]/l2*rad*1.6];
+    for(let j=0;j<=10;j++){const t=j/10,a1=(1-t)*(1-t),b1=2*(1-t)*t,c1=t*t;o.push(P(a1*p1[0]+b1*B[0]+c1*p2[0],a1*p1[1]+b1*B[1]+c1*p2[1]))}
+  }
+  return o}
+
+/* ---------- diamond knurl: pyramids from two opposite helical groove sets ---------- */
+function knurl(R,depth,inward,h){const pitch=1.6,n=Math.max(8,Math.round(TAU*R/pitch)),M=n*8,lead=pitch;
+  const tri=x=>{const f=x-Math.floor(x);return 1-2*Math.abs(f-0.5)};
+  const pts=Array.from({length:M},(_,i)=>pol(R,i*TAU/M));
+  const rad=(i,z)=>{const u=i/M*n,v=z/lead,p=Math.min(tri(u+v),tri(u-v));return inward?R-depth*p:R+depth*p};
+  const nzk=Math.max(8,Math.ceil(h/(lead/8))),zl=Array.from({length:nzk+1},(_,i)=>h*i/nzk);
+  return {pts,rad,zl,tw:()=>0}}
+/* ---------- ring face engravings ---------- */
+function strokeOpen(L,w){const hw=w/2,n=L.length,lf=[],rt=[],tan=i=>{const a=L[Math.max(0,i-1)],b=L[Math.min(n-1,i+1)],l=Math.hypot(b[0]-a[0],b[1]-a[1])||1;return [(b[0]-a[0])/l,(b[1]-a[1])/l]};
+  for(let i=0;i<n;i++){const [tx,ty]=tan(i);lf.push([L[i][0]-ty*hw,L[i][1]+tx*hw]);rt.push([L[i][0]+ty*hw,L[i][1]-tx*hw])}
+  const cap=(P,t,rev)=>{const o=[];for(let k=1;k<8;k++){const f=k*Math.PI/8,c=Math.cos(f),sn=Math.sin(f),nx=-t[1],ny=t[0];o.push(rev?[P[0]-hw*(c*nx)-hw*sn*t[0],P[1]-hw*(c*ny)-hw*sn*t[1]]:[P[0]+hw*(c*nx)+hw*sn*t[0],P[1]+hw*(c*ny)+hw*sn*t[1]])}return o};
+  return {outer:[...lf,...cap(L[n-1],tan(n-1),false),...rt.reverse(),...cap(L[0],tan(0),true)]}}
+function bandClosed(L,w){const hw=w/2,n=L.length,A=[],B=[];for(let i=0;i<n;i++){const a=L[(i+n-1)%n],b=L[(i+1)%n],l=Math.hypot(b[0]-a[0],b[1]-a[1])||1,tx=(b[0]-a[0])/l,ty=(b[1]-a[1])/l;A.push([L[i][0]-ty*hw,L[i][1]+tx*hw]);B.push([L[i][0]+ty*hw,L[i][1]-tx*hw])}
+  return Math.abs(area(A))>Math.abs(area(B))?{outer:A,holes:[B]}:{outer:B,holes:[A]}}
+function decorShapes(style,n0,a,b,w){const span=b-a,mid=(a+b)/2,P2=(r,t)=>[r*Math.cos(t),r*Math.sin(t)],out=[];let n=Math.max(1,Math.round(n0)),note='';
+  const fitN=(width)=>{let k=n;while(k>2&&TAU*a/k-width<0.6)k--;if(k<n)note=`Fewer shapes (${k}) so they don't touch.`;n=k;return k};
+  const loopM=Math.max(240,Math.round(TAU*b/0.25));
+  if(style==='rings'){const k=Math.max(1,Math.min(3,Math.floor(span/(w*2.2))));for(let i=0;i<k;i++){const r=a+span*(i+0.5)/k;out.push(bandClosed(Array.from({length:loopM},(_,j)=>P2(r,j*TAU/loopM)),w))}}
+  else if(style==='rays'){fitN(w);for(let i=0;i<n;i++){const t=i*TAU/n;out.push(strokeOpen(Array.from({length:6},(_,j)=>P2(a+w/2+(span-w)*j/5,t)),w))}}
+  else if(style==='swirl'){fitN(w*1.6);const g=TAU/n;for(let i=0;i<n;i++)out.push(strokeOpen(Array.from({length:24},(_,j)=>{const u=j/23;return P2(a+w/2+(span-w)*u,i*g+0.75*g*u)}),w))}
+  else if(style==='wave'||style==='zigzag'){const A=Math.max(0,span/2-w/2-0.15);out.push(bandClosed(Array.from({length:loopM*2},(_,j)=>{const t=j*TAU/(loopM*2),f=style==='wave'?Math.sin(n*t):(2/Math.PI)*Math.asin(0.96*Math.sin(n*t));return P2(mid+A*f,t)}),w))}
+  else if(style==='chevrons'){const d0=0.45*TAU/Math.max(n,1);fitN(w+d0*a*0.2);const g=TAU/n,dl=0.4*g,a2=a+0.15,b2=b-0.15;
+    for(let i=0;i<n;i++){const t=i*g,pts=[];for(let j=0;j<=6;j++){const r=b2-(b2-mid)*j/6;pts.push(P2(r,t+dl*j/6))}for(let j=1;j<=6;j++){const r=mid-(mid-a2)*j/6;pts.push(P2(r,t+dl*(1-j/6)))}
+      for(let j=0;j<=12;j++){const r=a2+(b2-a2)*(j<=6?j/6*0.5:0.5+(j-6)/12);}
+      const inner=[];for(let j=12;j>=0;j--){const [x,y]=pts[j],r=Math.hypot(x,y);inner.push(P2(r,Math.atan2(y,x)+w/r))}out.push({outer:[...pts,...inner]})}}
+  else if(style==='dots'||style==='petals'||style==='diamonds'){const g=TAU/n;let ra=span/2-0.2,rb=style==='dots'?ra:Math.min(span/3,0.32*g*mid);if(style==='dots'){ra=Math.min(ra,0.32*g*a);rb=ra}fitN(2*rb);
+    const g2=TAU/n;rb=style==='dots'?Math.min(ra,0.32*g2*a):Math.min(span/3,0.32*g2*mid);if(style==='dots')ra=rb;
+    for(let i=0;i<n;i++){const tc=i*g2,M=style==='diamonds'?4*12:40,pts=[];
+      for(let j=0;j<M;j++){const f=j*TAU/M;let u=Math.cos(f),v=Math.sin(f);if(style==='diamonds'){const s2=Math.abs(u)+Math.abs(v);u/=s2;v/=s2}else if(style==='petals'){v*=0.55+0.45*(1-u)}
+        const r=mid+ra*u;pts.push(P2(r,tc+rb*v/r))}out.push({outer:pts})}}
+  return {list:out,note};
+}
+
+/* ---------- non-circular (wavy) engine ----------
+   Round planets; ring pitch = R0(1+e·cos(nr·θ)), fixed; planets roll on it along the inward offset;
+   sun derived so planets also roll on it without slipping; teeth cut by enveloping the planet. */
+
+/* remove needle-thin slivers: opening (min→max) for outward material, closing for inward */
+function despike(arr,k,mode){const B=arr.length,a=Float64Array.from(arr),b=new Float64Array(B);const f1=mode==='open'?Math.min:Math.max,f2=mode==='open'?Math.max:Math.min;
+  for(let i=0;i<B;i++){let v=a[i];for(let j=-k;j<=k;j++)v=f1(v,a[(i+j+B)%B]);b[i]=v}
+  for(let i=0;i<B;i++){let v=b[i];for(let j=-k;j<=k;j++)v=f2(v,b[(i+j+B)%B]);a[i]=v}
+  for(let i=0;i<B;i++)arr[i]=mode==='open'?Math.min(arr[i],a[i]):Math.max(arr[i],a[i]);return arr}
+const wavyCache=new Map();
+function wavyEngine(m,zp,T,nr,ns,pa,clr,steps,hh=0){
+  const key=[m,zp,T,nr,ns,pa,clr,steps,hh].join('|');if(wavyCache.has(key))return wavyCache.get(key);
+  const res=wavyBuild(m,zp,T,nr,ns,pa,clr,steps,hh);if(wavyCache.size>12)wavyCache.clear();wavyCache.set(key,res);return res;
+}
+function wavyBuild(m,zp,T,nr,ns,pa,clr,steps,hh=0){
+  const rp=m*zp/2,zs=T*ns,zr=T*nr,zp0=T*(nr-ns)/2,P2=TAU/nr;
+  if(ns<2||ns>=nr)return {ok:false,err:'The sun needs at least 2 lobes and fewer lobes than the ring has waves.'};
+  if(zp>=zp0)return {ok:false,err:`Planet teeth must be fewer than ${zp0} here (teeth per wave × (waves − lobes) ÷ 2). Try ${Math.floor(zp0-0.5)}.`};
+  const Np=1200;
+  const ringR=(R0,e,t)=>R0*(1+e*(Math.cos(nr*t)+hh*Math.cos(2*nr*t)));
+  function period(e){
+    const per=R0=>{let L=0,px=0,py=0;for(let i=0;i<=240;i++){const t=i*P2/240,R=ringR(R0,e,t),x=R*Math.cos(t),y=R*Math.sin(t);if(i)L+=Math.hypot(x-px,y-py);px=x;py=y}return L*nr};
+    let lo=0.1,hi=2000;for(let i=0;i<44;i++){const md=(lo+hi)/2;per(md)<Math.PI*m*zr?lo=md:hi=md}const R0=(lo+hi)/2;
+    const Q=[],Nn=[],C=[];
+    for(let i=0;i<=Np;i++){const t=i*P2/Np,R=ringR(R0,e,t),dR=-R0*e*nr*(Math.sin(nr*t)+2*hh*Math.sin(2*nr*t));
+      const dx=dR*Math.cos(t)-R*Math.sin(t),dy=dR*Math.sin(t)+R*Math.cos(t),l=Math.hypot(dx,dy);
+      const q=[R*Math.cos(t),R*Math.sin(t)],n=[-dy/l,dx/l];Q.push(q);Nn.push(n);C.push([q[0]+rp*n[0],q[1]+rp*n[1]]);}
+    const s=[0],ph=[0],X=[],wp=-1/rp;const ws=C.map((c,i)=>{const n=Nn[i],cn=c[0]*n[0]+c[1]*n[1],cc=c[0]*c[0]+c[1]*c[1];return cc<=rp*rp?NaN:2*(rp-cn)/(cc-rp*rp)});
+    for(let i=0;i<=Np;i++){const c=C[i],n=Nn[i],w=ws[i];if(!isFinite(w))return null;
+      if(i){const dq=[Q[i][0]-Q[i-1][0],Q[i][1]-Q[i-1][1]],dc=[c[0]-C[i-1][0],c[1]-C[i-1][1]];if(dq[0]*dc[0]+dq[1]*dc[1]<=0)return null;
+        const ds=Math.hypot(dc[0],dc[1]);s.push(s[i-1]+ds);ph.push(ph[i-1]+(ws[i-1]+w)/2*ds);}
+      const k=1/((wp-w)*rp);X.push([c[0]+rp*(w*c[0]+n[0])*k,c[1]+rp*(w*c[1]+n[1])*k]);}
+    return {e,R0,C,X,s,ph,span:ph[Np]-P2};
+  }
+  const target=TAU/ns,f=e=>{const p=period(e);return p?p.span-target:NaN};
+  let a=0,fa=f(0),b=null,fb;
+  for(let e=0.005;e<=0.35;e+=0.005){const v=f(e);if(!isFinite(v))break;if(Math.sign(v)!==Math.sign(fa)){b=e;fb=v;break}a=e;fa=v}
+  if(b===null)return {ok:false,err:'No wavy shape closes up with these numbers — try one fewer planet tooth or different waves/lobes.'};
+  for(let i=0;i<24;i++){const md=(a+b)/2,v=f(md);if(Math.sign(v)===Math.sign(fa)){a=md;fa=v}else{b=md}}
+  const Pd=period((a+b)/2);
+  // full orbit by symmetry
+  const nAll=Np*nr+1,Cx=new Float64Array(nAll),Cy=new Float64Array(nAll),Sa=new Float64Array(nAll),Ph=new Float64Array(nAll),Xx=new Float64Array(nAll),Xy=new Float64Array(nAll);
+  const L=Pd.s[Np],dP=Pd.ph[Np];
+  for(let k=0;k<nr;k++){const c=Math.cos(k*P2),sn=Math.sin(k*P2);
+    for(let i=(k?1:0);i<=Np;i++){const j=k*Np+i,p=Pd.C[i],x=Pd.X[i];
+      Cx[j]=p[0]*c-p[1]*sn;Cy[j]=p[0]*sn+p[1]*c;Xx[j]=x[0]*c-x[1]*sn;Xy[j]=x[0]*sn+x[1]*c;Sa[j]=Pd.s[i]+k*L;Ph[j]=Pd.ph[i]+k*dP;}}
+  const phiTot=Ph[nAll-1],slots=nr+ns;
+  // pitch curves in polar bins
+  const binsFor=per=>Math.max(1200,Math.min(9000,Math.round(per/0.045)));
+  const Bs=binsFor(Math.PI*m*zs),Br=binsFor(Math.PI*m*zr);
+  const sunPitch=new Float64Array(Bs),cntS=new Float64Array(Bs);
+  for(let j=0;j<nAll;j++){const c=Math.cos(-Ph[j]),sn=Math.sin(-Ph[j]),x=Xx[j]*c-Xy[j]*sn,y=Xx[j]*sn+Xy[j]*c;
+    const bI=((Math.floor((Math.atan2(y,x)/TAU+1)*Bs)%Bs)+Bs)%Bs;sunPitch[bI]+=Math.hypot(x,y);cntS[bI]++;}
+  for(let i=0;i<Bs;i++)if(cntS[i])sunPitch[i]/=cntS[i];
+  for(let i=0;i<Bs;i++)if(!cntS[i]){let l=i,r=i;while(!cntS[(l+Bs)%Bs])l--;while(!cntS[r%Bs])r++;const A=sunPitch[(l+Bs)%Bs],B=sunPitch[r%Bs];sunPitch[i]=A+(B-A)*(i-l)/(r-l)}
+  const ringPitch=Float64Array.from({length:Br},(_,i)=>ringR(Pd.R0,Pd.e,(i+0.5)*TAU/Br));
+  // envelope of an oversized cutter planet
+  const cut0=extProfile(zp,m,pa,-clr,steps,1.25),cut=[];
+  for(let i=0;i<cut0.length;i++){const p=cut0[i],q=cut0[(i+1)%cut0.length],n=Math.max(1,Math.ceil(Math.hypot(q[0]-p[0],q[1]-p[1])/0.05));for(let t=0;t<n;t++)cut.push([p[0]+(q[0]-p[0])*t/n,p[1]+(q[1]-p[1])*t/n])}
+  const envS=new Float64Array(Bs).fill(Infinity),envR=new Float64Array(Br).fill(-Infinity);
+  const stride=Math.max(1,Math.round(0.055/(L/Np)));
+  const cu=Float64Array.from(cut,p=>p[0]),cv=Float64Array.from(cut,p=>p[1]),nc=cut.length;
+  for(let j=0;j<nAll;j+=stride){const ps=-Sa[j]/rp,c=Math.cos(ps),sn=Math.sin(ps),cx=Cx[j],cy=Cy[j],rc=Math.hypot(cx,cy),hiR=rc+0.45*rp,loR=rc-0.45*rp,phs=Ph[j]/TAU;
+    for(let i=0;i<nc;i++){const u=cu[i],v=cv[i],x=u*c-v*sn+cx,y=u*sn+v*c+cy,r=Math.sqrt(x*x+y*y);
+      if(r>hiR){const bI=Math.floor((Math.atan2(y,x)/TAU+1)*Br)%Br;if(r>envR[bI])envR[bI]=r}
+      else if(r<loR){const bI=((Math.floor((Math.atan2(y,x)/TAU-phs)*Bs)%Bs)+Bs)%Bs;if(r<envS[bI])envS[bI]=r}}}
+  const sunR=new Float64Array(Bs),ringH=new Float64Array(Br);
+  for(let i=0;i<Bs;i++){const e3=Math.min(envS[(i+Bs-1)%Bs],envS[i],envS[(i+1)%Bs]);sunR[i]=Math.min(e3,sunPitch[i]+m)}
+  for(let i=0;i<Br;i++){const e3=Math.max(envR[(i+Br-1)%Br],envR[i],envR[(i+1)%Br]);ringH[i]=Math.max(e3,ringPitch[i]-m)}
+  despike(sunR,Math.max(1,Math.round(0.15/(TAU*m*zs/2/Bs))),'open');despike(ringH,Math.max(1,Math.round(0.15/(TAU*m*zr/2/Br))),'close');
+  const lookup=(arr,B)=>ang=>{const x=((ang/TAU)%1+1)%1*B-0.5,i=Math.floor(x),f=x-i;return arr[(i+B)%B]*(1-f)+arr[(i+1)%B]*f};
+  const bandCache=new Map();
+  function bandEnv(kind,rad){const key=kind+rad.toFixed(4);if(bandCache.has(key))return bandCache.get(key);
+    const B=kind==='s'?Bs:Br,env=new Float64Array(B).fill(kind==='s'?Infinity:-Infinity),st=4;
+    for(let j=0;j<nAll;j+=st){let dx=Cx[j],dy=Cy[j];if(kind==='s'){const c=Math.cos(-Ph[j]),sn=Math.sin(-Ph[j]);[dx,dy]=[dx*c-dy*sn,dx*sn+dy*c]}
+      const D=Math.hypot(dx,dy),a0=Math.atan2(dy,dx),hw=Math.asin(Math.min(1,rad/D)),i0=Math.floor((a0-hw)/TAU*B),i1=Math.ceil((a0+hw)/TAU*B);
+      for(let i=i0;i<=i1;i++){const al=(i+0.5)*TAU/B,ux=Math.cos(al),uy=Math.sin(al),du=dx*ux+dy*uy,cr=dx*uy-dy*ux,q2=rad*rad-cr*cr;if(q2<0||du<=0)continue;
+        const bI=((i%B)+B)%B;if(kind==='s'){const t=du-Math.sqrt(q2);if(t<env[bI])env[bI]=t}else{const t=du+Math.sqrt(q2);if(t>env[bI])env[bI]=t}}}
+    const fn=lookup(env,B);bandCache.set(key,fn);return fn}
+  const sec=fn=>a2=>{const d=0.004,r=fn(a2),dr=(fn(a2+d)-fn(a2-d))/(2*d);return Math.sqrt(r*r+dr*dr)/r};
+  // planet states
+  function at(Phi,N){const out=[],step=slots/N;
+    for(let j=0;j<N;j++){let t=((Phi+j*step*TAU/ns)%phiTot+phiTot)%phiTot;let lo=0,hi=nAll-1;
+      while(hi-lo>1){const md=(lo+hi)>>1;Ph[md]<=t?lo=md:hi=md}const f=(t-Ph[lo])/((Ph[hi]-Ph[lo])||1);
+      const sv=Sa[lo]+(Sa[hi]-Sa[lo])*f;out.push({x:Cx[lo]+(Cx[hi]-Cx[lo])*f,y:Cy[lo]+(Cy[hi]-Cy[lo])*f,rot:-sv/rp,s:sv})}
+    return out}
+  function minGap(N){let g=Infinity;const tip=2*(rp+m);
+    for(let i=0;i<40;i++){const ps=at(i*TAU/ns/40,N);for(let j=0;j<N;j++){const A=ps[j],B=ps[(j+1)%N];g=Math.min(g,Math.hypot(A.x-B.x,A.y-B.y)-tip)}}return g}
+  const valid=[];for(let N=2;N<=slots;N++)if(slots%N===0&&minGap(N)>=0.5)valid.push(N);
+  return {ok:true,e:Pd.e,R0:Pd.R0,zs,zr,rp,slots,phiTot,at,minGap,valid,
+    sunPts:Array.from(sunR,(r,i)=>pol(r,(i+0.5)*TAU/Bs)),ringPts:Array.from(ringH,(r,i)=>pol(r,(i+0.5)*TAU/Br)),
+    sunPitch:lookup(sunPitch,Bs),ringPitch:lookup(ringPitch,Br),secS:sec(lookup(sunPitch,Bs)),secR:sec(lookup(ringPitch,Br)),bandEnv,minSun:Math.min(...sunR),maxRingPitch:Math.max(...ringPitch),turns:phiTot/TAU};
+}
+
+
+/* ---------- lobed planets (triangle / square) ----------
+   Planet pitch r=A(1+d·cos kψ) rolls inside a wavy fixed ring (nr = ns + 2k waves, one lobe per wave).
+   Sun contact = second crossing of the ray ring-contact → center with the planet, so ωs = ωp(1 − |Q|/|X|).
+   Planet teeth: rack rolled round its pitch curve. Sun/ring teeth: envelope of the moving planet. */
+const lobedCache=new Map();
+function lobedEngine(...a){const key=a.join('|');if(lobedCache.has(key))return lobedCache.get(key);const r=lobedBuild(...a);if(lobedCache.size>8)lobedCache.clear();lobedCache.set(key,r);return r}
+function lobedBuild(m,zp,k,dPct,ns,pa,clr){
+  if(zp%k)return {ok:false,err:`Planet teeth must be a multiple of ${k} for a ${k===3?'triangle':'square'} planet.`};
+  const T=zp/k,nr=ns+2*k,zs=T*ns,zr=T*nr,p=Math.PI*m,ta=Math.tan(pa);
+  if(T<3)return {ok:false,err:'Use at least 3 teeth per planet side.'};
+  if(ns<2)return {ok:false,err:'The sun needs at least 2 lobes.'};
+  const d=Math.max(0,Math.min(0.98,dPct/100))*(1/(k*k-1));
+  // planet pitch curve, arclength table
+  const MP=4000,ppol=ps=>1+d*Math.cos(k*ps);let per1=0;{let px=1+d,py=0;for(let i=1;i<=MP;i++){const t=i*TAU/MP,r=ppol(t),x=r*Math.cos(t),y=r*Math.sin(t);per1+=Math.hypot(x-px,y-py);px=x;py=y}}
+  const A=p*zp/per1,perim=p*zp;
+  const gx=new Float64Array(MP+1),gy=new Float64Array(MP+1),gs=new Float64Array(MP+1),gt=new Float64Array(MP+1);
+  for(let i=0;i<=MP;i++){const t=i*TAU/MP,r=A*ppol(t),dr=-A*d*k*Math.sin(k*t);gx[i]=r*Math.cos(t);gy[i]=r*Math.sin(t);
+    gt[i]=Math.atan2(dr*Math.sin(t)+r*Math.cos(t),dr*Math.cos(t)-r*Math.sin(t));if(i)gs[i]=gs[i-1]+Math.hypot(gx[i]-gx[i-1],gy[i]-gy[i-1]);}
+  for(let i=1;i<=MP;i++){while(gt[i]-gt[i-1]>Math.PI)gt[i]-=TAU;while(gt[i]-gt[i-1]<-Math.PI)gt[i]+=TAU}
+  const sc=perim/gs[MP];for(let i=0;i<=MP;i++)gs[i]*=sc;
+  const gAt=sg=>{const lap=Math.floor(sg/perim),u=sg-lap*perim;let lo=0,hi=MP;while(hi-lo>1){const md=(lo+hi)>>1;gs[md]<=u?lo=md:hi=md}
+    const f=(u-gs[lo])/(gs[hi]-gs[lo]);return [gx[lo]+(gx[hi]-gx[lo])*f,gy[lo]+(gy[hi]-gy[lo])*f,gt[lo]+(gt[hi]-gt[lo])*f+lap*TAU]};
+  const pPitch=ang=>A*ppol(ang);
+  // rack-generated planet profile (polar bins)
+  const Bp=Math.max(900,Math.min(5000,Math.round(perim/0.035)));
+  function rackGear(widen,tipK){const env=new Float64Array(Bp).fill(Infinity),y0=-1.25*m,y1=1.3*m,pts=[];
+    const hw=y=>p/4+widen/4+y*ta;
+    const nf=Math.ceil((y1-y0)/0.03),nt=Math.ceil(2*hw(y0)/0.03);for(let i=0;i<=nf;i++){const y=y0+(y1-y0)*i/nf;pts.push([-hw(y),y],[hw(y),y])}
+    for(let i=1;i<nt;i++){const x=-hw(y0)+2*hw(y0)*i/nt;pts.push([x,y0])}
+    for(let sg=0;sg<perim;sg+=0.03){const [px,py,tg]=gAt(sg),tx=Math.cos(tg),ty=Math.sin(tg),nx=ty,ny=-tx;
+      const j0=Math.floor(sg/p);for(let j=j0-2;j<=j0+3;j++){const xc=(j+0.5)*p-sg;if(Math.abs(xc)>1.7*p)continue;
+        for(const [u,y] of pts){const x=px+tx*(xc+u)+nx*y,yy=py+ty*(xc+u)+ny*y,r=Math.hypot(x,yy),bI=((Math.floor(Math.atan2(yy,x)/TAU*Bp)%Bp)+Bp)%Bp;if(r<env[bI])env[bI]=r}}}
+    const out=new Float64Array(Bp);for(let i=0;i<Bp;i++){const e3=Math.min(env[(i+Bp-1)%Bp],env[i],env[(i+1)%Bp]);out[i]=Math.min(e3,pPitch((i+0.5)*TAU/Bp)+tipK*m)}return out}
+  const planetR=rackGear(clr,1),cutR=rackGear(-clr,1.25);
+  // ring
+  const ringR=(R0,e,t)=>R0*(1+e*Math.cos(nr*t)),P2=TAU/nr,Lw=p*zr/nr;let Np=400;
+  function period(e){
+    const per=R0=>{let L=0,px=0,py=0;for(let i=0;i<=240;i++){const t=i*P2/240,R=ringR(R0,e,t),x=R*Math.cos(t),y=R*Math.sin(t);if(i)L+=Math.hypot(x-px,y-py);px=x;py=y}return L*nr};
+    let lo=0.1,hi=2000;for(let i=0;i<44;i++){const md=(lo+hi)/2;per(md)<p*zr?lo=md:hi=md}const R0=(lo+hi)/2;
+    // ring arclength table over one wave
+    const MR=3000,rs=new Float64Array(MR+1),rq=[];for(let i=0;i<=MR;i++){const t=i*P2/MR,R=ringR(R0,e,t),dR=-R0*e*nr*Math.sin(nr*t);
+      rq.push([R*Math.cos(t),R*Math.sin(t),Math.atan2(dR*Math.sin(t)+R*Math.cos(t),dR*Math.cos(t)-R*Math.sin(t))]);if(i)rs[i]=rs[i-1]+Math.hypot(rq[i][0]-rq[i-1][0],rq[i][1]-rq[i-1][1])}
+    for(let i=1;i<=MR;i++){while(rq[i][2]-rq[i-1][2]>Math.PI)rq[i][2]-=TAU;while(rq[i][2]-rq[i-1][2]<-Math.PI)rq[i][2]+=TAU}
+    const rsc=Lw/rs[MR];
+    const rAt=s0=>{const u=s0/rsc;let lo2=0,hi2=MR;while(hi2-lo2>1){const md=(lo2+hi2)>>1;rs[md]<=u?lo2=md:hi2=md}const f=(u-rs[lo2])/(rs[hi2]-rs[lo2]),a=rq[lo2],b=rq[hi2];return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]};
+    const S=[],TH=[],CX=[],CY=[],XX=[],XY=[];
+    for(let i=0;i<=Np;i++){const s0=Lw*i/Np,[qx,qy,tr]=rAt(s0),[lx,ly,tp]=gAt(s0),th=tr-tp,c=Math.cos(th),sn=Math.sin(th);
+      const cx=qx-(lx*c-ly*sn),cy=qy-(lx*sn+ly*c);S.push(s0);TH.push(th);CX.push(cx);CY.push(cy);
+      // ray Q→O: find far crossing of the planet pitch curve
+      const inside=t=>{const x=qx*(1-t)-cx,y=qy*(1-t)-cy,xl=x*c+y*sn,yl=-x*sn+y*c;return Math.hypot(xl,yl)-pPitch(Math.atan2(yl,xl))};
+      const Qn=Math.hypot(qx,qy),tm=Math.max(0.001,(qx*(qx-cx)+qy*(qy-cy))/(Qn*Qn));let a1=tm,b1=1;
+      if(inside(a1)>=0||inside(b1)<=0){lobedBuild.why='ray';return null}
+      for(let it=0;it<32;it++){const md=(a1+b1)/2;inside(md)<0?a1=md:b1=md}
+      const t=(a1+b1)/2;XX.push(qx*(1-t));XY.push(qy*(1-t));}
+    // planet must stay inside the ring
+    for(let i=0;i<=Np;i+=50){const c=Math.cos(TH[i]),sn=Math.sin(TH[i]);for(let j=0;j<180;j++){const a2=j*TAU/180,r=pPitch(a2),x=CX[i]+r*Math.cos(a2+TH[i]),y=CY[i]+r*Math.sin(a2+TH[i]);
+      if(Math.hypot(x,y)>ringR(R0,e,Math.atan2(y,x))+0.01){lobedBuild.why='outside';return null}}}
+    const PH=[0];for(let i=1;i<=Np;i++){const om=j=>{const a2=Math.min(Np,j+1),b2=Math.max(0,j-1),wp=(TH[a2]-TH[b2])/(S[a2]-S[b2]);const [qx,qy]=rAt(S[j]);return wp*(1-Math.hypot(qx,qy)/Math.hypot(XX[j],XY[j]))};
+      PH.push(PH[i-1]+(om(i-1)+om(i))/2*(S[i]-S[i-1]))}
+    return {e,R0,S,TH,CX,CY,XX,XY,PH,span:PH[Np]-P2};
+  }
+  const target=TAU/ns,f=e=>{const r=period(e);return r?r.span-target:NaN};
+  let br=null;const last={1:null,'-1':null};
+  for(let st=0;st<=0.3&&!br;st+=0.004)for(const sg of [1,-1]){const e=sg*st,v=f(e),L=last[sg];
+    if(isFinite(v)){if(L&&Math.sign(v)!==Math.sign(L[1])){br=[L[0],e];break}last[sg]=[e,v];if(st===0)last[-sg]=[e,v]}else last[sg]=null}
+  if(!br)return {ok:false,err:'No ring shape closes up for this planet — try a smaller lobe depth or more sun lobes.'};
+  let [a,b]=br,fa=f(a);for(let i=0;i<26;i++){const md=(a+b)/2,v=f(md);if(Math.sign(v)===Math.sign(fa)){a=md;fa=v}else b=md}
+  Np=1000;const Pd=period((a+b)/2);if(!Pd)return {ok:false,err:'Shape solve failed — try a smaller lobe depth.'};
+  const nAll=Np*nr+1,Cx=new Float64Array(nAll),Cy=new Float64Array(nAll),Th=new Float64Array(nAll),Sa=new Float64Array(nAll),Ph=new Float64Array(nAll),Xx=new Float64Array(nAll),Xy=new Float64Array(nAll);
+  const dP=Pd.PH[Np],tStep=Pd.TH[Np]-Pd.TH[0];
+  for(let w=0;w<nr;w++){const c=Math.cos(w*P2),sn=Math.sin(w*P2);
+    for(let i=(w?1:0);i<=Np;i++){const j=w*Np+i;Cx[j]=Pd.CX[i]*c-Pd.CY[i]*sn;Cy[j]=Pd.CX[i]*sn+Pd.CY[i]*c;Xx[j]=Pd.XX[i]*c-Pd.XY[i]*sn;Xy[j]=Pd.XX[i]*sn+Pd.XY[i]*c;
+      Th[j]=Pd.TH[i]+w*tStep;Sa[j]=Pd.S[i]+w*Lw;Ph[j]=Pd.PH[i]+w*dP}}
+  const phiTot=Ph[nAll-1],slots=nr+ns;
+  const binsFor=pp=>Math.max(1200,Math.min(9000,Math.round(pp/0.045)));const Bs=binsFor(p*zs),Br=binsFor(p*zr);
+  const sunPitch=new Float64Array(Bs),cnt=new Float64Array(Bs);
+  for(let j=0;j<nAll;j++){const c=Math.cos(-Ph[j]),sn=Math.sin(-Ph[j]),x=Xx[j]*c-Xy[j]*sn,y=Xx[j]*sn+Xy[j]*c,bI=((Math.floor(Math.atan2(y,x)/TAU*Bs)%Bs)+Bs)%Bs;sunPitch[bI]+=Math.hypot(x,y);cnt[bI]++}
+  for(let i=0;i<Bs;i++)if(cnt[i])sunPitch[i]/=cnt[i];
+  for(let i=0;i<Bs;i++)if(!cnt[i]){let l=i,r=i;while(!cnt[(l+Bs)%Bs])l--;while(!cnt[r%Bs])r++;sunPitch[i]=sunPitch[(l+Bs)%Bs]+(sunPitch[r%Bs]-sunPitch[(l+Bs)%Bs])*(i-l)/(r-l)}
+  const ringPitch=Float64Array.from({length:Br},(_,i)=>ringR(Pd.R0,Pd.e,(i+0.5)*TAU/Br));
+  const lookup=(arr,B)=>ang=>{const x=((ang/TAU)%1+1)%1*B-0.5,i=Math.floor(x),f2=x-i;return arr[(i+B)%B]*(1-f2)+arr[(i+1)%B]*f2};
+  const maxP=Math.max(...planetR);
+  // generic polar-cutter envelope (cutter given in planet frame as polar radii)
+  function envelope(rad,stride,sideK){const cu=[],cv=[];const B=rad.length;for(let i=0;i<B;i+=2){const a2=(i+0.5)*TAU/B;cu.push(rad[i]*Math.cos(a2));cv.push(rad[i]*Math.sin(a2))}
+    const eS=new Float64Array(Bs).fill(Infinity),eR=new Float64Array(Br).fill(-Infinity);
+    for(let j=0;j<nAll;j+=stride){const c=Math.cos(Th[j]),sn=Math.sin(Th[j]),cx=Cx[j],cy=Cy[j],rc=Math.hypot(cx,cy),hiR=rc+sideK*maxP,loR=rc-sideK*maxP,phs=Ph[j]/TAU;
+      for(let i=0;i<cu.length;i++){const u=cu[i],v=cv[i],x=u*c-v*sn+cx,y=u*sn+v*c+cy,r=Math.sqrt(x*x+y*y);
+        if(r>hiR){const bI=Math.floor((Math.atan2(y,x)/TAU+1)*Br)%Br;if(r>eR[bI])eR[bI]=r}
+        else if(r<loR){const bI=((Math.floor((Math.atan2(y,x)/TAU-phs)*Bs)%Bs)+Bs)%Bs;if(r<eS[bI])eS[bI]=r}}}
+    return [eS,eR]}
+  const stride=Math.max(1,Math.round(0.07/(Lw/Np)));
+  const [envS,envR]=envelope(cutR,stride,0.4);
+  const sunR=new Float64Array(Bs),ringH=new Float64Array(Br);
+  for(let i=0;i<Bs;i++)sunR[i]=Math.min(Math.min(envS[(i+Bs-1)%Bs],envS[i],envS[(i+1)%Bs]),sunPitch[i]+m);
+  for(let i=0;i<Br;i++)ringH[i]=Math.max(Math.max(envR[(i+Br-1)%Br],envR[i],envR[(i+1)%Br]),ringPitch[i]-m);
+  despike(sunR,Math.max(1,Math.round(0.15/(TAU*m*zs/2/Bs))),'open');despike(ringH,Math.max(1,Math.round(0.15/(TAU*m*zr/2/Br))),'close');
+  const bandCache=new Map();
+  function bandEnv(kind,off){const key=off.toFixed(4);if(!bandCache.has(key)){const rad=Float64Array.from({length:Bp},(_,i)=>pPitch((i+0.5)*TAU/Bp)+off);
+      const [eS,eR]=envelope(rad,stride*2,0.2);for(let i=0;i<Bs;i++)if(!isFinite(eS[i]))eS[i]=sunPitch[i];for(let i=0;i<Br;i++)if(!isFinite(eR[i]))eR[i]=ringPitch[i];
+      bandCache.set(key,[lookup(eS,Bs),lookup(eR,Br)])}
+    return bandCache.get(key)[kind==='s'?0:1]}
+  function at(Phi,N){const out=[],step=slots/N;
+    for(let j=0;j<N;j++){let t=((Phi+j*step*TAU/ns)%phiTot+phiTot)%phiTot;let lo=0,hi=nAll-1;while(hi-lo>1){const md=(lo+hi)>>1;Ph[md]<=t?lo=md:hi=md}
+      const f2=(t-Ph[lo])/((Ph[hi]-Ph[lo])||1);out.push({x:Cx[lo]+(Cx[hi]-Cx[lo])*f2,y:Cy[lo]+(Cy[hi]-Cy[lo])*f2,rot:Th[lo]+(Th[hi]-Th[lo])*f2})}return out}
+  function minGap(N){let g=Infinity;for(let i=0;i<40;i++){const ps=at(i*TAU/ns/40,N);for(let j=0;j<N;j++){const A2=ps[j],B2=ps[(j+1)%N];g=Math.min(g,Math.hypot(A2.x-B2.x,A2.y-B2.y)-2*maxP)}}return g}
+  const valid=[];for(let N=2;N<=slots;N++)if(slots%N===0&&minGap(N)>=0.5)valid.push(N);
+  const pr=Array.from(planetR);
+  return {ok:true,lobed:true,e:Pd.e,zs,zr,T,nr,slots,phiTot,at,minGap,valid,turns:phiTot/TAU,
+    planetPts:pr.map((r,i)=>pol(r,(i+0.5)*TAU/Bp)),planetPitch:pPitch,minPlanet:Math.min(...pr),
+    sunPts:Array.from(sunR,(r,i)=>pol(r,(i+0.5)*TAU/Bs)),ringPts:Array.from(ringH,(r,i)=>pol(r,(i+0.5)*TAU/Br)),
+    sunPitch:lookup(sunPitch,Bs),ringPitch:lookup(ringPitch,Br),bandEnv,minSun:Math.min(...sunR),maxRingPitch:Math.max(...ringPitch)};
+}
+
+/* ---------- design ---------- */
+function ringDerive(Q){const D=11.63+0.8128*(+Q.rsize||9),m=+Q.rm||1,zp=Math.max(5,Math.round(+Q.rzp||6)),rS=D/2+1.6+1.25*m;
+  let best=null;for(let zs=Math.round(2*rS/m);zs<=Math.round(2*rS/m)+4;zs++){const zr=zs+2*zp,a=m*(zs+zp)/2;
+    for(let n=60;n>=3;n--){if((zs+zr)%n)continue;if(2*a*Math.sin(Math.PI/n)-m*(zp+2)>=0.5){if(!best||n>best.n)best={zs,n};break}}}
+  return {shape:'round',rows:1,m,zp,zs:best?best.zs:Math.round(2*rS/m),n:best?best.n:3,bore:Q.rbk==='knurl'?'knurl':'round',bd:D,bch:+Q.rch||0,dish:'none',
+    pstyle:'none',ph:0,moons:'none',outer:Q.rknurl==='knurl'?'knurl':'smooth',wall:1.8,gd:0.5,etype:'chamfer',edge:0.6,cut:'none',deco:'none',att:'none',_D:D}}
+function design(){if(P.mode!=='ring')return designCore();
+  const saved=P;P={...P,...ringDerive(P)};try{const G=designCore();G.ringD=P._D;return G}finally{P=saved}}
+function designCore(){
+  const wavy=P.shape==='wavy',m=P.m,zp=Math.round(P.zp),N=Math.round(P.n),h=P.h;
+  const pa=P.pa*Math.PI/180,q=+P.q,steps=[4,7,11][q-1],nzH=[6,10,16][q-1];
+  const lk=wavy?{tri:3,square:4}[P.pshape]||0:0;
+  const WV=!wavy?null:lk?lobedEngine(m,zp,lk,+P.lobe||60,Math.round(P.ns),pa,P.clr):wavyEngine(m,zp,Math.round(P.tpw),Math.round(P.nr),Math.round(P.ns),pa,P.clr,steps,-(Math.min(50,Math.max(0,+P.flat||0)))/100);
+  if(wavy&&!WV.ok){P={...P,shape:'round'};const G0=design();P.shape='wavy';G0.msgs=[['bad',WV.err+' Showing the round version for now.']];return G0}
+  const zs=wavy?WV.zs:Math.round(P.zs),zr=wavy?WV.zr:zs+2*zp;
+  const multi=!wavy&&+P.rows>1;
+  const sty=wavy?'spur':multi?'herring':P.style,beta=(sty==='spur'?0:P.beta)*Math.PI/180;
+  const nz=sty==='spur'?1:sty==='herring'?nzH:Math.ceil(nzH/2);
+  const tb=Math.tan(beta);
+  const k=z=>sty==='herring'?tb*(h/2-Math.abs(z-h/2)):sty==='helical'?tb*z:0;
+  const chan=wavy||(P.ret==='channel'&&!multi),g=P.clr/2,gq=g*Math.SQRT2,v=Math.max(0.4,+P.cv||1),tt=(wavy?2.4:1.3)*m;
+  const W=Math.max(+P.cw||0,2*(v+gq)+0.8),z1=h/2-W/2,z2=h/2+W/2;
+  const blend=z=>z<=z1-tt||z>=z2+tt?0:z<z1?(z-(z1-tt))/tt:z>z2?((z2+tt)-z)/tt:1;
+  const tri=(z,hw)=>Math.max(0,1-Math.abs(z-h/2)/hw);
+  const bandOf=kind=>!chan?undefined:z=>{const s=blend(z);if(s<=0)return null;
+    if(kind==='p')return {r:lk?a2=>WV.planetPitch(a2)-g+v*tri(z,v):m*zp/2-g+v*tri(z,v),s,two:wavy};
+    const dv=(v+gq)*tri(z,v+gq);
+    if(wavy)return {r:lk?WV.bandEnv(kind,g+dv):WV.bandEnv(kind,m*zp/2+g+dv),s,two:true};
+    return {r:kind==='s'?m*zs/2-g-dv:m*zr/2+g+dv,s}};
+  const gzl=!chan?undefined:(()=>{const nn=Math.max(nz,2),L=Array.from({length:nn+1},(_,i)=>h*i/nn);
+    for(const d of [W/2+tt,W/2,v+gq,v,0])L.push(h/2-d,h/2+d);
+    for(let i=1;i<4;i++)L.push(z1-tt*i/4,z2+tt*i/4);
+    return L.filter(z=>z>=0&&z<=h).sort((a,b)=>a-b).filter((z,i,a)=>i===0||z-a[i-1]>1e-4)})();
+  const rS=m*zs/2,rP=m*zp/2,rR=m*zr/2,a=rS+rP,clr=P.clr;
+  const msgs=[];
+  const vc=Math.max(2,Math.round(P.vc)||5);
+  const holes=(style,D,root,sign,label,ch)=>{const out=holesRaw(style,D,root,sign,label);ch=Math.min(+ch||0,h/2-0.3);
+    if(!out.length||!(ch>0))return out;
+    if(style==='spokes'||style==='turbine'){msgs.push(['warn',`${label}: chamfer isn't available for spokes or turbine vanes, so it was skipped.`]);return out}
+    const reach=Math.max(...out[0].pts.map(p=>Math.hypot(p[0],p[1])));let c=ch;const kzl=out[0].zl;
+    if(reach+c>root-0.6){c=Math.max(0,root-0.6-reach);msgs.push(['warn',`${label} chamfer trimmed to ${c.toFixed(2)} mm so it stays clear of the teeth.`])}
+    if(c<=0)return out;
+    const zl=[...new Set([0,c*0.25,c*0.5,c*0.75,c,h-c,h-c*0.75,h-c*0.5,h-c*0.25,h,...Array.from({length:nz+1},(_,i)=>h*i/nz),...(out[0].tw(h)!==0?Array.from({length:9},(_,i)=>h*i/8):[])].map(z=>+z.toFixed(5)))].sort((a,b)=>a-b);
+    for(const o of out){o.cone=z=>{const r=reach+c-Math.min(z,h-z);return r>reach?r:0};o.zl=kzl?[...new Set([...zl,...kzl].map(z=>+z.toFixed(5)))].sort((a,b)=>a-b):zl}
+    return out};
+  const holesRaw=(style,D,root,sign,label)=>{ // returns hole contours
+    if(style==='none'||!(D>0))return [];
+    const R=D/2,lim=root-0.9;
+    const reach=style==='hex'?D/Math.sqrt(3):R;
+    if(reach>lim){msgs.push(['bad',`${label} is too big — keep it under ${(D*lim/reach).toFixed(1)} mm.`]);return []}
+    const M=Math.max(48,Math.round(D*6));
+    if(style==='round')return [{pts:circle(R,M),tw:()=>0}];
+    if(style==='knurl'){const K=knurl(R,0.35,true,h);return [K]}
+    if(style==='hex')return [{pts:hexagon(D),tw:()=>0}];
+    if(style==='tri')return [{pts:Array.from({length:M},(_,i)=>{const t=i*TAU/M;return pol(R*(0.8+0.2*Math.cos(3*t)),t+Math.PI/2)}),tw:()=>0}];
+    if(style==='rifled'){const ks=Math.max(12,Math.round(TAU*R/2.2));return [{pts:Array.from({length:ks*12},(_,i)=>{const t=i*TAU/(ks*12);return pol(R-0.7*(0.5+0.5*Math.tanh(3*Math.cos(ks*t))),t)}),tw:z=>sign*(z/h)*Math.min(1.2,12/R)}]}
+    if(style==='spline'){const ks=Math.max(6,vc*2);return [{pts:Array.from({length:ks*16},(_,i)=>{const t=i*TAU/(ks*16);return pol(R-Math.min(1.2,0.16*R)*(0.5+0.5*Math.tanh(4*Math.cos(ks*t))),t)}),tw:()=>0}]}
+    // spokes / turbine: sectors between vanes
+    // vanes are solid material joining hub and rim; width is held constant across the vane (not just around the circle)
+    const tv=Math.max(1.2,Math.min(1.8,R*0.16)),turb=style==='turbine';
+    let rh=Math.max(turb?Math.max(1.6,R*0.18):R*0.32,1.7*tv*vc/TAU);
+    if(rh>R-1.5){msgs.push(['bad',`${label}: too many vanes for that size — use fewer vanes or a bigger center.`]);return [{pts:circle(R,M),tw:()=>0}]}
+    const sw=turb?1.25:0,ns=16,g=TAU/vc;
+    const cl=(r,i)=>i*g+sw*Math.pow(Math.max(0,(r-rh)/(R-rh)),1.3);
+    const hw=r=>{const u=Math.max(1e-6,(r-rh)/(R-rh)),sl=sw*1.3*Math.pow(u,0.3)/(R-rh);return tv/(2*r)*Math.sqrt(1+(r*sl)**2)};
+    for(let s2=0;s2<=ns;s2++){const r=rh+(R-rh)*s2/ns;if(g-2*hw(r)<0.5/r){msgs.push(['bad',`${label}: vanes would merge — use fewer vanes or a bigger center.`]);return [{pts:circle(R,M),tw:()=>0}]}}
+    const out=[];
+    for(let i=0;i<vc;i++){const p=[];
+      for(let s2=0;s2<=ns;s2++){const r=rh+(R-rh)*s2/ns;p.push(pol(r,cl(r,i)+hw(r)))}
+      const a0=cl(R,i)+hw(R),a1=cl(R,i+1)-hw(R);for(let j=1;j<8;j++)p.push(pol(R,a0+(a1-a0)*j/8));
+      for(let s2=ns;s2>=0;s2--){const r=rh+(R-rh)*s2/ns;p.push(pol(r,cl(r,i+1)-hw(r)))}
+      const b0=cl(rh,i+1)-hw(rh),b1=cl(rh,i)+hw(rh);for(let j=1;j<4;j++)p.push(pol(rh,b0+(b1-b0)*j/4));
+      out.push({pts:p,tw:turb?z=>sign*0.7*z/h:()=>0});}
+    return out;
+  };
+  // sun
+  const sunRoot=wavy?WV.minSun:rS-1.25*m,pRoot=lk?WV.minPlanet:rP-1.25*m;
+  let dish=null;
+  if(P.dish&&P.dish!=='none'){const lim=sunRoot-1.0,R=Math.min(+P.dd/2||0,lim),d=Math.min(+P.ddep||0,h/(P.dish==='both'?2:1)-0.8);
+    if(+P.dd/2>lim)msgs.push(['warn',`Thumb dish shrunk to ${(2*R).toFixed(1)} mm so it stays inside the sun's teeth.`]);
+    if(+P.ddep>d)msgs.push(['warn',`Thumb dish depth limited to ${d.toFixed(1)} mm for this thickness.`]);
+    if(R>2&&d>0.2)dish={R,depth:Math.min(d,R*0.9),top:true,bottom:P.dish==='both'};
+    if(P.bore!=='none'&&dish)msgs.push(['warn','The thumb dish replaces the sun center hole.']);}
+  const sun=[{pts:wavy?WV.sunPts:extProfile(zs,m,pa,clr,steps),tw:z=>k(z)/rS,band:bandOf('s'),zl:gzl},...(dish?[]:holes(P.bore,P.bd,sunRoot,1,'Sun center',P.bch))];
+  // planet
+  // moons: each planet holds its own small herringbone gear bearing (mini ring cut into the planet, mini sun + 3 moons)
+  let moons=null;
+  if(P.moons==='3'){
+    if(lk)msgs.push(['warn','Moons need round planets — skipped for triangle/square planets.']);
+    else{const avail=pRoot-1.2,mb=Math.tan(30*Math.PI/180),hzl=Array.from({length:nzH+1},(_,i)=>h*i/nzH);let best=null;
+      for(const m2 of [0.9,0.8,0.7,0.6,0.5]){const zmax=Math.floor((avail-1.25*m2)*2/m2);
+        for(let zr2=zmax;zr2>=18&&!best;zr2--)for(let zp2=7;zp2<=zr2/2;zp2++){const zs2=zr2-2*zp2;if(zs2<7)break;if((zs2+zr2)%3)continue;
+          const a2=m2*(zs2+zp2)/2,gp=2*a2*Math.sin(Math.PI/3)-m2*(zp2+2);if(gp<0.6)continue;
+          if(!best||Math.abs(zs2-zp2)<Math.abs(best.zs2-best.zp2))best={m2,zr2,zp2,zs2,a2};}
+        if(best)break;}
+      if(!best)msgs.push(['bad',`Planets are too small for moons — they need about ${Math.ceil(2*(0.5*23/2+1.25*0.5+1.2+1.25*m)/m)}+ teeth at module ${m}.`]);
+      else{const {m2,zr2,zp2,zs2,a2}=best,rS2=m2*zs2/2,rP2=m2*zp2/2,rR2=m2*zr2/2,km=z=>mb*(h/2-Math.abs(z-h/2));
+        const th2=[0,TAU/3,2*TAU/3],ps2=th2.map(t=>t+Math.PI+t*zs2/zp2-Math.PI/zp2),rho2=ps2[0]*zp2/zr2;
+        moons={m2,zs2,zp2,zr2,a2,ring:{pts:intProfile(zr2,m2,pa,clr,steps),tw:z=>rho2-km(z)/rR2,zl:hzl},
+          sun:[{pts:extProfile(zs2,m2,pa,clr,steps),tw:z=>km(z)/rS2,zl:hzl}],moon:[{pts:extProfile(zp2,m2,pa,clr,steps),tw:z=>-km(z)/rP2,zl:hzl}],
+          pose:t=>{const thc=t*zs2/(zs2+zr2);return {sun:t,moons:th2.map((th,i)=>({x:a2*Math.cos(th+thc),y:a2*Math.sin(th+thc),rot:ps2[i]+thc-(t-thc)*zs2/zp2}))}}};
+        msgs.push(['warn',`Moons: each planet holds a ${zs2}-tooth sun and three ${zp2}-tooth moons in a ${zr2}-tooth ring (module ${m2}). Herringbone keeps them captive. Small teeth like these print best with a 0.4 mm nozzle or finer.`]);
+        if(P.pstyle!=='none'&&P.ph>0)msgs.push(['warn','Moons replace the planet center hole.']);}}}
+  const planet=[{pts:lk?WV.planetPts:extProfile(zp,m,pa,clr,steps),tw:z=>-k(z)/rP,band:bandOf('p'),zl:gzl},...(moons?[moons.ring]:holes(P.pstyle,P.ph,pRoot,-1,'Planet center',P.pch))];
+  // planet phases
+  const thetas=Array.from({length:N},(_,i)=>i*TAU/N);
+  const psi=thetas.map(t=>t+Math.PI+t*zs/zp-Math.PI/zp);
+  const rho=wavy?0:psi[0]*zp/zr;
+  // extra rows nest outward: each middle ring has inner teeth (outer member of the row inside) and outer teeth (sun of the next row)
+  const nRows=multi?Math.min(3,Math.round(+P.rows)):1;
+  if(+P.rows>1&&wavy)msgs.push(['warn','Extra rows work with round gears only.']);
+  const rowsD=[{zs,zr,N,a,thetas,psi,rho}];
+  for(let kk=1;kk<nRows;kk++){const pr=rowsD[kk-1],rIn=m*pr.zr/2+1.25*m;let zsk=Math.ceil(2*(rIn+2.0+1.25*m)/m),pk=null;
+    for(let t2=0;t2<8;t2++,zsk++){const zrk=zsk+2*zp,ak=m*(zsk+zp)/2;for(let n=30;n>=3;n--){if((zsk+zrk)%n)continue;if(2*ak*Math.sin(Math.PI/n)-m*(zp+2)>=1.2){if(!pk||n>pk.N+1)pk={zs:zsk,zr:zrk,N:n,a:ak};break}}}
+    if(!pk){msgs.push(['bad',`Couldn't fit row ${kk+1} — try different planet teeth.`]);break}
+    const th=Array.from({length:pk.N},(_,i)=>i*TAU/pk.N),ps=th.map(t=>t+Math.PI+t*pk.zs/zp-Math.PI/zp);
+    rowsD.push({...pk,thetas:th,psi:ps,rho:ps[0]*zp/pk.zr});}
+  const RL=rowsD[rowsD.length-1];
+  const mids=rowsD.slice(1).map((rw,j)=>{const pr=rowsD[j];return [{pts:extProfile(rw.zs,m,pa,clr,steps),tw:z=>k(z)/(m*rw.zs/2)},{pts:intProfile(pr.zr,m,pa,clr,steps),tw:z=>pr.rho-k(z)/(m*pr.zr/2)}]});
+  if(rowsD.length>1)msgs.push(['warn',`${rowsD.length} rows: ${rowsD.map((rw,i)=>`row ${i+1} has ${rw.N} planets`).join(', ')}. Herringbone teeth throughout; every middle ring spins freely.`]);
+  // ring
+  const ringRoot=wavy?WV.maxRingPitch+1.25*m:m*RL.zr/2+1.25*m,base=ringRoot+P.wall,H=h;
+  const no=Math.max(3,Math.round(P.zo)),d=Math.max(0.3,+P.gd||0),seed=Math.round(P.seed)||0,e=Math.min(Math.max(0,+P.edge||0),h/2-0.01);
+  const rnd=i=>{const x=Math.sin((seed+1)*127.1+i*311.7)*43758.5453;return x-Math.floor(x)};
+  const norm=f=>{const lo=Math.min(...f),hi=Math.max(...f);return f.map(v=>(v-lo)/((hi-lo)||1))};
+  const rad=fn=>{const M=Math.max(180,no*28),f=norm(Array.from({length:M},(_,i)=>fn(i*TAU/M)));return f.map((v,i)=>pol(base+d*v,i*TAU/M))};
+  const bell=z=>Math.sin(Math.PI*z/H),chev=z=>1-Math.abs(2*z/H-1);
+  const edgeOff=z=>{if(e<=0)return 0;const dd=Math.min(z,H-z);return dd>=e?0:P.etype==='chamfer'?-(e-dd):-(e-Math.sqrt(Math.max(0,e*e-(e-dd)**2)))};
+  let zlo=null;if(e>0){const extra=[];for(let j=1;j<=7;j++){const t=e*(1-Math.cos(j/7*Math.PI/2));extra.push(t,H-t)}
+    zlo=[...Array.from({length:nz+1},(_,s)=>H*s/nz),...extra].sort((a,b)=>a-b).filter((z,i,a)=>i===0||z-a[i-1]>1e-4);}
+  let outer,od=2*(base+d);
+  if(P.outer==='gear'){const mo=base/(no/2-1.25);
+    if(no/2-1.25<=0.5)msgs.push(['bad','Too few outer teeth.']);
+    outer={pts:extProfile(Math.max(6,no),mo,20*Math.PI/180,0,steps),tw:()=>0};od=mo*(no+2);}
+  else if(P.outer==='lobes')outer={pts:lobes(base,d,no,16),tw:()=>0};
+  else if(P.outer==='pebble'){const ph=[0,1,2,3,4].map(i=>rnd(i)*TAU);
+    outer={pts:rad(t=>Math.cos(no*t)+0.45*Math.cos(2*no*t+ph[0])+0.35*Math.cos(3*t+ph[1])+0.25*Math.cos(5*t+ph[2])+0.2*Math.cos((no+1)*t+ph[3])),
+      tw:z=>(TAU/no)*(0.25+0.3*rnd(5))*bell(z)};}
+  else if(P.outer==='alien'){
+    outer={pts:rad(t=>{const u=(no*t/TAU)%1;let f=u<0.72?Math.pow(u/0.72,1.8):Math.pow((1-u)/0.28,0.6);return f-0.22*Math.exp(-(((u-0.42)/0.05)**2))}),
+      tw:z=>(TAU/no)*0.55*chev(z),off:z=>0.3*d*bell(z)};od=2*(base+1.3*d);}
+  else if(P.outer==='flutes')outer={pts:rad(t=>Math.pow(0.5+0.5*Math.cos(no*t),0.7)),tw:z=>(z/H)*(TAU/no)*1.6};
+  else if(P.outer==='crystal'){const R=(base+0.4*d)/Math.cos(Math.PI/no);
+    outer={pts:Array.from({length:no},(_,i)=>pol(R,i*TAU/no)),tw:z=>(Math.PI/no)*chev(z),zl:[0,H/2,H]};od=2*R;}
+  else if(P.outer==='leaves')outer={pts:rad(t=>{const u=(no*t/TAU)%1,v=Math.pow(u,1.35);return Math.pow(Math.max(0,Math.sin(Math.PI*v)),0.55)*(1-0.15*Math.exp(-(((u-0.55)/0.06)**2)))}),tw:z=>(TAU/no)*0.12*chev(z)};
+  else if(P.outer==='scythe')outer={pts:rad(t=>{const u=(no*t/TAU)%1;return u<0.86?Math.pow(u/0.86,2.6):Math.pow((1-u)/0.14,0.5)}),tw:z=>(TAU/no)*0.9*z/H};
+  else if(P.outer==='scallop')outer={pts:rad(t=>0.75*(0.5+0.5*Math.cos(no*t))+0.25*Math.abs(Math.sin(no*5*t/2))),tw:()=>0};
+  else if(P.outer==='star'){const w=Math.min(14,Math.max(5,0.42*TAU*base/no)),Lc=base+d-w/2,M=Math.max(360,Math.min(1440,no*90));
+    outer={pts:Array.from({length:M},(_,i)=>{const t=i*TAU/M;let r=base;
+      for(let j=0;j<no;j++){let f=t-j*TAU/no;f=Math.atan2(Math.sin(f),Math.cos(f));if(Math.cos(f)<=0)continue;const sn=Math.abs(Math.sin(f));
+        if(Lc*sn<=w/2)r=Math.max(r,Lc*Math.cos(f)+Math.sqrt(w*w/4-(Lc*sn)**2));
+        if(sn>1e-6){const tr=(w/2)/sn;if(tr*Math.cos(f)<=Lc)r=Math.max(r,tr)}}
+      return pol(r,t)}),tw:()=>0,armW:w};}
+  else if(P.outer==='knurl'){const kd=Math.min(0.8,Math.max(0.3,d)),K=knurl(base,kd,false,h),ec=Math.min(e,h/2-0.5);
+    outer={...K,rad:(i,z)=>{const dd=Math.min(z,h-z);return K.rad(i,z)-(ec>0&&dd<ec?(ec-dd):0)}};od=2*(base+kd);}
+  else outer={pts:circle(base,Math.round(Math.max(96,base*6))),tw:()=>0};
+  if(['pebble','smooth','flutes','lobes','leaves','scythe','scallop','star'].includes(P.outer)){if(P.outer==='smooth')od=2*base;
+    if(e>0){outer.off=z=>edgeOff(z);outer.zl=zlo}}
+  else if(P.outer==='alien'&&e>0){const b0=outer.off;outer.off=z=>b0(z)+edgeOff(z);outer.zl=zlo}
+  const ring=[outer,{pts:wavy?WV.ringPts:intProfile(RL.zr,m,pa,clr,steps),tw:z=>RL.rho-k(z)/(m*RL.zr/2),band:bandOf('r'),zl:gzl}];
+  const sq=(rc,tc,a2,b2)=>Array.from({length:44},(_,i)=>{const t=i*TAU/44,c=Math.cos(t),s3=Math.sin(t),u=a2*Math.sign(c)*Math.pow(Math.abs(c),0.5),v=b2*Math.sign(s3)*Math.pow(Math.abs(s3),0.5);return pol(rc+u,tc+v/(rc+u))});
+  if(P.cut!=='none'){const r1=ringRoot+1.3;let r2,cnt,wf;
+    if(P.cut==='windows'){const big=['lobes','star','leaves','scythe','alien','pebble','flutes'].includes(P.outer);
+      r2=big?base+d*(P.outer==='lobes'||P.outer==='star'?1:0.45)-Math.max(1.8,e+1.2):base-1.3;cnt=no;
+      wf=P.outer==='star'?(outer.armW-3.2):0.4*TAU*r1/no-1;}
+    else{r2=base-Math.max(1.3,e+1.2);cnt=Math.max(6,Math.round(P.cn)||40);wf=0.5*TAU*r1/cnt;}
+    if(r2-r1<1.5||wf<0.9)msgs.push(['warn','Not enough room for wall cutouts — thicken the wall or add grip depth.']);
+    else for(let i=0;i<cnt;i++){const tc=i*TAU/cnt+(P.cut==='slots'?Math.PI/cnt:0);ring.push({pts:sq((r1+r2)/2,tc,(r2-r1)/2,wf/2),tw:()=>0})}}
+  // checks
+  if(e>0&&outer.off){ // real thinnest spot at the top/bottom face, between the edge treatment and the ring's tooth roots
+    const NB=720,oMin=new Float64Array(NB).fill(Infinity),hMax=new Float64Array(NB).fill(0),bin=(x,y)=>((Math.floor(Math.atan2(y,x)/TAU*NB)%NB)+NB)%NB;
+    const o0=outer.off(0),t0=outer.tw(0),c0=Math.cos(t0),s0=Math.sin(t0);
+    for(const [x,y] of outer.pts){const r=Math.hypot(x,y),f=(r+o0)/r,X=(x*c0-y*s0)*f,Y=(x*s0+y*c0)*f,b=bin(X,Y);oMin[b]=Math.min(oMin[b],Math.hypot(X,Y))}
+    const hc=ring[1],t1=hc.tw(0),c1=Math.cos(t1),s1=Math.sin(t1);
+    for(const [x,y] of hc.pts){const X=x*c1-y*s1,Y=x*s1+y*c1,b=bin(X,Y);hMax[b]=Math.max(hMax[b],Math.hypot(X,Y))}
+    let hm=Math.max(...hMax),thin=Infinity;for(let i=0;i<NB;i++)if(isFinite(oMin[i]))thin=Math.min(thin,oMin[i]-hm);
+    if(thin<0.8)msgs.push(['bad',`The edge ${P.etype==='chamfer'?'chamfer':'rounding'} leaves only ${Math.max(0,thin).toFixed(2)} mm of ring at the faces — use a smaller edge or a thicker wall.`]);}
+  let decor=null;
+  if(P.deco&&P.deco!=='none'){
+    if(P.cut!=='none')msgs.push(['warn','Face designs are skipped while wall cutouts are on.']);
+    else{const hm=Math.max(...ring[1].pts.map(p=>Math.hypot(p[0],p[1]))),oh=outer.off?outer.off(h):0;
+      const om=Math.min(...outer.pts.map(p=>Math.hypot(p[0],p[1])+oh)),a0=hm+1.0,b0=om-0.8,w=Math.max(0.4,+P.dw||0.8);
+      if(b0-a0<w+0.6)msgs.push(['warn','Not enough flat ring face for a design — thicken the wall.']);
+      else{const D=decorShapes(P.deco,+P.dn||24,a0,b0,w);if(D.note)msgs.push(['warn',D.note]);
+        const depth=Math.min(Math.max(0.2,+P.ddp||0.5),h/2-1);decor={top:true,bottom:P.dface==='both',depth,list:D.list};}}}
+  let attach=null;
+  if(P.att&&P.att!=='none'){const sz=Math.max(3,+P.as||8),ty=P.att;let n=Math.max(2,Math.round(+P.an||6));
+    const off0=(+P.aoff||0)*Math.PI/180,NB=1440,rmin=new Float64Array(NB).fill(Infinity);
+    for(const [x,y] of outer.pts){const b=((Math.floor(Math.atan2(y,x)/TAU*NB)%NB)+NB)%NB;rmin[b]=Math.min(rmin[b],Math.hypot(x,y))}
+    const anchorAt=t=>{let r=Infinity;const w=Math.ceil((sz/2)/(base*TAU)*NB)+1,c=((Math.floor(t/TAU*NB)%NB)+NB)%NB;for(let j=-w;j<=w;j++){const v=rmin[(c+j+NB)%NB];if(isFinite(v))r=Math.min(r,v)}return isFinite(r)?r:base};
+    const need=sz*(ty==='spikes'?0.75:ty==='ears'?1.6:1.05),fit=Math.max(2,Math.floor(TAU*(base+sz/2)/need));let angs;
+    if(P.outer!=='smooth'){ // lock to the outer ring's own lobes/teeth/fins: one per feature, at each feature's peak
+      // fold the outline into one period, find where it peaks on average, then space evenly from there
+      const tm=outer.tw(h/2),FB=180,sum=new Float64Array(FB),cn=new Float64Array(FB);
+      for(const [x,y] of outer.pts){const u=(((Math.atan2(y,x)+tm)/TAU*no)%1+1)%1,b2=Math.min(FB-1,Math.floor(u*FB));sum[b2]+=Math.hypot(x,y);cn[b2]++}
+      let bi=0,bv=-1;for(let i=0;i<FB;i++)if(cn[i]){const v=sum[i]/cn[i];if(v>bv){bv=v;bi=i}}
+      const ph=(bi+0.5)/FB*TAU/no,pk=Array.from({length:no},(_,k)=>ph+k*TAU/no);
+      let step=1;while(step<no&&(no%step||no/step>fit))step++;
+      if(no/step<2)msgs.push(['warn','These attachments are too big for this outer shape — make them smaller.']);
+      else if(step>1)msgs.push(['warn',`Attachments on every ${step===2?'2nd':step===3?'3rd':step+'th'} ${P.outer==='gear'?'tooth':'lobe'} so they don't overlap.`]);
+      angs=pk.filter((_,i)=>i%step===0);}
+    else{if(fit<n){msgs.push(['warn',`Fewer attachments (${fit}) so they don't overlap — still evenly spaced.`]);n=fit}angs=Array.from({length:n},(_,i)=>off0+i*TAU/n);}
+    const shape=attachShape(ty,sz),ov=1.2,eA=Math.min(e,sz/4),loopHole=ty==='loop'?sz/2-2.4:0;
+    if(ty==='loop'&&loopHole<1.5)msgs.push(['warn','Keychain loop needs a size of at least 8 mm for a usable hole.']);
+    const offA=eA>0?z=>{const dd=Math.min(z,h-z);return dd>=eA?0:P.etype==='chamfer'?-(eA-dd):-(eA-Math.sqrt(Math.max(0,eA*eA-(eA-dd)**2)))}:undefined;
+    attach=angs.map(t=>{const cs=[{pts:shape,tw:()=>0,off:offA,zl:offA?zlo||undefined:undefined}];
+      if(loopHole>=1.5)cs.push({pts:circle(loopHole,72),tw:()=>0});
+      const ext=-Math.min(...shape.map(p=>p[0]))-ov;
+      return {cs,ang:t,dist:anchorAt(t)+ext}});
+    if(!zlo&&offA)msgs.push(['warn','Edge treatment on attachments uses the ring’s edge setting.']);
+    od=Math.max(od,2*Math.max(...attach.map(A=>A.dist+sz)));}
+  let gap,validN;
+  if(wavy){validN=WV.valid;
+    if(WV.slots%N)msgs.push(['bad',`Wavy gears have ${WV.slots} planet slots — the planet count must divide ${WV.slots}.`]);
+    else{gap=WV.minGap(N);if(gap<0.5)msgs.push(['bad',`Planets bunch up and collide (closest gap ${gap.toFixed(2)} mm). Use fewer planets.`])}
+    msgs.push(['warn',lk?`Shaped planets: ${WV.T} teeth per side, ring has ${WV.nr} waves, sun is shaped to match. Spur teeth with the center channel.`:'Wavy gears use spur teeth with the center channel. The ring is wavy; the sun is shaped to match.']);}
+  else{const even=(zs+zr)%N===0;
+    if(!even)msgs.push(['bad',`${N} planets can't sit evenly: (sun + ring) = ${zs+zr} must divide by the planet count.`]);
+    gap=2*a*Math.sin(Math.PI/N)-m*(zp+2);
+    if(gap<0.6)msgs.push(['bad',`Planets collide (tip gap ${gap.toFixed(2)} mm). Use fewer planets or a bigger sun.`]);
+    validN=[];for(let n=2;n<=16;n++)if((zs+zr)%n===0&&2*a*Math.sin(Math.PI/n)-m*(zp+2)>=0.6)validN.push(n);}
+  if(zp<10&&!lk&&P.mode!=='ring')msgs.push(['warn',`Planets under 10 teeth get undercut; they print, but mesh a little rougher.`]);
+  if(!chan&&sty==='herring'&&beta<15*Math.PI/180)msgs.push(['warn','Helix under 15° may not hold the bearing together.']);
+  if(!chan&&sty!=='herring')msgs.push(['warn','Nothing locks the parts together: use herringbone teeth or the center channel.']);
+  if(chan&&z1-tt<1.2)msgs.push(['bad',`Too thin for the channel: make it at least ${(W+2*tt+2.4).toFixed(1)} mm thick or narrow the band.`]);
+  if(chan&&v<0.6)msgs.push(['warn','A ridge under 0.6 mm may pop out of its groove.']);
+  if(clr<0.15)msgs.push(['warn','Clearance under 0.15 mm usually fuses on FDM printers.']);
+  if(!msgs.some(x=>x[0]==='bad'))msgs.unshift(['good','Geometry checks out — ready to print in place.']);
+  const R2=rowsD.length,NT=wavy?N:rowsD.reduce((n,rw)=>n+rw.N,0);
+  const poses=wavy?t=>({sun:t,mids:[],planets:WV.at(t,N)}):t=>{const b=j=>t*(R2-j)/R2,planets=[];
+    rowsD.forEach((rw,j)=>{const s0=b(j),r0=b(j+1),c=(rw.zs*s0+rw.zr*r0)/(rw.zs+rw.zr),rot=c-(s0-c)*rw.zs/zp;
+      rw.thetas.forEach((th,i)=>planets.push({x:rw.a*Math.cos(th+c),y:rw.a*Math.sin(th+c),rot:rw.psi[i]+rot}))});
+    return {sun:t,mids:mids.map((_,j)=>b(j+1)),planets}};
+  return {mids,moons,attach,H:h,decor,dish,m,zs,zp,zr,N:NT,N1:N,h,nz,sun,planet,ring,a,od,gap,msgs,validN,poses,wavy,turns:wavy?WV.turns:null,ratio:1+zr/zs};
+}
+
+/* ---------- three.js scene ---------- */
+const fig=$('fig');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));fig.prepend(renderer.domElement);
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,1,1,5000);cam.up.set(0,0,1);
+scene.add(new THREE.HemisphereLight(0xffffff,0x3a3a3a,0.75));
+const dl=new THREE.DirectionalLight(0xffffff,0.85);dl.position.set(-80,-120,200);scene.add(dl);
+const dl2=new THREE.DirectionalLight(0xffffff,0.35);dl2.position.set(150,90,60);scene.add(dl2);
+const ctl=new THREE.OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;
+renderer.localClippingEnabled=true;
+const cutPlane=new THREE.Plane(new THREE.Vector3(0,-1,0),0);let sectionOn=false;
+const capMat=new THREE.MeshBasicMaterial({color:0xc2410c,side:THREE.BackSide,clippingPlanes:[cutPlane]});
+const mats={ring:new THREE.MeshStandardMaterial({color:0x9ea3a8,metalness:0.35,roughness:0.45}),
+  sun:new THREE.MeshStandardMaterial({color:0x5a5f65,metalness:0.35,roughness:0.5}),
+  planet:new THREE.MeshStandardMaterial({color:0xff6a13,metalness:0.1,roughness:0.55}),
+  moon:new THREE.MeshStandardMaterial({color:0xffc48a,metalness:0.1,roughness:0.55}),
+  mid:new THREE.MeshStandardMaterial({color:0x7d8287,metalness:0.35,roughness:0.45})};
+capMat.color.set(0x3b3f44);
+function mk(g,mat){const me=new THREE.Mesh(g,mat),cap=new THREE.Mesh(g,capMat);cap.visible=sectionOn;cap.renderOrder=-1;me.add(cap);return me}
+function applySection(){const R=G?G.od/2:50,a=+$('cutang').value*Math.PI/180;
+  cutPlane.normal.set(Math.sin(a),-Math.cos(a),0);cutPlane.constant=+$('cutpos').value*R;
+  for(const k in mats){mats[k].clippingPlanes=sectionOn?[cutPlane]:[];mats[k].needsUpdate=true}
+  if(group)group.traverse(o=>{if(o.material===capMat)o.visible=sectionOn});render()}
+let G=null,group=null,parts=null,framed=false;
+function geo(b){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(b.pos,3));g.setIndex(b.idx);const n=g.toNonIndexed();n.computeVertexNormals();g.dispose();return n}
+function rebuild(){
+  readUI();try{localStorage.setItem('pgg',JSON.stringify(P))}catch(e){}
+  G=design();
+  const bodies={sun:extrude(G.sun,G.h,G.nz,G.dish),planet:extrude(G.planet,G.h,G.nz),ring:extrude(G.ring,G.h,G.nz,null,G.decor)};
+  bodies.planets=Array(G.N).fill(bodies.planet);
+  bodies.mids=G.mids.map(c=>extrude(c.map(x=>({...x})),G.h,G.nz));
+  if(G.moons){bodies.miniSun=extrude(G.moons.sun.map(c=>({...c})),G.h,G.nz);bodies.moon=extrude(G.moons.moon.map(c=>({...c})),G.h,G.nz)}
+  if(G.attach){const parts2=[bodies.ring];for(const A of G.attach){const b=extrude(A.cs.map(c=>({...c})),G.h,G.nz),c=Math.cos(A.ang),s2=Math.sin(A.ang);
+      for(let i=0;i<b.pos.length;i+=3){const x=b.pos[i]+A.dist,y=b.pos[i+1];b.pos[i]=x*c-y*s2;b.pos[i+1]=x*s2+y*c;b.pos[i+2]=0.03+b.pos[i+2]*(G.h-0.06)/G.h}parts2.push(b)}
+    const pos=[],idx=[];for(const b of parts2){const o=pos.length/3;for(const v of b.pos)pos.push(v);for(const i of b.idx)idx.push(i+o)}bodies.ring={pos,idx};}
+  G.bodies=bodies;
+  if(group){scene.remove(group);group.traverse(o=>o.geometry&&o.geometry.dispose())}
+  group=new THREE.Group();
+  const pg=geo(bodies.planet);
+  parts={sun:mk(geo(bodies.sun),mats.sun),ring:mk(geo(bodies.ring),mats.ring),planets:bodies.planets.map(()=>mk(pg,mats.planet))};
+  group.add(parts.sun,parts.ring,...parts.planets);
+  parts.mids=bodies.mids.map(b=>mk(geo(b),mats.mid));if(parts.mids.length)group.add(...parts.mids);
+  parts.mini=null;if(G.moons){const gs=geo(bodies.miniSun),gm=geo(bodies.moon);parts.mini=parts.planets.map(()=>({sun:mk(gs,mats.sun),moons:[0,1,2].map(()=>mk(gm,mats.moon))}));
+    for(const q of parts.mini)group.add(q.sun,...q.moons);}
+  scene.add(group);
+  pose(angle);applySection();
+  if(!framed){const R=G.od/2;cam.position.set(R*0.9,-R*2.6,R*2.4);ctl.target.set(0,0,G.H/2);framed=true}
+  ctl.update();
+  const ringMode=P.mode==='ring';for(const id of ['c-presets','c-train','c-outer','c-centers'])$(id).hidden=ringMode;$('c-ring').hidden=!ringMode;
+  $('mode-bearing').setAttribute('aria-pressed',!ringMode);$('mode-ring').setAttribute('aria-pressed',ringMode);if(G.ringD)$('rdia').textContent=G.ringD.toFixed(1)+' mm';
+  $('zr').textContent=G.zr;$('zsro').textContent=G.zs;for(const id of ['r-zs'])$(id).hidden=!!G.wavy;for(const id of ['r-tpw','r-nr','r-ns','r-zsro','r-pshape','r-flat'])$(id).hidden=P.shape!=='wavy';const lob=P.shape==='wavy'&&P.pshape!=='round';$('r-lobe').hidden=!lob;if(lob){$('r-tpw').hidden=$('r-nr').hidden=$('r-flat').hidden=true}$('r-ret').hidden=$('r-style').hidden=P.shape==='wavy';
+  $('r-gd').hidden=['gear','smooth'].includes(P.outer);$('r-seed').hidden=P.outer!=='pebble';$('r-edge').hidden=$('r-etype').hidden=['gear','crystal'].includes(P.outer);$('r-cn').hidden=P.cut!=='slots';$('r-dd').hidden=$('r-ddep').hidden=P.dish==='none';$('r-as').hidden=P.att==='none';$('r-an').hidden=$('r-aoff').hidden=P.att==='none'||P.outer!=='smooth';for(const id of ['r-dn','r-dw','r-ddp','r-dface'])$(id).hidden=P.deco==='none';$('r-dn').hidden=P.deco==='none'||P.deco==='rings';$('r-cw').hidden=$('r-cv').hidden=P.ret!=='channel'||+P.rows>1;$('r-rows').hidden=P.shape==='wavy';if(+P.rows>1&&P.shape!=='wavy')$('r-ret').hidden=$('r-style').hidden=true;
+  const tris=(bodies.sun.idx.length+bodies.ring.idx.length+bodies.mids.reduce((n,b)=>n+b.idx.length,0)+bodies.planets.reduce((n,b)=>n+b.idx.length,0)+(G.moons?G.N*(bodies.miniSun.idx.length+3*bodies.moon.idx.length):0))/3;
+  $('stats').innerHTML=[...(G.ringD?[['Finger hole',G.ringD.toFixed(1)+' mm'],['Planets',G.N]]:[]),['Outside ⌀',G.od.toFixed(1)+' mm'],['Height',(+G.H.toFixed(2))+' mm'],G.wavy?['Sun turns per lap',G.turns.toFixed(2)]:['Ratio',G.ratio.toFixed(2)+' : 1'],['Triangles',Math.round(tris/1000)+'k']]
+    .map(([l,v])=>`<span class="pill">${l} <b>${v}</b></span>`).join('');
+  $('msgs').innerHTML=G.msgs.map(([c,t])=>`<li class="${c}">${t}</li>`).join('');
+  const valid=G.validN||[];
+  $('nchips').innerHTML=valid.length?valid.map(n=>`<button class="chip" data-n="${n}" aria-pressed="${n===G.N1}">${n}</button>`).join(''):'<span class="note">No even planet count fits — change sun or planet teeth.</span>';
+  $('presets').querySelectorAll('.chip').forEach((b,i)=>b.setAttribute('aria-pressed',KEYS.every(k=>PRESETS[i].v[k]==P[k])));
+  render();
+}
+let angle=0;
+function pose(t){if(!G)return;
+  const S=G.poses(t);parts.sun.rotation.z=S.sun;if(parts.mids)parts.mids.forEach((p,j)=>p.rotation.z=S.mids[j]);
+  parts.planets.forEach((p,i)=>{const q=S.planets[i];p.position.set(q.x,q.y,0);p.rotation.z=q.rot});
+  if(parts.mini)parts.mini.forEach((M,i)=>{const q=S.planets[i],L=G.moons.pose(-q.rot),c=Math.cos(q.rot),s=Math.sin(q.rot);
+    M.sun.position.set(q.x,q.y,0);M.sun.rotation.z=q.rot+L.sun;
+    M.moons.forEach((mm,j)=>{const o=L.moons[j];mm.position.set(q.x+o.x*c-o.y*s,q.y+o.x*s+o.y*c,0);mm.rotation.z=q.rot+o.rot})});}
+function size(){const w=fig.clientWidth,h=fig.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();render()}
+const ro=new ResizeObserver(size);ro.observe(fig);
+function render(){renderer.render(scene,cam)}
+let spinning=!matchMedia('(prefers-reduced-motion: reduce)').matches,last=0;
+function loop(ts){const dt=Math.min(0.05,(ts-last)/1000||0);last=ts;
+  if(spinning){angle+=dt*0.8;pose(angle)}ctl.update();render();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+const spinBtn=$('spin');
+function setSpin(v){spinning=v;spinBtn.textContent=v?'Pause':'Spin';spinBtn.setAttribute('aria-pressed',v)}
+spinBtn.onclick=()=>setSpin(!spinning);setSpin(spinning);
+$('sect').onclick=()=>{sectionOn=!sectionOn;$('sect').setAttribute('aria-pressed',sectionOn);$('secbar').hidden=!sectionOn;
+  if(sectionOn&&G){const R=G.od/2;cam.position.set(R*0.35,-R*2.2,R*1.1);ctl.target.set(0,0,G.H/2)}applySection()};
+$('cutpos').oninput=applySection;$('cutang').oninput=applySection;
+
+/* ---------- UI ---------- */
+$('presets').innerHTML=PRESETS.map((p,i)=>`<button class="chip" data-p="${i}">${p.name}</button>`).join('');
+const setHash=v=>{try{history.replaceState(null,'',v?'#'+v:location.pathname+location.search)}catch(e){}};
+$('mode-bearing').onclick=()=>{P.mode='bearing';setHash('');framed=false;rebuild()};$('mode-ring').onclick=()=>{P.mode='ring';setHash('ring');if(!(+P.h>=5&&+P.h<=10))P.h=8;writeUI();framed=false;rebuild()};
+if(location.hash==='#ring'){P.mode='ring';if(!(+P.h>=5&&+P.h<=10))P.h=8}else if(location.hash==='#bearing')P.mode='bearing';
+addEventListener('hashchange',()=>{const r=location.hash==='#ring';if(r!==(P.mode==='ring')){P.mode=r?'ring':'bearing';if(r&&!(+P.h>=5&&+P.h<=10))P.h=8;writeUI();framed=false;rebuild()}});
+if(!(window.claude&&window.claude.use))$('back').hidden=false;
+$('presets').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;P={...PRESETS[b.dataset.p].v};writeUI();framed=false;angle=0;rebuild()};
+$('nchips').onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;$('n').value=b.dataset.n;rebuild()};
+let tmr;for(const k of KEYS){$(k).addEventListener('input',()=>{clearTimeout(tmr);tmr=setTimeout(rebuild,180)});$(k).addEventListener('change',()=>{clearTimeout(tmr);rebuild()})}
+writeUI();rebuild();
+
+/* ---------- randomizer (keeps things printable) ---------- */
+const pick=a=>a[Math.floor(Math.random()*a.length)],ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),rr=(a,b)=>a+Math.random()*(b-a);
+function randomize(){
+  if(P.mode==='ring'){Object.assign(P,{rm:pick(['0.8','1','1.2']),rzp:ri(5,8),rknurl:pick(['knurl','knurl','smooth']),rbk:pick(['none','none','knurl']),ret:pick(['herring','herring','channel']),h:8});if(P.ret==='channel'){P.style='spur';P.h=9.5}else P.style='herring';writeUI();framed=false;rebuild();return}
+  const keep=P,q=P.q;
+  for(let t=0;t<60;t++){
+    const R={...keep,q,pa:20,clr:0.3,cw:3.5,cv:1,beta:pick([25,30,35])};
+    const wavy=Math.random()<0.22&&t<40;
+    if(wavy){const ns=pick([2,3,4]),nr=ns+pick([2,3]),tpw=pick([7,8,9,10]),zp0=tpw*(nr-ns)/2;
+      Object.assign(R,{flat:pick([0,15,30,45]),shape:'wavy',pshape:'round',ret:'channel',style:'spur',m:pick([1,1.25]),ns,nr,tpw,zp:Math.ceil(zp0)-1-pick([0,0,1]),n:nr+ns});
+      if(Math.random()<0.5){const k=pick([3,3,4]);Object.assign(R,{pshape:k===3?'tri':'square',zp:k*ri(3,5),ns:ri(4,7),lobe:ri(5,10)*10})}
+      if(R.zp<6)continue;}
+    else{Object.assign(R,{shape:'round',m:pick([1,1.25,1.5]),zp:ri(9,16),zs:ri(12,36)});
+      R.ret=Math.random()<0.65?'herring':'channel';R.style=R.ret==='herring'?'herring':pick(['spur','spur','herring']);
+      const zr=R.zs+2*R.zp,a=R.m*(R.zs+R.zp)/2,opts=[];
+      for(let n=3;n<=10;n++)if((R.zs+zr)%n===0&&2*a*Math.sin(Math.PI/n)-R.m*(R.zp+2)>=1)opts.push(n);
+      if(!opts.length)continue;R.n=pick(opts);}
+    R.h=pick(wavy?[12,14]:R.ret==='channel'?[10,12,14]:[8,10,12]);
+    R.outer=pick(['gear','lobes','pebble','alien','flutes','crystal','leaves','scythe','scallop','star','smooth']);
+    const zoR={gear:[30,60],lobes:[8,14],pebble:[5,9],alien:[7,12],flutes:[18,36],crystal:[6,12],leaves:[24,40],scythe:[8,16],scallop:[6,12],star:[5,8],smooth:[8,8]}[R.outer];
+    const gdR={gear:[2,2],lobes:[3,7],pebble:[2,5],alien:[3,6],flutes:[1,2],crystal:[1,3],leaves:[4,7],scythe:[3,6],scallop:[2,3],star:[10,18],smooth:[2,2]}[R.outer];
+    R.zo=ri(...zoR);R.gd=+rr(...gdR).toFixed(1);R.wall=pick([3,4,5]);R.seed=ri(0,99);
+    R.edge=['gear','crystal'].includes(R.outer)?0:pick([0,0,1,1.5]);R.etype=pick(['round','round','chamfer']);
+    R.cut='none';const cr=Math.random();
+    if(cr<0.3&&['lobes','star'].includes(R.outer))R.cut='windows';else if(cr<0.2){R.cut='slots';R.wall=pick([7,8,9]);R.cn=ri(30,60)}
+    R.bore=pick(['round','round','hex','tri','spline','spokes','turbine','rifled']);R.pstyle=pick(['round','round','tri','spline','spokes','turbine','none']);R.vc=ri(3,7);R.bch=pick([0,0.5,0.8]);R.pch=pick([0,0.4,0.6]);R.moons='none';R.att=Math.random()<0.22?pick(['bubbles','spikes','hearts','stars','petals','ears','loop']):'none';R.an=ri(6,14);R.as=pick([6,7,8,10]);R.aoff=0;R.deco=Math.random()<0.3?pick(['rings','rays','swirl','wave','zigzag','chevrons','dots','petals','diamonds']):'none';R.dn=ri(12,36);
+    const sunRoot=R.m*(wavy?R.tpw*R.ns:R.zs)/2*(wavy?0.8:1)-1.25*R.m,pRoot=R.m*R.zp/2-1.25*R.m;
+    R.bd=Math.max(0,Math.floor(2*(sunRoot-1.2)*rr(0.45,0.85)*2)/2);if(R.bore==='hex')R.bd=Math.min(R.bd,6.35);
+    R.ph=R.pstyle==='none'?0:Math.max(0,Math.floor(2*(pRoot-1)*rr(0.5,0.85)*2)/2);if(R.ph<2.5)R.pstyle='none';
+    P=R;let G1=design();
+    if(wavy&&G1.wavy){const ok=G1.validN.filter(n=>n>=3);if(!ok.length)continue;P.n=pick(ok);G1=design()}
+    if(!G1.msgs.some(m=>m[0]==='bad')){writeUI();framed=false;angle=0;rebuild();return}
+  }
+  P=keep;writeUI();
+}
+$('rand').onclick=()=>{const b=$('rand');b.disabled=true;b.textContent='Rolling…';setTimeout(()=>{try{randomize()}finally{b.disabled=false;b.textContent='Random'}},20)};
+
+/* ---------- STL + zip ---------- */
+function stl(list){ // list of {b, ang, x, y}
+  let nt=0;for(const it of list)nt+=it.b.idx.length/3;
+  const buf=new ArrayBuffer(84+nt*50),dv=new DataView(buf);dv.setUint32(80,nt,true);let o=84;
+  for(const {b,ang,x,y} of list){const c=Math.cos(ang),s=Math.sin(ang),p=b.pos,I=b.idx;
+    const T=v=>[p[v*3]*c-p[v*3+1]*s+x,p[v*3]*s+p[v*3+1]*c+y,p[v*3+2]];
+    for(let i=0;i<I.length;i+=3){const A=T(I[i]),B=T(I[i+1]),C=T(I[i+2]);
+      const u=[B[0]-A[0],B[1]-A[1],B[2]-A[2]],w=[C[0]-A[0],C[1]-A[1],C[2]-A[2]];
+      let n=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];const l=Math.hypot(...n)||1;n=n.map(v=>v/l);
+      for(const v of [n,A,B,C])for(const q of v){dv.setFloat32(o,q,true);o+=4}o+=2}}
+  return new Uint8Array(buf);
+}
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc=d=>{let c=0xFFFFFFFF;for(let i=0;i<d.length;i++)c=crcT[(c^d[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+function zip(files){const enc=new TextEncoder(),chunks=[],cen=[];let off=0;
+  for(const f of files){const nm=enc.encode(f.name),c=crc(f.data),h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint32(14,c,true);h.setUint32(18,f.data.length,true);h.setUint32(22,f.data.length,true);h.setUint16(26,nm.length,true);
+    chunks.push(new Uint8Array(h.buffer),nm,f.data);
+    const e=new DataView(new ArrayBuffer(46));e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint32(16,c,true);e.setUint32(20,f.data.length,true);e.setUint32(24,f.data.length,true);e.setUint16(28,nm.length,true);e.setUint32(42,off,true);
+    cen.push(new Uint8Array(e.buffer),nm);off+=30+nm.length+f.data.length}
+  const cs=cen.reduce((s,a)=>s+a.length,0),end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cs,true);end.setUint32(16,off,true);
+  return new Blob([...chunks,...cen,new Uint8Array(end.buffer)],{type:'application/zip'})}
+
+let downloads=null;const dlBtn=$('dl'),dlMsg=$('dlmsg');const hosted=!(window.claude&&window.claude.use);
+// On claude.ai the page may only save zip (not stl), so the single STL rides in a zip there; hosted anywhere else it saves a bare .stl.
+dlBtn.textContent=hosted?'Download print-in-place STL':'Download print-in-place STL (.zip)';
+if(!hosted){dlBtn.disabled=true;dlMsg.textContent='Connecting downloads…';
+  (async()=>{try{downloads=await window.claude.use('downloads')}catch(e){downloads=null}
+    if(downloads){dlBtn.disabled=false;dlMsg.textContent=''}else dlMsg.textContent='Downloads aren’t available in this view — open the page on claude.ai in a browser.'})();}
+dlBtn.onclick=async()=>{if(!G)return;
+  const b=G.bodies,tag=`${G.wavy?'wavy-':''}m${G.m}-s${G.zs}-p${G.zp}x${G.N}-r${G.zr}`,name=`planetary-gear-${tag}.stl`;
+  const S0=G.poses(0),data=stl([{b:b.sun,ang:S0.sun,x:0,y:0},{b:b.ring,ang:0,x:0,y:0},...b.mids.map((m2,j)=>({b:m2,ang:S0.mids[j],x:0,y:0})),...S0.planets.map((q,i)=>({b:b.planets[i],ang:q.rot,x:q.x,y:q.y})),
+    ...(G.moons?S0.planets.flatMap(q=>{const L=G.moons.pose(-q.rot),c=Math.cos(q.rot),s=Math.sin(q.rot);
+      return [{b:b.miniSun,ang:q.rot+L.sun,x:q.x,y:q.y},...L.moons.map(o=>({b:b.moon,ang:q.rot+o.rot,x:q.x+o.x*c-o.y*s,y:q.y+o.x*s+o.y*c}))]}):[])]);
+  if(hosted){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'model/stl'}));a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);dlMsg.textContent='Saved.';return}
+  if(!downloads)return;dlMsg.textContent='Preparing…';
+  try{await downloads.save({filename:name.replace(/\.stl$/,'.zip'),data:zip([{name,data}])});dlMsg.textContent='Saved.'}
+  catch(e){dlMsg.textContent=e&&e.code==='declined'?'Download cancelled.':e&&e.code==='host_unavailable'?'This app can’t save files — open the page in a browser or on a computer.':'Couldn’t save the file'+(e&&e.code?` (${e.code})`:'')+'.'}};
+}
+</script>
+</body>
+</html>
