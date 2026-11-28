@@ -117,10 +117,10 @@ const BAN={
 const TOOLS=[
   {name:"Planetary Gears",tag:"Gear bearings",url:"/print-shop/planetary-gears/",ban:"gears",live:true,blurb:"Print-in-place gear bearings: herringbone or V-channel teeth, wavy and triangle planets, nested rows, moons, grips, face designs and more."},
   {name:"Gear Rings",tag:"Wearable",url:"/print-shop/planetary-gears/#ring",ban:"ring",live:true,blurb:"Wearable fidget gear rings sized by US ring size, with chunky star planets and a diamond-knurl outside."},
-  {name:"Fidget Ring",tag:"Spinner rings",url:"/print-shop/fidget-ring/",ban:"fidget",live:false,blurb:"Pick the inner band size, then design a patterned outer band that spins around it."},
-  {name:"Infinity Cube",tag:"Fidget",url:"/print-shop/infinity-cube/",ban:"cube",live:false,blurb:"Print-in-place infinity cubes that fold over and over, forever."},
-  {name:"Chainmail Forge",tag:"Printed fabric",url:"/print-shop/chainmail-forge/",ban:"chain",live:false,blurb:"Interlocking print-in-place chainmail and flexible printed cloth."},
-  {name:"Flurry",tag:"Ornaments",url:"/print-shop/flurry/",ban:"flake",live:false,blurb:"Snowflake ornaments: generate one, draw your own, or fold-and-cut like paper. Hanging loops included."}
+  {name:"Fidget Ring",tag:"Spinner rings",url:"/print-shop/fidget-ring/",ban:"fidget",live:true,blurb:"Pick the inner band size, then design a patterned outer band that spins around it."},
+  {name:"Infinity Cube",tag:"Fidget",url:"/print-shop/infinity-cube/",ban:"cube",live:true,blurb:"Print-in-place infinity cubes that fold over and over, forever."},
+  {name:"Chainmail Forge",tag:"Printed fabric",url:"/print-shop/chainmail-forge/",ban:"chain",live:true,blurb:"Interlocking print-in-place chainmail and flexible printed cloth."},
+  {name:"Flurry",tag:"Ornaments",url:"/print-shop/flurry/",ban:"flake",live:true,blurb:"Snowflake ornaments: generate one, draw your own, or fold-and-cut like paper. Hanging loops included."}
 ];
 document.getElementById("grid").innerHTML=TOOLS.map(t=>{const inner=`<div class="banner">${BAN[t.ban]()}<div class="meta"><span class="tag">${esc(t.tag)}</span><span class="status ${t.live?"live":"soon"}">${t.live?"Live":"Soon"}</span></div></div>
   <h3>${esc(t.name)}</h3><p>${esc(t.blurb)}</p><span class="go">${t.live?"Open →":"On its way"}</span>`;
