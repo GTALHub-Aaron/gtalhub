@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Chainmail Forge | The Print Shop | GTALHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#f4f3ef,#121614);--panel:light-dark(#ffffff,#1b201e);--ink:light-dark(#18201c,#eef1ec);--mute:light-dark(#5d6762,#9aa59f);--line:light-dark(#dfe2dc,#2a312d);--g:#2fbf63;--g2:light-dark(#1f9a4c,#5ee08a);--warn:#e0702b;--bed:#1d2321}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2{font-family:Archivo,Inter,sans-serif;margin:0;line-height:1.05}
+h1{font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:17px;font-weight:700;margin-bottom:10px}
+.top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:18px max(4vw,16px) 12px}
+.top p{margin:0;color:var(--mute);font-size:15px}
+.back{color:var(--g2);font:600 14px Inter,sans-serif;text-decoration:none;width:100%}
+.back:hover{text-decoration:underline}
+.wrap{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;padding:0 max(4vw,16px) 28px;max-width:1500px;margin:0 auto}
+.view{position:relative;height:min(72vh,680px);border-radius:14px;overflow:hidden;background:radial-gradient(circle at 30% 20%,#2a312d,var(--bed) 70%)}
+.view canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.hud{position:absolute;left:12px;right:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.hud>*{pointer-events:auto}
+.chip{background:rgba(18,22,20,.78);color:#eef1ec;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:7px 12px;font-size:13px;backdrop-filter:blur(6px)}
+.seg{display:flex;background:rgba(18,22,20,.78);border-radius:999px;padding:3px;border:1px solid rgba(255,255,255,.12)}
+.seg button{background:none;border:0;color:#cfd6d1;font:600 13px Inter;padding:7px 12px;border-radius:999px;min-height:34px;cursor:pointer}
+.seg button.on{background:var(--g);color:#08140d}
+.busy{position:absolute;right:12px;bottom:12px;display:none}
+.status{position:absolute;left:12px;bottom:12px;max-width:calc(100% - 24px)}
+.status.bad{background:rgba(120,40,10,.85)}
+.side{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.styles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.st{border:1.5px solid var(--line);background:none;border-radius:10px;padding:6px 4px 8px;cursor:pointer;color:var(--ink);font:600 12px Inter;text-align:center;min-height:44px}
+.st svg{display:block;width:100%;aspect-ratio:1;margin-bottom:4px;border-radius:6px;background:var(--bed)}
+.st.on{border-color:var(--g);box-shadow:0 0 0 2px color-mix(in srgb,var(--g) 35%,transparent)}
+.st:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--g2);outline-offset:2px}
+.grp{font:600 13px Inter;color:var(--mute);margin:12px 0 8px}.grp:first-child{margin-top:0}
+.blurb{color:var(--mute);font-size:14px;margin:10px 0 0}
+.row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 4.2em;align-items:center;gap:10px;margin:6px 0}
+.row label{font-size:14px}
+.row output{font-variant-numeric:tabular-nums;text-align:right;font-size:14px;white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--g);height:32px}
+select{font:16px Inter;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);min-height:44px;width:100%}
+.tog{display:flex;align-items:center;gap:8px;font-size:14px;margin:4px 0 8px;min-height:32px}
+.tog input{width:20px;height:20px;accent-color:var(--g)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat b{display:block;font:700 clamp(18px,2.2vw,24px) Archivo,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat span{font-size:13px;color:var(--mute)}
+.dl{width:100%;min-height:52px;border:0;border-radius:12px;background:var(--g);color:#08140d;font:700 17px Archivo,sans-serif;cursor:pointer;margin-top:14px}
+.dl:disabled{opacity:.5;cursor:default}
+.note{font-size:13px;color:var(--mute);margin:8px 0 0}
+.tips{margin:0;padding-left:18px;font-size:14px;color:var(--mute)}
+.tips li{margin:4px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}.view{height:min(58vh,520px)}}
+@media(max-width:520px){.styles{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.st{font-size:11px}.row{grid-template-columns:7.2em minmax(0,1fr) 3.8em}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="/print-shop/">← The Print Shop</a>
+  <h1>Chainmail Forge</h1>
+  <p>Print-in-place fabric. Prints flat, no supports, already linked.</p>
+</header>
+<main class="wrap">
+  <section>
+    <div class="view" id="view">
+      <canvas id="cv"></canvas>
+      <div class="hud">
+        <div class="seg" id="mode"><button data-m="sheet" class="on">Whole sheet</button><button data-m="close">Close-up</button></div>
+        <div class="seg" id="cam"><button data-c="persp" class="on">3D</button><button data-c="top">Top</button></div>
+      </div>
+      <div class="chip status" id="status">Building…</div>
+      <div class="chip busy" id="busy">Working…</div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="stats">
+        <div class="stat"><b id="sLinks">–</b><span id="sLinksL">links</span></div>
+        <div class="stat"><b id="sSize">–</b><span>footprint, mm</span></div>
+        <div class="stat"><b id="sGrams">–</b><span>PLA, approx</span></div>
+        <div class="stat"><b id="sGap">–</b><span>tightest gap</span></div>
+        <div class="stat"><b id="sThick">–</b><span>fabric thickness</span></div>
+        <div class="stat"><b id="sPitch">–</b><span>link pitch</span></div>
+      </div>
+      <button class="dl" id="dl">Download print-in-place STL</button>
+      <p class="note" id="dlNote">One STL with every link already in place. Drop it straight into your slicer.</p>
+    </div>
+  </section>
+  <aside class="side">
+    <div class="card">
+      <h2>Link style</h2>
+      <div id="styles"></div>
+      <p class="blurb" id="blurb"></p>
+    </div>
+    <div class="card">
+      <h2>Links</h2>
+      <label class="tog"><input type="checkbox" id="auto" checked> Auto-size links (smallest link that keeps the gap)</label>
+      <div class="row" id="patRow" hidden><label for="pat">Top pattern</label><select id="pat"><option value="spiral">Spiral</option><option value="swirl">Swirl</option><option value="rings">Rings</option><option value="flat">Flat</option></select><span></span></div>
+      <div class="row"><label for="L" id="Llabel">Link size</label><input type="range" id="L" min="3" max="24" step="0.05"><output id="oL"></output></div>
+      <div class="row"><label for="w">Bar width</label><input type="range" id="w" min="0.6" max="2" step="0.05"><output id="ow"></output></div>
+      <div class="row"><label for="t">Bar thickness</label><input type="range" id="t" min="0.4" max="1.2" step="0.2"><output id="ot"></output></div>
+      <div class="row"><label for="g">Side gap</label><input type="range" id="g" min="0.3" max="0.9" step="0.05"><output id="og"></output></div>
+      <div class="row"><label for="gz">Layer gap</label><input type="range" id="gz" min="0.2" max="0.8" step="0.2"><output id="ogz"></output></div>
+      <p class="note">Bigger gaps give a floppier fabric. The defaults are set for a 0.4 mm nozzle at 0.2 mm layers. Bar thickness and layer gap move in whole layers.</p>
+    </div>
+    <div class="card">
+      <h2>Sheet</h2>
+      <div class="row"><label for="shape">Shape</label><select id="shape"><option value="rect">Rectangle</option><option value="circle">Circle / oval</option><option value="hex">Hexagon</option><option value="heart">Heart</option></select><span></span></div>
+      <div class="row"><label for="W">Width</label><input type="range" id="W" min="20" max="300" step="5"><output id="oW"></output></div>
+      <div class="row"><label for="H">Height</label><input type="range" id="H" min="20" max="300" step="5"><output id="oH"></output></div>
+    </div>
+    <div class="card">
+      <h2>Printing it</h2>
+      <ul class="tips">
+        <li>No supports. The high bars are short bridges between posts.</li>
+        <li>If links fuse at the bed, turn on elephant-foot compensation (about 0.1–0.15 mm) or raise the side gap.</li>
+        <li>Print bridges slowly with full fan. A brim is fine but skip a raft.</li>
+        <li>Flex it gently along both axes after printing to break any whiskers.</li>
+      </ul>
+    </div>
+  </aside>
+</main>
+<script id="engine">
+// Chainmail geometry engine: rectilinear saddle loops (x-edges high, y-edges low),
+// posts at every corner, interlock verified by linking number, clearance by box tests.
+(function (root) {
+  const EPS = 1e-6;
+
+  // ---------- link templates ----------
+  function rectLoop(hx, hy) { // CCW
+    return [[-hx, -hy], [hx, -hy], [hx, hy], [-hx, hy]];
+  }
+  function plusLoop(hx, hy, c) { // rectangle with notched corners (plus outline), CCW
+    return [[-hx + c, -hy], [hx - c, -hy], [hx - c, -hy + c], [hx, -hy + c], [hx, hy - c], [hx - c, hy - c],
+            [hx - c, hy], [-hx + c, hy], [-hx + c, hy - c], [-hx, hy - c], [-hx, -hy + c], [-hx + c, -hy + c]];
+  }
+
+  const STYLES = {
+    nasa: { tile: true, name: 'Hex tiles', blurb: 'NASA-fabric style. Hollow hexagon tiles with solid tops sit almost edge to edge, tied together by hidden staple links under every seam. They fold easily one way and stiffen the other way, like the original.' },
+
+    rings: { curved: true, group: 'curved',
+      name: 'Round rings', blurb: 'Round 4-in-1 rings, the closest thing to real wire chainmail.',
+      build(L) { const r = L / 2, p = ringPts(r, r, 48); return { degree: 4, templates: [{ ox: 0, oy: 0, curve: p }, { ox: .5, oy: .5, curve: p }] }; } },
+    oval: { curved: true,
+      name: 'Oval rings', blurb: 'Stretched round rings. Drapes more along their length.',
+      build(L) { const p = ringPts(L * 0.68, L * 0.42, 56); return { degree: 4, templates: [{ ox: 0, oy: 0, curve: p }, { ox: .5, oy: .5, curve: p }] }; } },
+    soft: { curved: true,
+      name: 'Soft box', blurb: 'Square links with rounded corners. They slide past each other more smoothly than sharp boxes.',
+      build(L) { const a = L / 2, p = softBoxPts(a, a * 0.55, 8); return { degree: 4, templates: [{ ox: 0, oy: 0, curve: p }, { ox: .5, oy: .5, curve: p }] }; } },
+    hex: { curved: true,
+      name: 'Hex mail', blurb: 'Hexagon links for a honeycomb look.',
+      build(L) { const r = L / 2, v = []; for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; v.push([r * Math.cos(a), r * 0.95 * Math.sin(a)]); }
+        const p = polyPts(v, 4); return { degree: 4, templates: [{ ox: 0, oy: 0, curve: p }, { ox: .5, oy: .5, curve: p }] }; } },
+    scale: { curved: true,
+      name: 'Scale mail', blurb: 'U-shaped links in staggered rows, like fish or dragon scales.',
+      build(L) { const p = scalePts(L / 2, 20); return { degree: 4, templates: [{ ox: 0, oy: 0, curve: p }, { ox: .5, oy: .5, curve: p }] }; } },
+    jrings: { curved: true,
+      name: 'Big & small', blurb: 'Large round rings joined by smaller ones, a Japanese-style weave.',
+      build(L) { return { degree: 4, templates: [{ ox: 0, oy: 0, curve: ringPts(L / 2, L / 2, 48) }, { ox: .5, oy: .5, curve: ringPts(L * 0.4, L * 0.4, 40) }] }; } },
+    box: {
+      name: 'Box mail', blurb: 'Classic European 4-in-1. Every square link hooks its four diagonal neighbors.',
+      build(L) { const a = L / 2; return { degree: 4, templates: [
+        { ox: 0, oy: 0, loop: rectLoop(a, a) }, { ox: .5, oy: .5, loop: rectLoop(a, a) }] }; }
+    },
+    stretch: {
+      name: 'Stretch mail', blurb: 'Long rectangular links. Drapes easily one way and stays firmer the other.',
+      build(L) { const ax = L * 0.75, ay = L * 0.42; return { degree: 4, templates: [
+        { ox: 0, oy: 0, loop: rectLoop(ax, ay) }, { ox: .5, oy: .5, loop: rectLoop(ax, ay) }] }; }
+    },
+    basket: {
+      name: 'Basket weave', blurb: 'Wide and tall links take turns, like woven fabric.',
+      build(L) { const A = L * 0.68, B = L * 0.4; return { degree: 4, templates: [
+        { ox: 0, oy: 0, loop: rectLoop(A, B) }, { ox: .5, oy: .5, loop: rectLoop(B, A) }] }; }
+    },
+    japanese: {
+      name: 'Japanese 4-in-1', blurb: 'Big square links tied together by small connector links.',
+      build(L) { const a = L / 2, b = L * 0.27; return { degree: 4, templates: [
+        { ox: 0, oy: 0, loop: rectLoop(a, a) }, { ox: .5, oy: .5, loop: rectLoop(b, b) }] }; }
+    },
+    cross: {
+      name: 'Cross mail', blurb: 'Box links with a cross brace in the middle. Denser, fabric-like look, like the photo.',
+      build(L, w) { const a = L / 2;
+        const ex = [
+          { x0: -a, x1: a, y0: -w / 2, y1: w / 2, lvl: 'low' },
+          { x0: -w / 2, x1: w / 2, y0: -a, y1: a, lvl: 'low' }
+        ];
+        const posts = [[0, -a], [0, a]];
+        return { degree: 4, templates: [
+          { ox: 0, oy: 0, loop: rectLoop(a, a), extras: ex, posts }, { ox: .5, oy: .5, loop: rectLoop(a, a), extras: ex, posts }] }; }
+    },
+    clover: {
+      name: 'Clover mail', blurb: 'Plus-shaped links with notched corners, which gives a softer, scalier surface.',
+      build(L) { const a = L / 2, c = L * 0.16; return { degree: 4, templates: [
+        { ox: 0, oy: 0, loop: plusLoop(a, a, c) }, { ox: .5, oy: .5, loop: plusLoop(a, a, c) }] }; }
+    },
+    ladder: {
+      name: 'Ladder mail', blurb: 'Square links with a center rung. The rung stiffens each link but it still bends at the joints.',
+      build(L, w) { const a = L / 2;
+        const ex = [{ x0: -a, x1: a, y0: -w / 2, y1: w / 2, lvl: 'low' }];
+        return { degree: 4, templates: [
+          { ox: 0, oy: 0, loop: rectLoop(a, a), extras: ex }, { ox: .5, oy: .5, loop: rectLoop(a, a), extras: ex }] }; }
+    },
+    mixed: {
+      name: 'Twin mail', blurb: 'Square links paired with tall rectangles, for a ribbed, corduroy-like texture.',
+      build(L) { const a = L / 2; return { degree: 4, templates: [
+        { ox: 0, oy: 0, loop: rectLoop(a, a) }, { ox: .5, oy: .5, loop: rectLoop(a * 0.6, a * 1.25) }] }; }
+    }
+  };
+
+  // ---------- curved links: arc bars on two levels + round posts ----------
+  function ringPts(rx, ry, n) { const o = []; for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; o.push([rx * Math.cos(a), ry * Math.sin(a)]); } return o; }
+  function polyPts(verts, per) { const o = []; for (let i = 0; i < verts.length; i++) { const a = verts[i], b = verts[(i + 1) % verts.length]; for (let k = 0; k < per; k++) o.push([a[0] + (b[0] - a[0]) * k / per, a[1] + (b[1] - a[1]) * k / per]); } return o; }
+  function softBoxPts(a, rc, nArc) { const o = []; const c = [[a - rc, a - rc, 0], [-a + rc, a - rc, 1], [-a + rc, -a + rc, 2], [a - rc, -a + rc, 3]];
+    for (const [cx, cy, q] of c) for (let k = 0; k <= nArc; k++) { const t = (q + k / nArc) * Math.PI / 2; o.push([cx + rc * Math.cos(t), cy + rc * Math.sin(t)]); }
+    return o; }
+  function scalePts(R, n) {
+    const o = [], top = R * 0.95;
+    for (let i = 0; i <= n; i++) { const a = Math.PI + i / n * Math.PI; o.push([R * Math.cos(a), R * Math.sin(a)]); }
+    for (let k = 1; k <= 3; k++) o.push([R, top * k / 3]);
+    for (let k = 1; k <= 5; k++) o.push([R - 2 * R * k / 5, top]);
+    for (let k = 1; k < 3; k++) o.push([-R, top - top * k / 3]);
+    return o; }
+
+  function buildCurved(pts, P, spanMax) {
+    const { w, t, gz } = P, H = 2 * t + gz, n = pts.length, pr = w / 2;
+    const lvl = pts.map((p, i) => { const q = pts[(i + 1) % n]; return Math.abs(q[0] - p[0]) > Math.abs(q[1] - p[1]) + 1e-9 ? 1 : 0; });
+    let s0 = -1; for (let i = 0; i < n; i++) if (lvl[i] !== lvl[(i + n - 1) % n]) { s0 = i; break; }
+    if (s0 < 0) return null;
+    const runs = []; let cur = { lv: lvl[s0], idx: [s0] };
+    for (let k = 1; k <= n; k++) { const i = (s0 + k) % n;
+      if (k === n || lvl[i] !== cur.lv) { cur.idx.push(i); runs.push(cur); if (k < n) cur = { lv: lvl[i], idx: [i] }; } else cur.idx.push(i); }
+    const posts = [], bands = [], loop3 = [];
+    for (const r of runs) {
+      const rp = r.idx.map(i => pts[i]), z0 = r.lv ? H - t : 0, z1 = r.lv ? H : t, zc = (z0 + z1) / 2;
+      posts.push(rp[0]);
+      if (r.lv) {
+        let len = 0; const cum = [0]; for (let k = 1; k < rp.length; k++) { len += Math.hypot(rp[k][0] - rp[k - 1][0], rp[k][1] - rp[k - 1][1]); cum.push(len); }
+        const m = Math.ceil(len / spanMax);
+        for (let j = 1; j < m; j++) { const target = len * j / m; let k = 1; while (cum[k] < target) k++; posts.push(Math.abs(cum[k] - target) < Math.abs(cum[k - 1] - target) ? rp[k] : rp[k - 1]); }
+      }
+      bands.push({ pts: rp, z0, z1 });
+      for (const p of rp) loop3.push([p[0], p[1], zc]);
+    }
+    const caps = [];
+    for (const b of bands) for (let k = 0; k < b.pts.length - 1; k++) caps.push([b.pts[k][0], b.pts[k][1], b.pts[k + 1][0], b.pts[k + 1][1], w / 2, b.z0, b.z1]);
+    for (const p of posts) caps.push([p[0], p[1], p[0], p[1], pr, 0, H]);
+    let bb = [1e9, -1e9, 1e9, -1e9]; for (const c of caps) { bb[0] = Math.min(bb[0], c[0] - c[4], c[2] - c[4]); bb[1] = Math.max(bb[1], c[0] + c[4], c[2] + c[4]); bb[2] = Math.min(bb[2], c[1] - c[4], c[3] - c[4]); bb[3] = Math.max(bb[3], c[1] + c[4], c[3] + c[4]); }
+    const tri = [], T = (a, b, c) => tri.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+    for (const b of bands) {
+      const p = b.pts, m = p.length, L = [], R = [];
+      for (let k = 0; k < m; k++) {
+        const a = p[Math.max(0, k - 1)], c = p[Math.min(m - 1, k + 1)]; let dx = c[0] - a[0], dy = c[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+        let sc = 1; if (k > 0 && k < m - 1) { const d1 = [p[k][0] - a[0], p[k][1] - a[1]], l1 = Math.hypot(...d1) || 1; const cosh = (d1[0] * dx + d1[1] * dy) / l1; sc = 1 / Math.max(0.5, cosh); }
+        const ox = -dy * w / 2 * sc, oy = dx * w / 2 * sc; L.push([p[k][0] + ox, p[k][1] + oy]); R.push([p[k][0] - ox, p[k][1] - oy]);
+      }
+      const v = (q, z) => [q[0], q[1], z];
+      for (let k = 0; k < m - 1; k++) {
+        T(v(L[k], b.z1), v(R[k], b.z1), v(R[k + 1], b.z1)); T(v(L[k], b.z1), v(R[k + 1], b.z1), v(L[k + 1], b.z1));
+        T(v(L[k], b.z0), v(R[k + 1], b.z0), v(R[k], b.z0)); T(v(L[k], b.z0), v(L[k + 1], b.z0), v(R[k + 1], b.z0));
+        T(v(L[k], b.z0), v(L[k], b.z1), v(L[k + 1], b.z1)); T(v(L[k], b.z0), v(L[k + 1], b.z1), v(L[k + 1], b.z0));
+        T(v(R[k], b.z0), v(R[k + 1], b.z1), v(R[k], b.z1)); T(v(R[k], b.z0), v(R[k + 1], b.z0), v(R[k + 1], b.z1));
+      }
+      T(v(L[0], b.z0), v(R[0], b.z0), v(R[0], b.z1)); T(v(L[0], b.z0), v(R[0], b.z1), v(L[0], b.z1));
+      T(v(L[m - 1], b.z0), v(R[m - 1], b.z1), v(R[m - 1], b.z0)); T(v(L[m - 1], b.z0), v(L[m - 1], b.z1), v(R[m - 1], b.z1));
+    }
+    const NS = 16, rr = pr * 1.08;
+    for (const p of posts) for (let k = 0; k < NS; k++) {
+      const a0 = k / NS * 2 * Math.PI, a1 = (k + 1) / NS * 2 * Math.PI;
+      const A = [p[0] + rr * Math.cos(a0), p[1] + rr * Math.sin(a0)], B = [p[0] + rr * Math.cos(a1), p[1] + rr * Math.sin(a1)];
+      T([p[0], p[1], H], [A[0], A[1], H], [B[0], B[1], H]); T([p[0], p[1], 0], [B[0], B[1], 0], [A[0], A[1], 0]);
+      T([A[0], A[1], 0], [B[0], B[1], 0], [B[0], B[1], H]); T([A[0], A[1], 0], [B[0], B[1], H], [A[0], A[1], H]);
+    }
+    return { caps, loop3, bb, tri: new Float32Array(tri), posts, bands };
+  }
+
+  function segDist(ax, ay, bx, by, cx, cy, dx, dy) {
+    const ux = bx - ax, uy = by - ay, vx = dx - cx, vy = dy - cy, wx = ax - cx, wy = ay - cy;
+    const a = ux * ux + uy * uy, b = ux * vx + uy * vy, c = vx * vx + vy * vy, d = ux * wx + uy * wy, e = vx * wx + vy * wy, D = a * c - b * b;
+    let sN, sD = D, tN, tD = D;
+    if (a < 1e-12 && c < 1e-12) return Math.hypot(wx, wy);
+    if (a < 1e-12) { const tt = Math.min(1, Math.max(0, e / c)); return Math.hypot(ax - (cx + tt * vx), ay - (cy + tt * vy)); }
+    if (c < 1e-12) { const ss = Math.min(1, Math.max(0, -d / a)); return Math.hypot(ax + ss * ux - cx, ay + ss * uy - cy); }
+    if (D < 1e-12) { sN = 0; sD = 1; tN = e; tD = c; } else { sN = b * e - c * d; tN = a * e - b * d; if (sN < 0) { sN = 0; tN = e; tD = c; } else if (sN > sD) { sN = sD; tN = e + b; tD = c; } }
+    if (tN < 0) { tN = 0; sN = Math.min(Math.max(-d, 0), a); sD = a; } else if (tN > tD) { tN = tD; sN = Math.min(Math.max(-d + b, 0), a); sD = a; }
+    const sc = sN / sD, tc = tN / tD; return Math.hypot(wx + sc * ux - tc * vx, wy + sc * uy - tc * vy);
+  }
+  function pairCurved(A, B, P) {
+    const ox = B.cx - A.cx, oy = B.cy - A.cy; let minH = Infinity;
+    for (const p of A.cv.caps) {
+      const pminx = Math.min(p[0], p[2]) - p[4], pmaxx = Math.max(p[0], p[2]) + p[4], pminy = Math.min(p[1], p[3]) - p[4], pmaxy = Math.max(p[1], p[3]) + p[4];
+      for (const q of B.cv.caps) {
+        if (Math.max(p[5] - q[6], q[5] - p[6]) >= P.gz - 1e-4) continue;
+        const qx0 = Math.min(q[0], q[2]) + ox - q[4], qx1 = Math.max(q[0], q[2]) + ox + q[4], qy0 = Math.min(q[1], q[3]) + oy - q[4], qy1 = Math.max(q[1], q[3]) + oy + q[4];
+        const gap = Math.max(qx0 - pmaxx, pminx - qx1, qy0 - pmaxy, pminy - qy1);
+        if (gap > minH || gap > 3) continue;
+        const d = segDist(p[0], p[1], p[2], p[3], q[0] + ox, q[1] + oy, q[2] + ox, q[3] + oy) - p[4] - q[4];
+        if (d < minH) { minH = d; if (d < 1e-4) return { minH }; }
+      }
+    }
+    return { minH };
+  }
+  function linkingCurved(A, B) {
+    const ox = B.cx - A.cx, oy = B.cy - A.cy, a = A.cv.loop3, b = B.cv.loop3; let s = 0;
+    for (let i = 0; i < a.length; i++) { const p = a[i], p2 = a[(i + 1) % a.length]; if (Math.abs(p[2] - p2[2]) > 1e-6) continue;
+      for (let j = 0; j < b.length; j++) { const q = b[j], q2 = b[(j + 1) % b.length]; if (Math.abs(q[2] - q2[2]) > 1e-6) continue;
+        const r = [p2[0] - p[0], p2[1] - p[1]], u = [q2[0] - q[0], q2[1] - q[1]], den = r[0] * u[1] - r[1] * u[0];
+        if (Math.abs(den) < 1e-12) continue;
+        const wx = q[0] + ox - p[0], wy = q[1] + oy - p[1];
+        const tt = (wx * u[1] - wy * u[0]) / den, uu = (wx * r[1] - wy * r[0]) / den;
+        if (tt < 0 || tt >= 1 || uu < 0 || uu >= 1) continue;
+        if (Math.abs(p[2] - q[2]) < 1e-6) return NaN;
+        const cr = Math.sign(den); s += p[2] > q[2] ? cr : -cr;
+      } }
+    return s / 2;
+  }
+
+  // ---------- boxes ----------
+  function linkBoxes(tpl, cx, cy, P) {
+    const { w, t, gz } = P, H = 2 * t + gz, hw = w / 2, out = [];
+    const loop = tpl.loop, n = loop.length;
+    for (let i = 0; i < n; i++) {
+      const [x0, y0] = loop[i], [x1, y1] = loop[(i + 1) % n];
+      if (Math.abs(y0 - y1) < EPS) {
+        out.push([cx + Math.min(x0, x1) - hw, cx + Math.max(x0, x1) + hw, cy + y0 - hw, cy + y0 + hw, H - t, H]);
+      } else {
+        out.push([cx + x0 - hw, cx + x0 + hw, cy + Math.min(y0, y1) - hw, cy + Math.max(y0, y1) + hw, 0, t]);
+      }
+      out.push([cx + x0 - hw, cx + x0 + hw, cy + y0 - hw, cy + y0 + hw, 0, H]);
+    }
+    for (const p of (tpl.posts || [])) out.push([cx + p[0] - hw, cx + p[0] + hw, cy + p[1] - hw, cy + p[1] + hw, 0, H]);
+    for (const e of (tpl.extras || [])) {
+      const z = e.lvl === 'low' ? [0, t] : e.lvl === 'high' ? [H - t, H] : [0, H];
+      out.push([cx + e.x0, cx + e.x1, cy + e.y0, cy + e.y1, z[0], z[1]]);
+    }
+    return out;
+  }
+  function bboxOf(boxes) {
+    const b = [1e9, -1e9, 1e9, -1e9];
+    for (const q of boxes) { b[0] = Math.min(b[0], q[0]); b[1] = Math.max(b[1], q[1]); b[2] = Math.min(b[2], q[2]); b[3] = Math.max(b[3], q[3]); }
+    return b;
+  }
+
+  // ---------- linking number (x-edges over y-edges) ----------
+  function linking(loopA, ax, ay, loopB, bx, by) {
+    let s = 0;
+    const edges = (loop, cx, cy) => loop.map((p, i) => { const q = loop[(i + 1) % loop.length];
+      return [cx + p[0], cy + p[1], cx + q[0], cy + q[1]]; });
+    const EA = edges(loopA, ax, ay), EB = edges(loopB, bx, by);
+    const cross = (X, Y, sgn) => {
+      if (Math.abs(X[1] - X[3]) > EPS || Math.abs(Y[0] - Y[2]) > EPS) return 0;
+      const y = X[1], x = Y[0];
+      if (x <= Math.min(X[0], X[2]) + EPS || x >= Math.max(X[0], X[2]) - EPS) return 0;
+      if (y <= Math.min(Y[1], Y[3]) + EPS || y >= Math.max(Y[1], Y[3]) - EPS) return 0;
+      const ox = Math.sign(X[2] - X[0]), uy = Math.sign(Y[3] - Y[1]);
+      return ox * uy;
+    };
+    for (const a of EA) for (const b of EB) { s += cross(a, b, 1); s += cross(b, a, -1); }
+    return s / 2;
+  }
+
+  // ---------- pair evaluation ----------
+  function pairInfo(A, B, P) {
+    let minH = Infinity, collide = false;
+    for (const p of A.boxes) for (const q of B.boxes) {
+      const gx = Math.max(p[0] - q[1], q[0] - p[1]);
+      const gy = Math.max(p[2] - q[3], q[2] - p[3]);
+      const gzv = Math.max(p[4] - q[5], q[4] - p[5]);
+      if (gzv >= P.gz - 1e-4) continue;
+      const h = Math.max(gx, gy);
+      if (h < minH) minH = h;
+      if (h < P.g - 1e-4) collide = true;
+    }
+    return { minH, collide };
+  }
+
+  function makeLink(tpl, cx, cy, P) {
+    if (tpl.curve) {
+      if (!tpl.cv) tpl.cv = buildCurved(tpl.curve, P, P.spanMax || 99);
+      if (!tpl.cv) return null;
+      const b = tpl.cv.bb; return { tpl, cx, cy, cv: tpl.cv, bb: [b[0] + cx, b[1] + cx, b[2] + cy, b[3] + cy] };
+    }
+    const boxes = linkBoxes(tpl, cx, cy, P);
+    return { tpl, cx, cy, boxes, bb: bboxOf(boxes) };
+  }
+  const pairAny = (A, B, P) => A.cv ? pairCurved(A, B, P) : pairInfo(A, B, P);
+  const linkAny = (A, B) => A.cv ? linkingCurved(A, B) : linking(A.tpl.loop, A.cx, A.cy, B.tpl.loop, B.cx, B.cy);
+
+  function evaluate(style, P, px, py) {
+    const def = STYLES[style].build(P.L, P.w);
+    const links = [], center = [];
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) for (const tpl of def.templates) {
+      const k = makeLink(tpl, (i + tpl.ox) * px, (j + tpl.oy) * py, P);
+      if (!k) return { ok: false, minGap: -1 };
+      links.push(k); if (i === 0 && j === 0) center.push(k);
+    }
+    let minGap = Infinity, ok = true;
+    for (const c of center) {
+      let deg = 0;
+      for (const o of links) {
+        if (o === c) continue;
+        const ov = !(o.bb[0] > c.bb[1] + 3 || o.bb[1] < c.bb[0] - 3 || o.bb[2] > c.bb[3] + 3 || o.bb[3] < c.bb[2] - 3);
+        if (!ov) continue;
+        const info = pairAny(c, o, { ...P, g: 0 });
+        if (info.minH < minGap) minGap = info.minH;
+        if (info.minH < 1e-4) return { ok: false, minGap: -1 };
+        const lk = linkAny(c, o);
+        if (Number.isNaN(lk)) ok = false; else if (lk !== 0) deg++;
+      }
+      if (deg !== def.degree) ok = false;
+    }
+    return { ok, minGap: ok ? minGap : -1 };
+  }
+
+  function tplBB(tpl, P) { if (tpl.curve) { const c = buildCurved(tpl.curve, P, P.spanMax || 99); return c ? c.bb : [0, 1, 0, 1]; } return bboxOf(linkBoxes(tpl, 0, 0, P)); }
+  function optimize(style, P) {
+    const def = STYLES[style].build(P.L, P.w);
+    const bbs = def.templates.map(t => tplBB(t, P));
+    const Wd = bbs.reduce((s, b) => s + b[1] - b[0], 0) / bbs.length, Hd = bbs.reduce((s, b) => s + b[3] - b[2], 0) / bbs.length;
+    const k0 = Hd / Wd, lo = 0.4 * Wd, hi = 2.4 * Wd, N = 150, step0 = (hi - lo) / N;
+    let best = { minGap: -1, px: 0, py: 0 };
+    for (const f of [1, 0.88, 1.14, 0.76, 1.32, 0.64, 1.56, 0.5, 2]) {
+      for (let a = 0; a <= N; a++) { const px = lo + step0 * a, py = px * k0 * f;
+        const r = evaluate(style, P, px, py); if (r.ok && r.minGap > best.minGap) best = { minGap: r.minGap, px, py }; }
+      if (best.minGap >= 0) break;
+    }
+    if (best.minGap < 0) return null;
+    let step = step0 * 2;
+    for (let it = 0; it < 16; it++) {
+      step *= 0.6;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
+        const px = best.px + dx * step, py = best.py + dy * step;
+        const r = evaluate(style, P, px, py);
+        if (r.ok && r.minGap > best.minGap + 1e-6) best = { minGap: r.minGap, px, py };
+      }
+    }
+    return best;
+  }
+
+  function autoSize(style, P) {
+    const okAt = L => { const o = optimize(style, { ...P, L }); return !!(o && o.minGap >= P.g); };
+    let L = 3.2 * (P.w + P.g), good = null, bad = null;
+    if (okAt(L)) { good = L; while (good > P.w * 2) { const n = good / 1.3; if (okAt(n)) good = n; else { bad = n; break; } } if (!bad) return Math.ceil(good * 20) / 20; }
+    else { bad = L; while (bad < P.w * 60) { const n = bad * 1.3; if (okAt(n)) { good = n; break; } bad = n; } if (!good) return null; }
+    for (let i = 0; i < 7; i++) { const m = (good + bad) / 2; if (okAt(m)) good = m; else bad = m; }
+    return Math.ceil(good * 20) / 20;
+  }
+
+  // ---------- sheet ----------
+  function inShape(bb, S) {
+    const pts = [[bb[0], bb[2]], [bb[1], bb[2]], [bb[0], bb[3]], [bb[1], bb[3]]];
+    const W = S.W / 2, Hh = S.H / 2;
+    if (S.shape === 'rect') return pts.every(([x, y]) => Math.abs(x) <= W && Math.abs(y) <= Hh);
+    if (S.shape === 'circle') return pts.every(([x, y]) => (x / W) ** 2 + (y / Hh) ** 2 <= 1);
+    if (S.shape === 'hex') return pts.every(([x, y]) => Math.abs(y) <= Hh && Math.abs(x) <= W - Math.abs(y) / Hh * (W / 2));
+    if (S.shape === 'heart') return pts.every(([x, y]) => { const u = x / W * 1.14, v = y / Hh * 1.125 + 0.125; return (u * u + v * v - 1) ** 3 - u * u * v ** 3 <= 0; });
+    return true;
+  }
+
+  function buildSheet(style, P, lat, S) {
+    const def = STYLES[style].build(P.L, P.w);
+    const nx = Math.ceil(S.W / lat.px) + 2, ny = Math.ceil(S.H / lat.py) + 2;
+    let links = [];
+    for (let j = -ny; j <= ny; j++) for (let i = -nx; i <= nx; i++) for (const tpl of def.templates) {
+      const cx = (i + tpl.ox) * lat.px, cy = (j + tpl.oy) * lat.py;
+      if (Math.abs(cx) > S.W / 2 + P.L * 2 || Math.abs(cy) > S.H / 2 + P.L * 2) continue;
+      const k = makeLink(tpl, cx, cy, P);
+      if (k && inShape(k.bb, S)) links.push(k);
+    }
+    const cell = P.L * 2, grid = new Map();
+    links.forEach((k, idx) => { const key = Math.floor(k.cx / cell) + ',' + Math.floor(k.cy / cell); (grid.get(key) || grid.set(key, []).get(key)).push(idx); });
+    const adj = links.map(() => []);
+    links.forEach((k, idx) => {
+      const gx = Math.floor(k.cx / cell), gy = Math.floor(k.cy / cell);
+      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) for (const o of (grid.get((gx + dx) + ',' + (gy + dy)) || [])) {
+        if (o <= idx) continue; const m = links[o];
+        if (m.bb[0] > k.bb[1] || m.bb[1] < k.bb[0] || m.bb[2] > k.bb[3] || m.bb[3] < k.bb[2]) continue;
+        const lk = linkAny(k, m); if (lk && !Number.isNaN(lk)) { adj[idx].push(o); adj[o].push(idx); }
+      }
+    });
+    const comp = new Array(links.length).fill(-1); let bestC = -1, bestN = 0, c = 0;
+    for (let s = 0; s < links.length; s++) if (comp[s] < 0) {
+      let n = 0; const st = [s]; comp[s] = c;
+      while (st.length) { const u = st.pop(); n++; for (const v of adj[u]) if (comp[v] < 0) { comp[v] = c; st.push(v); } }
+      if (n > bestN) { bestN = n; bestC = c; } c++;
+    }
+    links = links.filter((_, i) => comp[i] === bestC);
+    return links;
+  }
+
+  // ---------- meshing: exact union of a link's boxes via coordinate compression ----------
+  function linkMesh(boxes, pushTri) {
+    const uniq = a => { a.sort((p, q) => p - q); const o = []; for (const v of a) if (!o.length || v - o[o.length - 1] > 1e-6) o.push(v); return o; };
+    const X = uniq(boxes.flatMap(b => [b[0], b[1]])), Y = uniq(boxes.flatMap(b => [b[2], b[3]])), Z = uniq(boxes.flatMap(b => [b[4], b[5]]));
+    const nx = X.length - 1, ny = Y.length - 1, nz = Z.length - 1;
+    const occ = new Uint8Array(nx * ny * nz), id = (i, j, k) => (k * ny + j) * nx + i;
+    for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const cx = (X[i] + X[i + 1]) / 2, cy = (Y[j] + Y[j + 1]) / 2, cz = (Z[k] + Z[k + 1]) / 2;
+      for (const b of boxes) if (cx > b[0] && cx < b[1] && cy > b[2] && cy < b[3] && cz > b[4] && cz < b[5]) { occ[id(i, j, k)] = 1; break; }
+    }
+    const at = (i, j, k) => (i < 0 || j < 0 || k < 0 || i >= nx || j >= ny || k >= nz) ? 0 : occ[id(i, j, k)];
+    const quad = (a, b, c, d) => { pushTri(a, b, c); pushTri(a, c, d); };
+    for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      if (!at(i, j, k)) continue;
+      const x0 = X[i], x1 = X[i + 1], y0 = Y[j], y1 = Y[j + 1], z0 = Z[k], z1 = Z[k + 1];
+      if (!at(i - 1, j, k)) quad([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]);
+      if (!at(i + 1, j, k)) quad([x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]);
+      if (!at(i, j - 1, k)) quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]);
+      if (!at(i, j + 1, k)) quad([x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0]);
+      if (!at(i, j, k - 1)) quad([x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [x1, y0, z0]);
+      if (!at(i, j, k + 1)) quad([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]);
+    }
+  }
+
+  function sheetTriangles(links) {
+    const out = []; let vol = 0;
+    const curvedOnes = links.filter(k => k.cv);
+    if (curvedOnes.length) {
+      let n = 0; for (const k of curvedOnes) n += k.cv.tri.length;
+      const pos = new Float32Array(n); let o = 0;
+      for (const k of curvedOnes) { const t = k.cv.tri; for (let i = 0; i < t.length; i += 3) { pos[o++] = t[i] + k.cx; pos[o++] = t[i + 1] + k.cy; pos[o++] = t[i + 2]; } }
+      for (let i = 0; i < pos.length; i += 9) { const a = i, b = i + 3, c = i + 6;
+        vol += (pos[a] * (pos[b + 1] * pos[c + 2] - pos[b + 2] * pos[c + 1]) - pos[a + 1] * (pos[b] * pos[c + 2] - pos[b + 2] * pos[c]) + pos[a + 2] * (pos[b] * pos[c + 1] - pos[b + 1] * pos[c])) / 6; }
+      return { pos, volume: vol * 0.92 };
+    }
+    for (const k of links) {
+      linkMesh(k.boxes, (a, b, c) => { out.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+        vol += (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6; });
+    }
+    return { pos: new Float32Array(out), volume: vol };
+  }
+
+  function stlBinary(pos) {
+    const n = pos.length / 9, buf = new ArrayBuffer(84 + n * 50), dv = new DataView(buf);
+    const hdr = 'Chainmail generator'; for (let i = 0; i < hdr.length; i++) dv.setUint8(i, hdr.charCodeAt(i));
+    dv.setUint32(80, n, true);
+    for (let t = 0; t < n; t++) {
+      const o = 84 + t * 50, p = t * 9;
+      const ux = pos[p + 3] - pos[p], uy = pos[p + 4] - pos[p + 1], uz = pos[p + 5] - pos[p + 2];
+      const vx = pos[p + 6] - pos[p], vy = pos[p + 7] - pos[p + 1], vz = pos[p + 8] - pos[p + 2];
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1;
+      dv.setFloat32(o, nx / l, true); dv.setFloat32(o + 4, ny / l, true); dv.setFloat32(o + 8, nz / l, true);
+      for (let v = 0; v < 9; v++) dv.setFloat32(o + 12 + v * 4, pos[p + v], true);
+    }
+    return new Uint8Array(buf);
+  }
+
+  // ---------- NASA-style hex tiles: hollow hex tiles + staple connectors under each seam ----------
+  function tileDims(P) {
+    const { w, t, gz, g } = P, s0 = Math.max(g, 0.5), play = Math.max(0.4, g);
+    const e = s0 / 2 + w + g + w / 2 + play;
+    const Fmin = 2 * (e + w / 2 + w + g) - s0 + 0.2;
+    return { s0, play, e, Fmin: Math.ceil(Fmin * 10) / 10,
+      zr0: t + gz, zr1: 2 * t + gz, zb0: 2 * t + 2 * gz, zb1: 3 * t + 2 * gz, zp0: 3 * t + 3 * gz, zp1: 4 * t + 3 * gz };
+  }
+  function meshTools() {
+    const tri = [], prims = []; let vol = 0;
+    const T = (a, b, c) => { tri.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+      vol += (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6; };
+    const prism = (poly, z0, z1) => {
+      prims.push({ poly, z0, z1 });
+      const n = poly.length, c = poly.reduce((s, p) => [s[0] + p[0] / n, s[1] + p[1] / n], [0, 0]);
+      for (let i = 0; i < n; i++) { const a = poly[i], b = poly[(i + 1) % n];
+        T([c[0], c[1], z1], [a[0], a[1], z1], [b[0], b[1], z1]); T([c[0], c[1], z0], [b[0], b[1], z0], [a[0], a[1], z0]);
+        T([a[0], a[1], z0], [b[0], b[1], z0], [b[0], b[1], z1]); T([a[0], a[1], z0], [b[0], b[1], z1], [a[0], a[1], z1]); } };
+    const obox = (cx, cy, ux, uy, len, wid, z0, z1) => { const vx = -uy, vy = ux, hl = len / 2, hw = wid / 2;
+      prism([[cx - ux * hl - vx * hw, cy - uy * hl - vy * hw], [cx + ux * hl - vx * hw, cy + uy * hl - vy * hw], [cx + ux * hl + vx * hw, cy + uy * hl + vy * hw], [cx - ux * hl + vx * hw, cy - uy * hl + vy * hw]], z0, z1); };
+    const band = (pts, wid, z0, z1) => {
+      const m = pts.length, L = [], R = [];
+      for (let k = 0; k < m; k++) { const a = pts[Math.max(0, k - 1)], c = pts[Math.min(m - 1, k + 1)]; let dx = c[0] - a[0], dy = c[1] - a[1]; const l = Math.hypot(dx, dy) || 1;
+        L.push([pts[k][0] - dy / l * wid / 2, pts[k][1] + dx / l * wid / 2]); R.push([pts[k][0] + dy / l * wid / 2, pts[k][1] - dx / l * wid / 2]); }
+      const v = (q, z) => [q[0], q[1], z];
+      for (let k = 0; k < m - 1; k++) {
+        T(v(L[k], z1), v(R[k], z1), v(R[k + 1], z1)); T(v(L[k], z1), v(R[k + 1], z1), v(L[k + 1], z1));
+        T(v(L[k], z0), v(R[k + 1], z0), v(R[k], z0)); T(v(L[k], z0), v(L[k + 1], z0), v(R[k + 1], z0));
+        T(v(L[k], z0), v(L[k], z1), v(L[k + 1], z1)); T(v(L[k], z0), v(L[k + 1], z1), v(L[k + 1], z0));
+        T(v(R[k], z0), v(R[k + 1], z1), v(R[k], z1)); T(v(R[k], z0), v(R[k + 1], z0), v(R[k + 1], z1)); }
+      T(v(L[0], z0), v(R[0], z0), v(R[0], z1)); T(v(L[0], z0), v(R[0], z1), v(L[0], z1));
+      T(v(L[m - 1], z0), v(R[m - 1], z1), v(R[m - 1], z0)); T(v(L[m - 1], z0), v(L[m - 1], z1), v(R[m - 1], z1)); };
+    return { tri, prims, T, prism, obox, band, vol: () => vol };
+  }
+  function tileTemplate(F, P, D, pattern) {
+    const M = meshTools(), { w, g, t } = P, Rc = F / 2 / Math.cos(Math.PI / 6), a = F / Math.sqrt(3), nw = w + 2 * g;
+    const Rin = Rc - w / Math.cos(Math.PI / 6), O = [], I = [];
+    for (let k = 0; k < 6; k++) { const ca = k * Math.PI / 3 + Math.PI / 6; O.push([Rc * Math.cos(ca), Rc * Math.sin(ca)]); I.push([Rin * Math.cos(ca), Rin * Math.sin(ca)]); }
+    const lerp = (p, q, s) => [p[0] + (q[0] - p[0]) * s, p[1] + (q[1] - p[1]) * s];
+    for (let k = 0; k < 6; k++) {
+      const k2 = (k + 1) % 6, ao = a, ai = Math.hypot(I[k2][0] - I[k][0], I[k2][1] - I[k][1]);
+      M.prism([O[k], O[k2], I[k2], I[k]], D.zr0, D.zr1);
+      const so = 0.5 - nw / 2 / ao, si = 0.5 - nw / 2 / ai;
+      M.prism([O[k], lerp(O[k], O[k2], so), lerp(I[k], I[k2], si), I[k]], D.zr1 - 0.01, D.zp0 + 0.01);
+      M.prism([lerp(O[k], O[k2], 1 - so), O[k2], I[k2], lerp(I[k], I[k2], 1 - si)], D.zr1 - 0.01, D.zp0 + 0.01);
+      const kp = (k + 5) % 6, L = 1.25 * w / ao;
+      M.prism([O[k], lerp(O[k], O[k2], L), I[k], lerp(O[k], O[kp], L)], 0, D.zr0 + 0.01);
+    }
+    const hex = []; for (let k = 0; k < 6; k++) { const ca = k * Math.PI / 3 + Math.PI / 6; hex.push([Rc * Math.cos(ca), Rc * Math.sin(ca)]); }
+    M.prism(hex, D.zp0, D.zp1);
+    const top = D.zp1, ht = 0.4, rin = F / 2 - w * 0.9, bw = Math.max(0.6, w * 0.7);
+    if (pattern === 'spiral') { const pts = [], turns = Math.max(1.5, (rin - 0.6) / (bw * 2.2)); for (let i = 0; i <= 160; i++) { const s = i / 160, ang = s * turns * 2 * Math.PI, r = 0.6 + s * (rin - 0.6); pts.push([r * Math.cos(ang), r * Math.sin(ang)]); } M.band(pts, bw, top - 0.01, top + ht); }
+    if (pattern === 'rings') for (let r = rin; r > bw; r -= bw * 2.4) { const pts = []; for (let i = 0; i <= 48; i++) { const ang = i / 48 * 2 * Math.PI; pts.push([r * Math.cos(ang), r * Math.sin(ang)]); } M.band(pts, bw, top - 0.01, top + ht); }
+    if (pattern === 'swirl') for (let arm = 0; arm < 3; arm++) { const pts = []; for (let i = 0; i <= 50; i++) { const s = i / 50, r = 0.5 + s * (rin - 0.5), ang = arm * 2 * Math.PI / 3 + s * 2.4; pts.push([r * Math.cos(ang), r * Math.sin(ang)]); } M.band(pts, bw, top - 0.01, top + ht); }
+    return { tri: new Float32Array(M.tri), vol: M.vol(), Rc, prims: M.prims };
+  }
+  function connectorTemplate(P, D) {
+    const M = meshTools(), { w } = P, e = D.e, len = 2 * e + w;
+    M.obox(0, 0, 1, 0, len, w, 0, P.t);
+    M.obox(-e, 0, 1, 0, w, w, 0, D.zb1); M.obox(e, 0, 1, 0, w, w, 0, D.zb1);
+    M.obox(0, 0, 1, 0, len, w, D.zb0, D.zb1);
+    return { tri: new Float32Array(M.tri), vol: M.vol(), prims: M.prims };
+  }
+  function buildTiles(P, S, F, pattern) {
+    const D = tileDims(P), pitch = F + D.s0, rowH = pitch * Math.sqrt(3) / 2, Rc = F / 2 / Math.cos(Math.PI / 6);
+    const tiles = [], key = new Map();
+    const ny = Math.ceil(S.H / rowH) + 2, nx = Math.ceil(S.W / pitch) + 2;
+    for (let j = -ny; j <= ny; j++) for (let i = -nx; i <= nx; i++) {
+      const cx = (i + (j & 1) * 0.5) * pitch, cy = j * rowH, bb = [cx - Rc, cx + Rc, cy - Rc, cy + Rc];
+      if (inShape(bb, S)) { key.set(i + ',' + j, tiles.length); tiles.push({ i, j, cx, cy, bb }); }
+    }
+    const seams = [];
+    for (const tl of tiles) for (let k = 0; k < 3; k++) {
+      const th = k * Math.PI / 3, cx = tl.cx + Math.cos(th) * pitch, cy = tl.cy + Math.sin(th) * pitch;
+      const j2 = Math.round(cy / rowH), i2 = Math.round(cx / pitch - (j2 & 1) * 0.5), o = key.get(i2 + ',' + j2);
+      if (o !== undefined) seams.push({ a: tl, b: tiles[o], th, mx: (tl.cx + tiles[o].cx) / 2, my: (tl.cy + tiles[o].cy) / 2 });
+    }
+    const idx = new Map(tiles.map((t, n) => [t, n])), adj = tiles.map(() => []);
+    for (const s of seams) { adj[idx.get(s.a)].push(idx.get(s.b)); adj[idx.get(s.b)].push(idx.get(s.a)); }
+    const comp = tiles.map(() => -1); let best = -1, bestN = 0;
+    for (let s0 = 0, c = 0; s0 < tiles.length; s0++) if (comp[s0] < 0) { let n = 0; const st = [s0]; comp[s0] = c; while (st.length) { const u = st.pop(); n++; for (const v of adj[u]) if (comp[v] < 0) { comp[v] = c; st.push(v); } } if (n > bestN) { bestN = n; best = c; } c++; }
+    const keepT = tiles.filter((_, n) => comp[n] === best), keepS = seams.filter(s => comp[idx.get(s.a)] === best);
+    return { tiles: keepT, seams: keepS, D, pitch, F, pattern };
+  }
+  function tileTriangles(sheet, P) {
+    const tt = tileTemplate(sheet.F, P, sheet.D, sheet.pattern), ct = connectorTemplate(P, sheet.D);
+    const n = sheet.tiles.length * tt.tri.length + sheet.seams.length * ct.tri.length, pos = new Float32Array(n); let o = 0;
+    for (const t of sheet.tiles) { const s = tt.tri; for (let i = 0; i < s.length; i += 3) { pos[o++] = s[i] + t.cx; pos[o++] = s[i + 1] + t.cy; pos[o++] = s[i + 2]; } }
+    for (const sm of sheet.seams) { const c = Math.cos(sm.th), sn = Math.sin(sm.th), s = ct.tri;
+      for (let i = 0; i < s.length; i += 3) { pos[o++] = sm.mx + s[i] * c - s[i + 1] * sn; pos[o++] = sm.my + s[i] * sn + s[i + 1] * c; pos[o++] = s[i + 2]; } }
+    return { pos, volume: (sheet.tiles.length * tt.vol + sheet.seams.length * ct.vol) * 0.95 };
+  }
+
+  root.Mail = { tileTemplate, connectorTemplate, segDist, tileDims, buildTiles, tileTriangles, pairCurved, linkingCurved, buildCurved, STYLES, evaluate, optimize, autoSize, buildSheet, sheetTriangles, stlBinary, linkBoxes, linking, makeLink };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+{
+const $ = id => document.getElementById(id);
+const S = { pat: 'spiral', style: 'box', L: 4.4, w: 1.0, t: 0.6, g: 0.45, gz: 0.4, auto: true, shape: 'rect', W: 100, H: 100, mode: 'sheet', cam: 'persp' };
+try { Object.assign(S, JSON.parse(localStorage.getItem('chainmail-forge') || '{}')); } catch (e) {}
+const save = () => { try { localStorage.setItem('chainmail-forge', JSON.stringify(S)); } catch (e) {} };
+const fmt = (v, d = 2) => (+v).toFixed(d).replace(/\.?0+$/, '');
+
+// ---------- style picker with top-view icons ----------
+const DEF = {"rings":[8.5,9.957,9.957,0.457],"oval":[10.55,15.819,10.316,0.454],"soft":[5.25,6.715,6.715,0.465],"hex":[11.5,12.956,10.918,0.456],"scale":[6.4,7.893,7.695,0.455],"jrings":[12.9,14.355,14.355,0.455],"box":[4.4,5.867,5.867,0.467],"stretch":[5.2,9.621,5.824,0.456],"basket":[5.45,8.865,8.865,0.453],"japanese":[8.1,9.558,9.558,0.458],"cross":[5.85,8.775,8.775,0.462],"clover":[12.15,13.608,13.676,0.458],"ladder":[5.85,8.768,8.775,0.462],"mixed":[7.3,8.76,11.792,0.46]};
+const ORDER = [['Square bars', ['box', 'stretch', 'basket', 'japanese', 'cross', 'ladder', 'clover', 'mixed']], ['Curved', ['rings', 'oval', 'soft', 'hex', 'scale', 'jrings']], ['Tiles', ['nasa']]];
+function iconSVG(key) {
+  if (Mail.STYLES[key].tile) { let r = ''; const F = 10, pitch = 10.6, rh = pitch * Math.sqrt(3) / 2, Rc = F / 2 / Math.cos(Math.PI / 6);
+    for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) { const cx = (i + (j & 1) * .5) * pitch + 16, cy = j * rh + 16;
+      r += `<polygon points="${[0, 1, 2, 3, 4, 5].map(k => { const a = k * Math.PI / 3 + Math.PI / 6; return (cx + Rc * Math.cos(a)).toFixed(2) + ',' + (cy + Rc * Math.sin(a)).toFixed(2); }).join(' ')}" fill="#35c768"/>`;
+      let d = ''; for (let s = 0; s <= 40; s++) { const u = s / 40, a = u * 2.6 * 2 * Math.PI, rr = 0.6 + u * 3.6; d += (s ? 'L' : 'M') + (cx + rr * Math.cos(a)).toFixed(2) + ' ' + (cy + rr * Math.sin(a)).toFixed(2); }
+      r += `<path d="${d}" fill="none" stroke="#b6ffcc" stroke-width=".7"/>`; }
+    return `<svg viewBox="0 0 32 32" aria-hidden="true">${r}</svg>`; }
+  const P = { w: 1, t: .6, gz: .4, g: .45 }, [L, px, py] = DEF[key], def = Mail.STYLES[key].build(L, 1), span = Math.max(px, py) * 2.1, h = span / 2;
+  const lo = [], hi = [], po = [];
+  for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) for (const tp of def.templates) {
+    const cx = (i + tp.ox) * px, cy = (j + tp.oy) * py;
+    if (Math.abs(cx) > span || Math.abs(cy) > span) continue;
+    if (tp.curve) { tp.cv = tp.cv || Mail.buildCurved(tp.curve, { ...P, L }, 99);
+      for (const b of tp.cv.bands) (b.z0 > 0 ? hi : lo).push(`<polyline points="${b.pts.map(q => (q[0] + cx + h).toFixed(2) + ',' + (h - q[1] - cy).toFixed(2)).join(' ')}"/>`);
+      for (const q of tp.cv.posts) po.push(`<circle cx="${(q[0] + cx + h).toFixed(2)}" cy="${(h - q[1] - cy).toFixed(2)}" r=".55"/>`);
+    } else for (const b of Mail.linkBoxes(tp, cx, cy, { ...P, L })) {
+      const r = `<rect x="${(b[0] + h).toFixed(2)}" y="${(h - b[3]).toFixed(2)}" width="${(b[1] - b[0]).toFixed(2)}" height="${(b[3] - b[2]).toFixed(2)}"/>`;
+      (b[4] === 0 && b[5] > 1.5 ? po : b[4] > .5 ? hi : lo).push(r);
+    }
+  }
+  const pl = (s, c) => s.replace(/<polyline/g, `<polyline fill="none" stroke="${c}" stroke-width="1" stroke-linejoin="round"`);
+  return `<svg viewBox="0 0 ${span.toFixed(2)} ${span.toFixed(2)}" aria-hidden="true"><g fill="#1f8a45">${pl(lo.join(''), '#1f8a45')}</g><g fill="#5ee08a">${pl(hi.join(''), '#5ee08a')}</g><g fill="#b6ffcc">${po.join('')}</g></svg>`;
+}
+$('styles').innerHTML = ORDER.map(([title, keys]) => `<h3 class="grp">${title}</h3><div class="styles">${keys.map(k => `<button class="st" data-s="${k}">${iconSVG(k)}${Mail.STYLES[k].name.replace(/ mail$/, '')}</button>`).join('')}</div>`).join('');
+$('styles').addEventListener('click', e => { const b = e.target.closest('.st'); if (!b) return; S.style = b.dataset.s; S.auto = true; sync(); schedule(); });
+
+// ---------- controls ----------
+const sliders = { L: 'oL', w: 'ow', t: 'ot', g: 'og', gz: 'ogz', W: 'oW', H: 'oH' };
+const unit = k => ' mm';
+function sync() {
+  for (const [k, o] of Object.entries(sliders)) { $(k).value = S[k]; $(o).textContent = fmt(S[k], k === 'W' || k === 'H' ? 0 : 2) + unit(k); }
+  $('auto').checked = S.auto; $('shape').value = S.shape; $('pat').value = S.pat;
+  const isTile = !!Mail.STYLES[S.style].tile; $('sLinksL').textContent = isTile ? 'tiles + links' : 'links'; $('patRow').hidden = !isTile; $('Llabel').textContent = isTile ? 'Tile size' : 'Link size';
+  document.querySelectorAll('.st').forEach(b => b.classList.toggle('on', b.dataset.s === S.style));
+  $('blurb').textContent = Mail.STYLES[S.style].blurb + (Mail.STYLES[S.style].tile ? ' Thicker than mail (about 3.6 mm). The tile tops bridge across hollow tiles, so use full cooling.' : '') + (Mail.STYLES[S.style].curved ? ' Curved styles bridge along arcs, so print the bridges slowly with full cooling and test a swatch first.' : '');
+  document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.m === S.mode));
+  document.querySelectorAll('#cam button').forEach(b => b.classList.toggle('on', b.dataset.c === S.cam));
+}
+for (const k of Object.keys(sliders)) $(k).addEventListener('input', e => {
+  S[k] = +e.target.value; if (k === 'L') S.auto = false; sync(); schedule();
+});
+$('auto').addEventListener('change', e => { S.auto = e.target.checked; schedule(); });
+$('shape').addEventListener('change', e => { S.shape = e.target.value; schedule(); });
+$('pat').addEventListener('change', e => { S.pat = e.target.value; schedule(); });
+$('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.mode = b.dataset.m; sync(); schedule(); });
+$('cam').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.cam = b.dataset.c; sync(); frame(); });
+
+// ---------- tiny WebGL viewer ----------
+const cv = $('cv'), view = $('view');
+let orbit = { th: -0.9, ph: 0.85, r: 150, tx: 0, ty: 0 }, extent = 50;
+const gl = cv.getContext('webgl', { antialias: true });
+let prog, buf = null, nbuf = null, nVerts = 0, aspect = 1, bedBuf = null;
+if (gl) {
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec3 p;attribute vec3 n;uniform mat4 m;varying vec3 vn;varying float vz;void main(){vn=n;vz=p.z;gl_Position=m*vec4(p,1.);}`));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision mediump float;varying vec3 vn;varying float vz;uniform vec3 col;uniform float bed;void main(){vec3 N=normalize(vn);
+    float d=max(dot(N,normalize(vec3(-.35,-.5,.8))),0.);float d2=max(dot(N,normalize(vec3(.6,.4,.3))),0.);float hemi=.5+.5*N.z;
+    vec3 c=col*(.28+.42*hemi+.62*d)+vec3(.12,.18,.25)*d2*(1.-bed);c+=vec3(.08)*smoothstep(.9,1.,N.z)*(1.-bed);gl_FragColor=vec4(c,1.);}`));
+  gl.linkProgram(prog); gl.useProgram(prog); gl.enable(gl.DEPTH_TEST); gl.clearColor(0, 0, 0, 0);
+} else { $('status').textContent = 'This browser can’t show the 3D preview. Downloads still work.'; }
+function mul(a, b) { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; }
+function persp(f, a, n, fa) { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); }
+function look(e, c, u) { const sub = (a, b) => a.map((v, i) => v - b[i]), nrm = v => { const l = Math.hypot(...v); return v.map(x => x / l); }, cr = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], dt = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const z = nrm(sub(e, c)), x = nrm(cr(u, z)), y = cr(z, x); return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -dt(x, e), -dt(y, e), -dt(z, e), 1]); }
+function upload(pos, ext) {
+  if (!gl) return; const nrm = new Float32Array(pos.length);
+  for (let i = 0; i < pos.length; i += 9) { const ux = pos[i + 3] - pos[i], uy = pos[i + 4] - pos[i + 1], uz = pos[i + 5] - pos[i + 2], vx = pos[i + 6] - pos[i], vy = pos[i + 7] - pos[i + 1], vz = pos[i + 8] - pos[i + 2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; for (let k = 0; k < 3; k++) { nrm[i + k * 3] = nx / l; nrm[i + k * 3 + 1] = ny / l; nrm[i + k * 3 + 2] = nz / l; } }
+  buf = buf || gl.createBuffer(); nbuf = nbuf || gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, nbuf); gl.bufferData(gl.ARRAY_BUFFER, nrm, gl.STATIC_DRAW); nVerts = pos.length / 3;
+  const E = ext * 3, bp = new Float32Array([-E, -E, -.02, E, -E, -.02, E, E, -.02, -E, -E, -.02, E, E, -.02, -E, E, -.02]);
+  bedBuf = bedBuf || [gl.createBuffer(), gl.createBuffer()];
+  gl.bindBuffer(gl.ARRAY_BUFFER, bedBuf[0]); gl.bufferData(gl.ARRAY_BUFFER, bp, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bedBuf[1]); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(18).map((_, i) => i % 3 === 2 ? 1 : 0), gl.STATIC_DRAW);
+}
+function draw(b, nb, count, col, bed) {
+  const lp = gl.getAttribLocation(prog, 'p'), ln = gl.getAttribLocation(prog, 'n');
+  gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, nb); gl.enableVertexAttribArray(ln); gl.vertexAttribPointer(ln, 3, gl.FLOAT, false, 0, 0);
+  gl.uniform3fv(gl.getUniformLocation(prog, 'col'), col); gl.uniform1f(gl.getUniformLocation(prog, 'bed'), bed);
+  for (let s = 0; s < count; s += 3 * 20000) gl.drawArrays(gl.TRIANGLES, s, Math.min(3 * 20000, count - s));
+}
+function place() {
+  if (!gl || !buf) return; const { th, ph, r, tx, ty } = orbit;
+  const eye = S.cam === 'top' ? [tx, ty - 0.001, r] : [tx + r * Math.sin(ph) * Math.cos(th), ty + r * Math.sin(ph) * Math.sin(th), r * Math.cos(ph)];
+  const m = mul(persp(0.6, aspect, Math.max(0.05, r / 200), r * 10), look(eye, [tx, ty, 0], [0, 0, 1]));
+  gl.viewport(0, 0, cv.width, cv.height); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.uniformMatrix4fv(gl.getUniformLocation(prog, 'm'), false, m);
+  draw(bedBuf[0], bedBuf[1], 6, [0.16, 0.19, 0.18], 1);
+  draw(buf, nbuf, nVerts, [0.2, 0.78, 0.4], 0);
+}
+function resize() { const d = Math.min(devicePixelRatio || 1, 2); cv.width = view.clientWidth * d; cv.height = view.clientHeight * d; aspect = view.clientWidth / Math.max(1, view.clientHeight); place(); }
+new ResizeObserver(resize).observe(view);
+function frame() { orbit.tx = 0; orbit.ty = 0; orbit.r = extent * (S.cam === 'top' ? 3.4 : 3.6); if (S.cam !== 'top') { orbit.th = -1.2; orbit.ph = 0.8; } place(); }
+
+const pts = new Map(); let pinch0 = 0;
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY, e.button]); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); } });
+cv.addEventListener('pointermove', e => {
+  if (!pts.has(e.pointerId)) return; const p = pts.get(e.pointerId), dx = e.clientX - p[0], dy = e.clientY - p[1];
+  if (pts.size === 2) { const [a, b] = [...pts.values()]; p[0] = e.clientX; p[1] = e.clientY; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch0) orbit.r *= pinch0 / d; pinch0 = d; }
+  else if (p[2] === 2 || e.shiftKey || S.cam === 'top') { const k = orbit.r / view.clientHeight * 0.9; const c = Math.cos(orbit.th), s = Math.sin(orbit.th);
+    if (S.cam === 'top') { orbit.tx -= dx * k; orbit.ty += dy * k; } else { orbit.tx += (dx * s + dy * c) * k; orbit.ty += (-dx * c + dy * s) * k; } p[0] = e.clientX; p[1] = e.clientY; }
+  else { orbit.th -= dx * 0.008; orbit.ph = Math.min(1.5, Math.max(0.05, orbit.ph - dy * 0.008)); p[0] = e.clientX; p[1] = e.clientY; }
+  place();
+});
+const up = e => { pts.delete(e.pointerId); pinch0 = 0; };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('wheel', e => { e.preventDefault(); orbit.r *= Math.exp(e.deltaY * 0.001); place(); }, { passive: false });
+
+// ---------- compute ----------
+let lat = null, sheetLinks = [], timer = 0;
+function schedule() { $('busy').style.display = 'block'; run.key = null; clearTimeout(timer); timer = setTimeout(run, 120); save(); }
+let worker = null, reqId = 0;
+try {
+  const src = document.getElementById('engine').textContent + `\nonmessage = e => { const { id, style, P, auto } = e.data; let L = P.L; if (auto) { const a = Mail.autoSize(style, P); if (a) L = a; } const lat = Mail.optimize(style, { ...P, L }); postMessage({ id, L, lat }); };`;
+  worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+  worker.onmessage = e => { if (e.data.id === reqId) finish(e.data.L, e.data.lat); };
+} catch (e) { worker = null; }
+const solved = {};
+function run() {
+  if (Mail.STYLES[S.style].tile) return finishTiles();
+  const P = { w: S.w, t: S.t, gz: S.gz, g: S.g, L: S.L }, key = [S.style, S.w, S.t, S.gz, S.g, S.auto ? 'a' : S.L].join('|');
+  if (solved[key]) return finish(...solved[key]);
+  const d = DEF[S.style];
+  if (S.auto && S.w === 1 && S.t === .6 && S.gz === .4 && S.g === .45) return finish(d[0], { px: d[1], py: d[2], minGap: d[3] });
+  const id = ++reqId; run.key = key;
+  if (worker) worker.postMessage({ id, style: S.style, P, auto: S.auto });
+  else { let L = S.L; if (S.auto) { const a = Mail.autoSize(S.style, P); if (a) L = a; } finish(L, Mail.optimize(S.style, { ...P, L })); }
+}
+let tileSheet = null;
+function finishTiles() {
+  const P = { w: S.w, t: S.t, gz: S.gz, g: S.g }, D = Mail.tileDims(P);
+  if (S.auto) S.L = Math.max(D.Fmin, 10); if (S.L < D.Fmin) S.L = D.Fmin;
+  sync(); save();
+  const shape = S.mode === 'close' ? { shape: 'rect', W: (S.L + D.s0) * 3.2, H: (S.L + D.s0) * 3.2 } : { shape: S.shape, W: S.W, H: S.H };
+  const view = Mail.buildTiles(P, shape, S.L, S.pat), full = S.mode === 'close' ? Mail.buildTiles(P, { shape: S.shape, W: S.W, H: S.H }, S.L, S.pat) : view;
+  tileSheet = full;
+  const tri = Mail.tileTriangles(view, P), vol = S.mode === 'close' ? Mail.tileTriangles(full, P).volume : tri.volume;
+  const Rc = S.L / 2 / Math.cos(Math.PI / 6), bbOf = sh => sh.tiles.reduce((b, t) => [Math.min(b[0], t.cx - Rc), Math.max(b[1], t.cx + Rc), Math.min(b[2], t.cy - Rc), Math.max(b[3], t.cy + Rc)], [1e9, -1e9, 1e9, -1e9]);
+  const bb = bbOf(full), n = full.tiles.length;
+  $('sLinks').textContent = n ? `${n} + ${full.seams.length}` : '0';
+  $('sSize').textContent = n ? `${fmt(bb[1] - bb[0], 0)} × ${fmt(bb[3] - bb[2], 0)}` : '–';
+  $('sGrams').textContent = fmt(vol / 1000 * 1.24, 1) + ' g';
+  $('sGap').textContent = fmt(S.g, 2) + ' mm';
+  $('sThick').textContent = fmt(4 * S.t + 3 * S.gz + (S.pat === 'flat' ? 0 : 0.4), 2) + ' mm';
+  $('sPitch').textContent = fmt(S.L + D.s0, 1) + ' mm';
+  const st = $('status'); st.classList.toggle('bad', n < 2);
+  st.textContent = n < 2 ? 'The sheet is too small for two tiles. Make it bigger or the tiles smaller.' : `✓ ${n} tiles tied by ${full.seams.length} hidden links · nothing closer than ${fmt(S.g, 2)} mm`;
+  $('dl').disabled = n < 1;
+  const b2 = bbOf(view), ext = Math.max(b2[1] - b2[0], b2[3] - b2[2], 10); upload(tri.pos, ext);
+  const newExt = ext / 2; const changed = Math.abs(newExt - extent) / extent > 0.15; extent = newExt; if (changed || !run.framed) { frame(); run.framed = true; } else place();
+  $('busy').style.display = 'none';
+}
+function finish(L, latIn) {
+  if (run.key) solved[run.key] = [L, latIn];
+  S.L = L; lat = latIn; sync(); save();
+  const P = { w: S.w, t: S.t, gz: S.gz, g: S.g };
+  const st = $('status');
+  if (!lat) { st.textContent = 'These links can’t interlock at this size. Make the links bigger or the bars thinner.'; st.classList.add('bad'); $('busy').style.display = 'none'; $('dl').disabled = true; return; }
+  const P2 = { ...P, L: S.L };
+  const shape = S.mode === 'close' ? { shape: 'rect', W: Math.max(lat.px, lat.py) * 3.2, H: Math.max(lat.px, lat.py) * 3.2 } : { shape: S.shape, W: S.W, H: S.H };
+  sheetLinks = Mail.buildSheet(S.style, P2, lat, shape);
+  const full = S.mode === 'close' ? Mail.buildSheet(S.style, P2, lat, { shape: S.shape, W: S.W, H: S.H }) : sheetLinks;
+  const tri = Mail.sheetTriangles(sheetLinks);
+  const fullVol = S.mode === 'close' ? Mail.sheetTriangles(full).volume : tri.volume;
+  let bb = [1e9, -1e9, 1e9, -1e9]; for (const k of full) { bb[0] = Math.min(bb[0], k.bb[0]); bb[1] = Math.max(bb[1], k.bb[1]); bb[2] = Math.min(bb[2], k.bb[2]); bb[3] = Math.max(bb[3], k.bb[3]); }
+  $('sLinks').textContent = full.length.toLocaleString();
+  $('sSize').textContent = full.length ? `${fmt(bb[1] - bb[0], 0)} × ${fmt(bb[3] - bb[2], 0)}` : '–';
+  $('sGrams').textContent = fmt(fullVol / 1000 * 1.24, 1) + ' g';
+  $('sGap').textContent = fmt(lat.minGap, 2) + ' mm';
+  $('sThick').textContent = fmt(2 * S.t + S.gz, 2) + ' mm';
+  $('sPitch').textContent = fmt(lat.px, 1) + (Math.abs(lat.px - lat.py) > .05 ? ` × ${fmt(lat.py, 1)}` : '') + ' mm';
+  const okGap = lat.minGap >= S.g - 1e-3;
+  st.classList.toggle('bad', !okGap || !full.length);
+  st.textContent = !full.length ? 'The sheet is too small for even one linked group. Make it bigger.'
+    : okGap ? `✓ Every link hooks 4 neighbors · nothing closer than ${fmt(lat.minGap, 2)} mm`
+    : `⚠ Tightest gap is ${fmt(lat.minGap, 2)} mm, below your ${fmt(S.g, 2)} mm. Make the links bigger.`;
+  $('dl').disabled = !full.length;
+  let b2 = [1e9, -1e9, 1e9, -1e9]; for (const k of sheetLinks) { b2[0] = Math.min(b2[0], k.bb[0]); b2[1] = Math.max(b2[1], k.bb[1]); b2[2] = Math.min(b2[2], k.bb[2]); b2[3] = Math.max(b2[3], k.bb[3]); }
+  const ext = Math.max(b2[1] - b2[0], b2[3] - b2[2], 10); upload(tri.pos, ext);
+  const newExt = ext / 2; const changed = Math.abs(newExt - extent) / extent > 0.15; extent = newExt; if (changed || !run.framed) { frame(); run.framed = true; } else place();
+  $('busy').style.display = 'none';
+}
+
+// ---------- download ----------
+$('dl').addEventListener('click', () => {
+  const P = { w: S.w, t: S.t, gz: S.gz, g: S.g, L: S.L };
+  let stl;
+  if (Mail.STYLES[S.style].tile) stl = Mail.stlBinary(Mail.tileTriangles(tileSheet, P).pos);
+  else { const full = S.mode === 'close' ? Mail.buildSheet(S.style, P, lat, { shape: S.shape, W: S.W, H: S.H }) : sheetLinks; stl = Mail.stlBinary(Mail.sheetTriangles(full).pos); }
+  const name = `chainmail-${S.style}-${S.shape}-${S.W}x${S.H}.stl`, blob = new Blob([stl], { type: 'model/stl' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  $('dlNote').textContent = `Saved ${name} (${(blob.size / 1e6).toFixed(1)} MB). Drop it into your slicer.`;
+});
+
+sync(); schedule();
+}
+</script>
+</body>
+</html>
