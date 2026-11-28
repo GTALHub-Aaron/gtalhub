@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The Print Shop | GTALHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: GTALHub arcade-workshop — dry, a little snarky, all business about the parts.
+   IDEA: a shop counter of machines; each card is a machine that spits out a printable part.
+   PICTURE: a drawn print bed per tool with its part mid-print.
+   COLOR and TYPE: GTALHub's own — near-black, green signal, cyan tags; Bebas Neue + Roboto Mono.
+   LAYOUT: GTALHub nav, a short header with a printer nozzle drawing, then the tool grid. */
+:root{
+--bg:#0a0a0f;--panel:#111118;--line:#1e1e2e;--text:#f5f5f5;--muted:#8888aa;
+--green:#00ff88;--cyan:#00ccff;--yellow:#ffcc00;--orange:#ff8a3d;
+--display:"Bebas Neue",-apple-system,BlinkMacSystemFont,sans-serif;
+--mono:"Roboto Mono",ui-monospace,"SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.65 var(--mono);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:clip}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+[hidden]{display:none!important}
+nav{position:sticky;top:0;z-index:5;background:rgba(10,10,15,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+.logo{font-family:var(--display);font-size:30px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.logo span{color:var(--green)}
+.logo:hover{color:var(--green)}
+.crumb{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.08em;text-decoration:none}
+.crumb:hover{color:var(--green)}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.03em;line-height:1}
+header.hero{padding:56px 0 28px;position:relative}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(rgba(0,255,136,.035) 1px,transparent 1px) 0 0/48px 48px,linear-gradient(90deg,rgba(0,255,136,.035) 1px,transparent 1px) 0 0/48px 48px;
+ -webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent)}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:24px;align-items:center;position:relative}
+h1{font-size:clamp(52px,9vw,84px);margin:0 0 10px}
+h1 em{font-style:normal;color:var(--green)}
+.lede{color:var(--muted);margin:0;max-width:60ch}
+.nozzle svg{width:100%;height:auto;display:block}
+section{padding:8px 0 72px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:26px;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:border-color .15s,transform .15s;text-decoration:none}
+.card::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--green),transparent);z-index:2}
+a.card:hover,a.card:focus-visible{border-color:rgba(0,255,136,.4);transform:translateY(-2px);outline:none}
+a.card:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
+.card.soon{opacity:.72}
+.banner{position:relative;margin:-26px -26px 20px;height:140px;border-bottom:1px solid var(--line);overflow:hidden;background:#0d0d14}
+.banner svg{display:block;width:100%;height:100%;transition:transform .4s}
+a.card:hover .banner svg{transform:scale(1.04)}
+.meta{position:absolute;top:14px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:center}
+.tag{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border-radius:3px;color:var(--cyan);background:rgba(10,10,15,.82);border:1px solid rgba(0,204,255,.333)}
+.status{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;background:rgba(10,10,15,.82);padding:4px 9px;border-radius:3px}
+.status::before{content:"●"}
+.status.live{color:var(--green)}
+.status.soon{color:var(--yellow)}
+.card h3{font-size:32px;margin:0 0 10px}
+.card p{color:var(--muted);margin:0 0 22px;flex:1;font-size:14px}
+.go{font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-size:13px}
+.soon .go{color:var(--yellow)}
+.foot{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:13px}
+@media(max-width:600px){.hero .wrap{grid-template-columns:minmax(0,1fr)}.nozzle{max-width:180px}header.hero{padding-top:36px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav><div class="wrap"><a class="logo" href="/apps/">GTAL<span>Hub</span></a><a class="crumb" href="/apps/">← The Lineup</a></div></nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <h1>The Print <em>Shop</em></h1>
+      <p class="lede">Generators that spit out ready-to-print STLs. Pick a machine, fiddle with the knobs, hit download. No CAD, no supports, no excuses.</p>
+    </div>
+    <div class="nozzle" aria-hidden="true">
+      <svg viewBox="0 0 220 160"><defs><linearGradient id="hot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a3d"/><stop offset="1" stop-color="#ffcc00"/></linearGradient></defs>
+        <rect x="70" y="8" width="80" height="44" rx="6" fill="#1e1e2e" stroke="#2c2c44"/><rect x="82" y="18" width="56" height="8" rx="2" fill="#00ff88" opacity=".7"/>
+        <path d="M96 52h28l-6 28h-16z" fill="#8d94a8"/><path d="M106 80h8l-4 10z" fill="url(#hot)"/>
+        <g><rect x="18" y="118" width="184" height="10" rx="2" fill="#1e1e2e"/>
+          <g fill="#00ff88"><rect x="58" y="110" width="104" height="8" rx="2" opacity=".9"/><rect x="66" y="102" width="88" height="8" rx="2" opacity=".75"/><rect x="74" y="94" width="72" height="8" rx="2" opacity=".6">
+            <animate attributeName="width" values="0;72;72" dur="2.4s" repeatCount="indefinite"/></rect></g></g>
+        <circle cx="110" cy="91" r="3" fill="#ffcc00"><animate attributeName="opacity" values="1;.3;1" dur=".6s" repeatCount="indefinite"/></circle>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section><div class="wrap"><div class="grid" id="grid"></div></div></section>
+</main>
+<div class="foot"><div class="wrap">Every tool works on its own link — send someone just the one they need.</div></div>
+
+<script>
+{
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SVG=(inner,defs="")=>`<svg viewBox="0 0 400 140" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><pattern id="pg" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#00ff88" stroke-opacity=".07"/></pattern>${defs}</defs><rect width="400" height="140" fill="#0d0d14"/><rect width="400" height="140" fill="url(#pg)"/>${inner}</svg>`;
+// one simple gear path: n teeth, pitch radius r
+const gear=(n,r,fill,stroke="none")=>{let d="";const t=r*0.16;for(let i=0;i<n*4;i++){const a=i/(n*4)*Math.PI*2,rr=(i%4<2)?r+t:r-t;d+=(i?"L":"M")+(rr*Math.cos(a)).toFixed(1)+" "+(rr*Math.sin(a)).toFixed(1)}return `<path d="${d}Z" fill="${fill}" stroke="${stroke}"/>`};
+const spin=(cx,cy,deg,dur,inner)=>`<g transform="translate(${cx} ${cy})"><g>${inner}<animateTransform attributeName="transform" type="rotate" from="0" to="${deg}" dur="${dur}s" repeatCount="indefinite"/></g></g>`;
+const BAN={
+  gears:()=>SVG(spin(200,70,360,14,gear(48,52,"#8d94a8")+`<circle r="44" fill="#0d0d14"/>`)+spin(200,70,-360,7,gear(18,20,"#5a5f65")+`<circle r="7" fill="#0d0d14"/>`)+
+    [0,1,2,3].map(i=>`<g transform="rotate(${i*90} 200 70)">${spin(232,70,-720,7,gear(9,9,"#ff8a3d"))}</g>`).join("")),
+  ring:()=>SVG(`<circle cx="200" cy="72" r="54" fill="#2a2a38"/><circle cx="200" cy="72" r="26" fill="#0d0d14"/>`+
+    `<g>${Array.from({length:12},(_,i)=>{const a=i/12*Math.PI*2;return spin(200+40*Math.cos(a),72+40*Math.sin(a),-360,3,gear(5,6,"#ffcc00"))}).join("")}<animateTransform attributeName="transform" type="rotate" from="0 200 72" to="360 200 72" dur="9s" repeatCount="indefinite"/></g>`),
+  fidget:()=>SVG(`<circle cx="200" cy="72" r="48" fill="none" stroke="#8d94a8" stroke-width="16"/>`+spin(200,72,360,6,`<circle r="48" fill="none" stroke="#00ccff" stroke-width="10" stroke-dasharray="14 10"/>`)+`<circle cx="200" cy="72" r="36" fill="none" stroke="#5a5f65" stroke-width="6"/>`),
+  cube:()=>SVG(`<g transform="translate(200 72)"><g><path d="M-44 -6 l22 -12 l22 12 l-22 12z M-44 -6 v24 l22 12 v-24z M0 -6 v24 l-22 12 v-24z" fill="#00ff88" fill-opacity=".25" stroke="#00ff88"/>
+    <path d="M0 -6 l22 -12 l22 12 l-22 12z M0 -6 v24 l22 12 v-24z M44 -6 v24 l-22 12 v-24z" fill="#00ccff" fill-opacity=".25" stroke="#00ccff"/>
+    <animateTransform attributeName="transform" type="scale" values="1 1;1 .7;1 1" dur="3s" repeatCount="indefinite"/></g></g>`),
+  chain:()=>SVG(Array.from({length:7},(_,r)=>Array.from({length:12},(_,c)=>`<ellipse cx="${60+c*26+(r%2)*13}" cy="${16+r*18}" rx="11" ry="7" fill="none" stroke="${(r+c)%3?'#8d94a8':'#00ff88'}" stroke-width="3"/>`).join("")).join("")),
+  flake:()=>SVG(spin(200,70,360,30,Array.from({length:6},(_,i)=>`<g transform="rotate(${i*60})"><path d="M0 0V-52M0 -20l-12 -12M0 -20l12 -12M0 -36l-9 -9M0 -36l9 -9" stroke="#e8f4ff" stroke-width="4" stroke-linecap="round" fill="none"/></g>`).join("")+`<circle r="8" fill="#00ccff"/>`))
+};
+// Live tools link to their page; "soon" ones show until their page is on GTALHub.
+const TOOLS=[
+  {name:"Planetary Gears",tag:"Gear bearings",url:"/print-shop/planetary-gears/",ban:"gears",live:true,blurb:"Print-in-place gear bearings: herringbone or V-channel teeth, wavy and triangle planets, nested rows, moons, grips, face designs and more."},
+  {name:"Gear Rings",tag:"Wearable",url:"/print-shop/planetary-gears/#ring",ban:"ring",live:true,blurb:"Wearable fidget gear rings sized by US ring size, with chunky star planets and a diamond-knurl outside."},
+  {name:"Fidget Ring",tag:"Spinner rings",url:"/print-shop/fidget-ring/",ban:"fidget",live:false,blurb:"Pick the inner band size, then design a patterned outer band that spins around it."},
+  {name:"Infinity Cube",tag:"Fidget",url:"/print-shop/infinity-cube/",ban:"cube",live:false,blurb:"Print-in-place infinity cubes that fold over and over, forever."},
+  {name:"Chainmail Forge",tag:"Printed fabric",url:"/print-shop/chainmail-forge/",ban:"chain",live:false,blurb:"Interlocking print-in-place chainmail and flexible printed cloth."},
+  {name:"Flurry",tag:"Ornaments",url:"/print-shop/flurry/",ban:"flake",live:false,blurb:"Snowflake ornaments: generate one, draw your own, or fold-and-cut like paper. Hanging loops included."}
+];
+document.getElementById("grid").innerHTML=TOOLS.map(t=>{const inner=`<div class="banner">${BAN[t.ban]()}<div class="meta"><span class="tag">${esc(t.tag)}</span><span class="status ${t.live?"live":"soon"}">${t.live?"Live":"Soon"}</span></div></div>
+  <h3>${esc(t.name)}</h3><p>${esc(t.blurb)}</p><span class="go">${t.live?"Open →":"On its way"}</span>`;
+  return t.live?`<a class="card" href="${esc(t.url)}">${inner}</a>`:`<div class="card soon">${inner}</div>`}).join("");
+if(matchMedia("(prefers-reduced-motion: reduce)").matches)document.querySelectorAll("svg").forEach(s=>s.pauseAnimations&&s.pauseAnimations());
+}
+</script>
+</body>
+</html>
