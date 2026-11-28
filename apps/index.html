@@ -382,13 +382,19 @@ const BANNERS = {
       <circle cx="200" cy="83" r="3.6" fill="#2f7cf6" stroke="#c9ced9" stroke-width="1.4"/>
       <path d="M191 66 Q191 54 200 46 Q209 54 209 66z" fill="#e8413b"/>
     </g>`, `<linearGradient id="rkSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d3d8f"/><stop offset=".55" stop-color="#4a9ff0"/><stop offset="1" stop-color="#8fd3ff"/></linearGradient>`),
+  // The Print Shop: a nozzle laying down a gear on a print bed
+  print: () => SVG(`<rect width="400" height="130" fill="#0d0d14"/><rect width="400" height="130" fill="url(#psGrid)"/>
+    <rect x="70" y="104" width="260" height="8" rx="2" fill="#1e1e2e"/>
+    <g transform="translate(200 78)"><g>${Array.from({length:40},(_,i)=>{const a=i/40*Math.PI*2,r=i%4<2?26:21;return `${i?"L":"M"}${(r*Math.cos(a)).toFixed(1)} ${(r*Math.sin(a)*0.45).toFixed(1)}`}).join(" ").replace(/^/,'<path d="')+'Z" fill="#00ff88" opacity=".85"/>'}<ellipse rx="8" ry="3.6" fill="#0d0d14"/></g></g>
+    <rect x="176" y="18" width="48" height="26" rx="4" fill="#1e1e2e" stroke="#2c2c44"/><path d="M190 44h20l-5 14h-10z" fill="#8d94a8"/><path d="M197 58h6l-3 6z" fill="#ffcc00"/>
+    <g fill="#ff8a3d"><circle cx="120" cy="84" r="9" opacity=".8"/><circle cx="286" cy="86" r="7" opacity=".8"/></g>`, grid("psGrid", 24, "#00ff88", .08)),
   // anything new without its own scene yet
   other: () => SVG(`<rect width="400" height="130" fill="#0d0d14"/><rect width="400" height="130" fill="url(#gnGrid)"/><circle cx="200" cy="72" r="34" fill="#00ff88" opacity=".08"/><path d="M182 72 h36 M200 54 v36" stroke="#00ff88" stroke-width="3" opacity=".6"/>`, grid("gnGrid", 24, "#00ff88", .08))
 };
 function bannerFor(a) {
   const k = `${a.url} ${a.name}`.toLowerCase();
   return (/rocket/.test(k) ? BANNERS.rocket : /stunt|rooftop/.test(k) ? BANNERS.stunt : /mirror/.test(k) ? BANNERS.mirror : /gift|exchange/.test(k) ? BANNERS.gift : /pioneer/.test(k) ? BANNERS.pfm : /weigh/.test(k) ? BANNERS.weigh : /aura|pack/.test(k) ? BANNERS.aura
-    : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : /marble/.test(k) ? BANNERS.marble : BANNERS.other)();
+    : /layout/.test(k) ? BANNERS.layout : /immune/.test(k) ? BANNERS.immune : /paver/.test(k) ? BANNERS.paver : /marble/.test(k) ? BANNERS.marble : /print/.test(k) ? BANNERS.print : BANNERS.other)();
 }
 
 // Older tags that now share a category
@@ -397,7 +403,8 @@ const CATS = [
   { name: "Games & Kids", note: "Things to play, including ones made for little hands." },
   { name: "Game Companions", note: "Planners and guides for games we play." },
   { name: "Home & Life", note: "Family, holidays and health." },
-  { name: "Work Tools", note: "Floor plans, packing lists and load math for work." }
+  { name: "Work Tools", note: "Floor plans, packing lists and load math for work." },
+  { name: "Maker Tools", note: "3D-print generators that export ready-to-print STLs." }
 ];
 // Show one category (or all of them when id is empty) and keep it in the address so a refresh stays put
 function filter(id){
